@@ -2,8 +2,5 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="purple_Dark">#3C7A50</color>
-    <color name="your_background_color">#6200EE</color>
-    <color name="green_indicator">#3C7A50</color>
-
+    <color name="purple_Dark">#4A148C</color>
 </resources>

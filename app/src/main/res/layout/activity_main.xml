@@ -30,8 +30,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="24dp"
                     android:layout_marginTop="16dp"
-                    android:layout_marginEnd="24dp"
-                    android:paddingTop="16dp">
+                    android:layout_marginEnd="24dp">
 
                     <TextView
                         android:id="@+id/textView"
@@ -86,29 +85,6 @@
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </LinearLayout>
-            <androidx.viewpager2.widget.ViewPager2
-                android:id="@+id/bannerPager"
-                android:layout_width="match_parent"
-                android:layout_height="160dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="8dp"
-                android:clipToPadding="true"
-                android:clipChildren="true"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:overScrollMode="never" />
-
-            <!-- 배너 아래 인디케이터 -->
-            <com.tbuonomo.viewpagerdotsindicator.DotsIndicator
-                android:id="@+id/dots_indicator"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="16dp"
-                app:dotsColor="#D0D0D0"
-                app:selectedDotColor="#3C7A50"
-                app:dotsSize="8dp"
-                app:dotsSpacing="6dp" />
         </LinearLayout>
     </ScrollView>
 
@@ -116,7 +92,7 @@
         android:id="@+id/gridButtons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="320dp"
+        android:layout_marginTop="300dp"
         android:columnCount="4"
         android:padding="16dp"
         android:rowCount="4"

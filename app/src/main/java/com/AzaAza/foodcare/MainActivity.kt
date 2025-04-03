@@ -60,10 +60,10 @@ class MainActivity : AppCompatActivity() {
                     val nextItem = (bannerPager.currentItem + 1) % banners.size
                     bannerPager.currentItem = nextItem
                 }
-                handler.postDelayed(this, 8000) // 8초마다 실행
+                handler.postDelayed(this, 5000) // 8초마다 실행
             }
         }
-        handler.postDelayed(runnable, 8000)
+        handler.postDelayed(runnable, 5000)
 
         // ✅ 사용자가 손으로 슬라이드하면 자동 슬라이드 일시 중지
         bannerPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {

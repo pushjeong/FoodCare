@@ -46,8 +46,22 @@ class MainActivity : AppCompatActivity() {
             R.drawable.five_banner
         )
 
-        val adapter = BannerAdapter(banners)
+        val adapter = BannerAdapter(banners) { position ->
+            val targetActivity = when (position) {
+                0 -> FridgeActivity::class.java
+                1 -> UserInfoActivity::class.java
+                2 -> MemberActivity::class.java
+                3 -> FoodManagementActivity::class.java
+                4 -> FoodRecipeActivity::class.java
+                else -> null
+            }
+            targetActivity?.let {
+                startActivity(Intent(this, it))
+            }
+        }
+
         bannerPager.adapter = adapter
+
 
         val indicator = findViewById<DotsIndicator>(R.id.dots_indicator)
         indicator.setViewPager2(bannerPager)

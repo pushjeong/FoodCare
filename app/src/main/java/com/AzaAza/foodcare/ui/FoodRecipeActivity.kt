@@ -43,7 +43,7 @@ class FoodRecipeActivity : AppCompatActivity() {
         // RecyclerView 설정
         recipeRecyclerView = findViewById(R.id.recipeRecyclerView)
         recipeRecyclerView.layoutManager = LinearLayoutManager(this)
-        recipeAdapter = RecipeAdapter(emptyList())
+        recipeAdapter = RecipeAdapter(emptyList(), userIngredients)
         recipeRecyclerView.adapter = recipeAdapter
 
         // 서버에서 레시피 데이터 가져오기
@@ -109,12 +109,14 @@ class FoodRecipeActivity : AppCompatActivity() {
     }
 
     private fun showKimchiStewData() {
+        val ingredientsList = listOf("김치", "돼지고기", "두부", "대파", "양파", "마늘", "고춧가루", "국간장")
         val kimchiStew = Recipe(
             name = "김치찌개",
-            description = "맛있는 김치찌개 레시피",
+            description = ingredientsList.joinToString(", "),
             imageResId = R.drawable.kimchistew,
-            ingredients = listOf("김치", "돼지고기", "두부", "대파", "양파", "마늘", "고춧가루", "국간장")
+            ingredients = ingredientsList
         )
+
 
         // 보유재료 일치 개수 계산
         val matchedCount = kimchiStew.ingredients.count { it in userIngredients }

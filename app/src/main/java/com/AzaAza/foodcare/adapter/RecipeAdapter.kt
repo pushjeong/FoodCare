@@ -9,8 +9,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.models.Recipe
 
-class RecipeAdapter(private var recipes: List<Recipe>) :
-    RecyclerView.Adapter<RecipeAdapter.RecipeViewHolder>() {
+class RecipeAdapter(
+    private var recipes: List<Recipe>,
+    private val userIngredients: List<String>
+) : RecyclerView.Adapter<RecipeAdapter.RecipeViewHolder>() {
 
     inner class RecipeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameText: TextView = itemView.findViewById(R.id.recipeName)
@@ -29,7 +31,8 @@ class RecipeAdapter(private var recipes: List<Recipe>) :
         holder.nameText.text = recipe.name
         holder.descriptionText.text = recipe.description
         holder.imageView.setImageResource(recipe.imageResId)
-        holder.matchedCountText.text = "일치 재료: ${recipe.matchedCount}개" // 여기서 설정
+        holder.matchedCountText.text =
+            "일치 재료: ${recipe.matchedCount}개 (${recipe.ingredients.filter { userIngredients.contains(it) }.joinToString(", ")})"
     }
 
     override fun getItemCount(): Int = recipes.size

@@ -7,6 +7,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -62,6 +63,10 @@ class FoodManagementActivity : AppCompatActivity() {
         fabAdd.setOnClickListener {
             showAddIngredientDialog()
         }
+        val backButton: ImageView = findViewById(R.id.backButton)
+        backButton.setOnClickListener { onBackPressed() }
+
+
     }
 
     private fun fetchIngredientsFromServer() {
@@ -294,4 +299,15 @@ class FoodManagementActivity : AppCompatActivity() {
         val density = resources.displayMetrics.density
         return (dp * density).toInt()
     }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                onBackPressed()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
 }

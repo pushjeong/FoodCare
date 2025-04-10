@@ -20,7 +20,7 @@
             <LinearLayout
                 android:id="@+id/topBarLayout"
                 android:layout_width="match_parent"
-                android:layout_height="105dp"
+                android:layout_height="100dp"
                 android:background="@drawable/topbar"
                 android:orientation="vertical">
 
@@ -34,9 +34,10 @@
 
                     <ImageView
                         android:id="@+id/backButton"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/bell"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/back_button"
+                        android:layout_marginTop="10dp"
                         android:contentDescription="뒤로가기"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
@@ -50,11 +51,12 @@
                         android:textSize="40sp"
                         android:textColor="#FFFFFF"
                         android:textStyle="bold"
+                        android:layout_marginTop="10dp"
                         app:layout_constraintStart_toEndOf="@id/backButton"
                         app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintHorizontal_bias="0.5" />
+                        app:layout_constraintHorizontal_bias="0.4" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </LinearLayout>
 

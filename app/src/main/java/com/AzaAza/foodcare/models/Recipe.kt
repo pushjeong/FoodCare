@@ -1,4 +1,4 @@
-package com.AzaAza.foodcare
+package com.AzaAza.foodcare.models
 
 data class Recipe(
     val name: String,

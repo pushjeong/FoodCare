@@ -1,5 +1,6 @@
-package com.AzaAza.foodcare
+package com.AzaAza.foodcare.helper
 
+import com.AzaAza.foodcare.models.Recipe
 import java.text.Normalizer
 
 object RecipeSearchHelper {

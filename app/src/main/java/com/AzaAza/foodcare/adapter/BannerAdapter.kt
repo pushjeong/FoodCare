@@ -1,4 +1,4 @@
-package com.AzaAza.foodcare
+package com.AzaAza.foodcare.adapter
 
 import android.view.ViewGroup
 import android.widget.ImageView

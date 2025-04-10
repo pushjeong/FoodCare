@@ -1,4 +1,4 @@
-package com.AzaAza.foodcare
+package com.AzaAza.foodcare.ui
 
 import android.content.Intent
 import android.os.Build
@@ -11,6 +11,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.content.ContextCompat
 import androidx.viewpager2.widget.ViewPager2
+import com.AzaAza.foodcare.R
+import com.AzaAza.foodcare.adapter.BannerAdapter
 import com.tbuonomo.viewpagerdotsindicator.DotsIndicator
 
 class MainActivity : AppCompatActivity() {

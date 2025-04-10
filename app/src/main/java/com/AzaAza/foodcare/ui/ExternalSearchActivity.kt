@@ -1,16 +1,17 @@
-package com.AzaAza.foodcare
+package com.AzaAza.foodcare.ui
 
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import com.AzaAza.foodcare.R
 
-class UserInfoActivity : AppCompatActivity() {
+class ExternalSearchActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_user_info)
+        setContentView(R.layout.activity_external_search)
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "개인정보"
+        supportActionBar?.title = "외부검색"
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

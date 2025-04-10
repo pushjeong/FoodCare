@@ -1,6 +1,6 @@
 package com.AzaAza.foodcare.models
 
-import com.AzaAza.foodcare.Recipe
+import com.AzaAza.foodcare.R
 import com.google.gson.annotations.SerializedName
 
 data class RecipeDto(
@@ -26,7 +26,7 @@ data class RecipeDto(
         return Recipe(
             name = name,
             description = instructions.take(50) + if (instructions.length > 50) "..." else "",
-            imageResId = com.AzaAza.foodcare.R.drawable.bell,
+            imageResId = R.drawable.bell,
             ingredients = ingredientsList,
             matchedCount = matchedCount
         )

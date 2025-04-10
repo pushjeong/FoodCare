@@ -1,16 +1,17 @@
-package com.AzaAza.foodcare
+package com.AzaAza.foodcare.ui
 
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import com.AzaAza.foodcare.R
 
-class FridgeActivity : AppCompatActivity() {
+class UserInfoActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_fridge)
+        setContentView(R.layout.activity_user_info)
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "냉장고"
+        supportActionBar?.title = "개인정보"
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

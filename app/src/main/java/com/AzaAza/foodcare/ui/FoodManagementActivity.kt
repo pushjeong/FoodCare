@@ -1,4 +1,4 @@
-package com.AzaAza.foodcare
+package com.AzaAza.foodcare.ui
 
 import android.app.Dialog
 import android.graphics.Color
@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.api.RetrofitClient
 import com.AzaAza.foodcare.models.IngredientDto
 import com.AzaAza.foodcare.models.IngredientResponse

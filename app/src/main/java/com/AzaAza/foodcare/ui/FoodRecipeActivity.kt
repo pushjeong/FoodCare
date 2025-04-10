@@ -1,7 +1,6 @@
-package com.AzaAza.foodcare
+package com.AzaAza.foodcare.ui
 
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
@@ -12,7 +11,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.core.widget.addTextChangedListener
+import com.AzaAza.foodcare.R
+import com.AzaAza.foodcare.adapter.RecipeAdapter
 import com.AzaAza.foodcare.api.RetrofitClient
+import com.AzaAza.foodcare.models.Recipe
 import com.AzaAza.foodcare.models.RecipeDto
 import retrofit2.Call
 import retrofit2.Callback

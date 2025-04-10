@@ -1,4 +1,4 @@
-package com.AzaAza.foodcare
+package com.AzaAza.foodcare.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -6,6 +6,8 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.AzaAza.foodcare.R
+import com.AzaAza.foodcare.models.Recipe
 
 class RecipeAdapter(private var recipes: List<Recipe>) :
     RecyclerView.Adapter<RecipeAdapter.RecipeViewHolder>() {

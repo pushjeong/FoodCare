@@ -18,18 +18,18 @@
         android:networkSecurityConfig="@xml/network_security_config">
 
         <!-- 새 액티비티 등록 -->
-        <activity android:name=".FoodManagementActivity"/>
-        <activity android:name=".FoodRecipeActivity"/>
-        <activity android:name=".ExternalSearchActivity"/>
-        <activity android:name=".FridgeActivity"/>
-        <activity android:name=".UserInfoActivity"/>
-        <activity android:name=".MemberActivity"/>
-        <activity android:name=".FoodSearchActivity"/>
-        <activity android:name=".SettingActivity"/>
+        <activity android:name=".ui.FoodManagementActivity"/>
+        <activity android:name=".ui.FoodRecipeActivity"/>
+        <activity android:name=".ui.ExternalSearchActivity"/>
+        <activity android:name=".ui.FridgeActivity"/>
+        <activity android:name=".ui.UserInfoActivity"/>
+        <activity android:name=".ui.MemberActivity"/>
+        <activity android:name=".ui.FoodSearchActivity"/>
+        <activity android:name=".ui.SettingActivity"/>
 
         <!-- 메인 액티비티 -->
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

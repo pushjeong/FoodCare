@@ -7,5 +7,3 @@ data class Recipe(
     val ingredients: List<String>,
     val matchedCount: Int = 0 // 보유재료 일치 개수 필드 추가
 )
-
-

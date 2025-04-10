@@ -1,9 +1,6 @@
-// IngredientDto.kt
 package com.AzaAza.foodcare.models
 
 import com.google.gson.annotations.SerializedName
-import java.text.SimpleDateFormat
-import java.util.*
 
 data class IngredientDto(
     @SerializedName("name") val name: String,
@@ -15,7 +12,3 @@ data class IngredientDto(
 data class IngredientResponse(
     @SerializedName("message") val message: String
 )
-
-
-
-

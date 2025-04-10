@@ -64,7 +64,7 @@ class FoodManagementActivity : AppCompatActivity() {
     }
 
     private fun fetchIngredientsFromServer() {
-        RetrofitClient.apiService.getIngredients().enqueue(object : Callback<List<IngredientDto>> {
+        RetrofitClient.ingredientApiService.getIngredients().enqueue(object : Callback<List<IngredientDto>> {
             override fun onResponse(call: Call<List<IngredientDto>>, response: Response<List<IngredientDto>>) {
                 if (response.isSuccessful) {
                     val serverIngredients = response.body()
@@ -196,7 +196,7 @@ class FoodManagementActivity : AppCompatActivity() {
         )
 
         // 서버로 데이터 전송
-        RetrofitClient.apiService.addIngredient(dto).enqueue(object : Callback<IngredientResponse> {
+        RetrofitClient.ingredientApiService.addIngredient(dto).enqueue(object : Callback<IngredientResponse> {
             override fun onResponse(call: Call<IngredientResponse>, response: Response<IngredientResponse>) {
                 if (response.isSuccessful) {
                     // 성공 시 로컬 목록 및 UI 업데이트

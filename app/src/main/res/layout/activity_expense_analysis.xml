@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- 상단 바 -->
+        <LinearLayout
+            android:id="@+id/topBarLayout"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:background="@drawable/topbar"
+            android:orientation="vertical">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp">
+
+                <ImageView
+                    android:id="@+id/backButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/back_button"
+                    android:layout_marginTop="10dp"
+                    android:contentDescription="뒤로가기"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" />
+
+                <TextView
+                    android:id="@+id/topBarTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="소비패턴"
+                    android:textSize="40sp"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:layout_marginTop="10dp"
+                    app:layout_constraintStart_toEndOf="@id/backButton"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.4" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </LinearLayout>
+
+        <!-- 0월에는 0을(를) 많이 구매하셨어요! -->
+        <TextView
+            android:id="@+id/summaryText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="0월에는 0을(를) 많이 구매하셨어요!"
+            android:textSize="20sp"
+            android:padding="16dp"
+            android:textColor="#000000"
+            android:textStyle="bold" />
+
+        <!-- 랭킹 리스트 -->
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp">
+
+            <!-- 반복: 1등 ~ 5등 -->
+            <!-- 1등 -->
+            <LinearLayout
+                android:id="@+id/itemRank1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="8dp"
+                android:paddingHorizontal="16dp">
+
+                <TextView
+                    android:id="@+id/rankText1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="1등"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="4"
+                    android:orientation="horizontal"
+                    android:gravity="end"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:id="@+id/itemNameText1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="당근" />
+
+                    <TextView
+                        android:id="@+id/itemCountText1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="월 0개 구매"
+                        android:layout_weight="1"
+                        android:textSize="14sp"
+                        android:layout_marginStart="8dp" />
+
+                    <!-- 쇼핑리스트 추가 버튼 -->
+                    <Button
+                        android:id="@+id/addToShoppingListButton1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="쇼핑리스트 추가"
+                        android:backgroundTint="#E8DB6B"
+                        android:textColor="#000000" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 2등 -->
+            <LinearLayout
+                android:id="@+id/itemRank2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="8dp"
+                android:paddingHorizontal="16dp">
+
+                <TextView
+                    android:id="@+id/rankText2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="2등"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="4"
+                    android:orientation="horizontal"
+                    android:gravity="end"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:id="@+id/itemNameText2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="감자" />
+
+                    <TextView
+                        android:id="@+id/itemCountText2"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="월 0개 구매"
+                        android:layout_weight="1"
+                        android:textSize="14sp"
+                        android:layout_marginStart="8dp" />
+
+                    <!-- 쇼핑리스트 추가 버튼 -->
+                    <Button
+                        android:id="@+id/addToShoppingListButton2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="쇼핑리스트 추가"
+                        android:backgroundTint="#E8DB6B"
+                        android:textColor="#000000" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 3등 -->
+            <LinearLayout
+                android:id="@+id/itemRank3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="8dp"
+                android:paddingHorizontal="16dp">
+
+                <TextView
+                    android:id="@+id/rankText3"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="3등"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="4"
+                    android:orientation="horizontal"
+                    android:gravity="end"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:id="@+id/itemNameText3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="양파" />
+
+                    <TextView
+                        android:id="@+id/itemCountText3"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="월 0개 구매"
+                        android:layout_weight="1"
+                        android:textSize="14sp"
+                        android:layout_marginStart="8dp" />
+
+                    <!-- 쇼핑리스트 추가 버튼 -->
+                    <Button
+                        android:id="@+id/addToShoppingListButton3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="쇼핑리스트 추가"
+                        android:backgroundTint="#E8DB6B"
+                        android:textColor="#000000" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 4등 -->
+            <LinearLayout
+                android:id="@+id/itemRank4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="8dp"
+                android:paddingHorizontal="16dp">
+
+                <TextView
+                    android:id="@+id/rankText4"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="4등"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="4"
+                    android:orientation="horizontal"
+                    android:gravity="end"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:id="@+id/itemNameText4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="계란" />
+
+                    <TextView
+                        android:id="@+id/itemCountText4"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="월 0개 구매"
+                        android:layout_weight="1"
+                        android:textSize="14sp"
+                        android:layout_marginStart="8dp" />
+
+                    <!-- 쇼핑리스트 추가 버튼 -->
+                    <Button
+                        android:id="@+id/addToShoppingListButton4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="쇼핑리스트 추가"
+                        android:backgroundTint="#E8DB6B"
+                        android:textColor="#000000" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 5등 -->
+            <LinearLayout
+                android:id="@+id/itemRank5"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="8dp"
+                android:paddingHorizontal="16dp">
+
+                <TextView
+                    android:id="@+id/rankText5"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="5등"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="4"
+                    android:orientation="horizontal"
+                    android:gravity="end"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:id="@+id/itemNameText5"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="파" />
+
+                    <TextView
+                        android:id="@+id/itemCountText5"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="월 0개 구매"
+                        android:layout_weight="1"
+                        android:textSize="14sp"
+                        android:layout_marginStart="8dp" />
+
+                    <!-- 쇼핑리스트 추가 버튼 -->
+                    <Button
+                        android:id="@+id/addToShoppingListButton5"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="쇼핑리스트 추가"
+                        android:backgroundTint="#E8DB6B"
+                        android:textColor="#000000" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 버튼 2개: 더 확인하기, 쇼핑리스트 확인하기 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center">
+
+                <Button
+                    android:id="@+id/checkMoreButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="더 확인하기"
+                    android:backgroundTint="#BDBDBD"
+                    android:textColor="#000000"
+                    android:layout_marginEnd="16dp" />
+
+                <Button
+                    android:id="@+id/checkShoppingListButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="쇼핑리스트 확인하기"
+                    android:backgroundTint="#BDBDBD"
+                    android:textColor="#000000" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/recommendTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="자주 사는 식재료가 포함된 음식"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:padding="12dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="4dp"
+                android:textColor="#000000" />
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_marginTop="0dp">
+
+                <LinearLayout
+                    android:id="@+id/itemBudaeStew"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:id="@+id/itemNameBudaeStew"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="부대찌개"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginEnd="12dp" />
+
+                    <TextView
+                        android:id="@+id/itemInfoBudaeStew"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="상위 0개 중 0개 포함"
+                        android:textSize="14sp"
+                        android:layout_marginStart="8dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/itemCheeseRamen"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:id="@+id/itemNameCheeseRamen"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="치즈라면"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginEnd="12dp" />
+
+                    <TextView
+                        android:id="@+id/itemInfoCheeseRamen"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="상위 0개 중 0개 포함"
+                        android:textSize="14sp"
+                        android:layout_marginStart="8dp" />
+                </LinearLayout>
+
+
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

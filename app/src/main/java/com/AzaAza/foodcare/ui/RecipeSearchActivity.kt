@@ -20,7 +20,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class FoodRecipeActivity : AppCompatActivity() {
+class RecipeSearchActivity : AppCompatActivity() {
     private lateinit var recipeAdapter: RecipeAdapter
     private lateinit var recipeRecyclerView: RecyclerView
     private lateinit var progressBar: ProgressBar
@@ -31,7 +31,7 @@ class FoodRecipeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_food_recipe)
+        setContentView(R.layout.activity_recipe_search)
 
         // 뒤로가기 버튼
         val backButton: ImageView = findViewById(R.id.backButton)
@@ -74,11 +74,11 @@ class FoodRecipeActivity : AppCompatActivity() {
                         // 어댑터 업데이트
                         recipeAdapter.updateList(allRecipes)
 
-                        Toast.makeText(this@FoodRecipeActivity,
+                        Toast.makeText(this@RecipeSearchActivity,
                             "${allRecipes.size}개의 레시피를 가져왔습니다.",
                             Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(this@FoodRecipeActivity,
+                        Toast.makeText(this@RecipeSearchActivity,
                             "서버에서 데이터를 불러오는데 실패했습니다: 빈 응답",
                             Toast.LENGTH_SHORT).show()
 
@@ -86,7 +86,7 @@ class FoodRecipeActivity : AppCompatActivity() {
                         showKimchiStewData()
                     }
                 } else {
-                    Toast.makeText(this@FoodRecipeActivity,
+                    Toast.makeText(this@RecipeSearchActivity,
                         "서버에서 데이터를 불러오는데 실패했습니다: ${response.code()}",
                         Toast.LENGTH_SHORT).show()
 
@@ -98,7 +98,7 @@ class FoodRecipeActivity : AppCompatActivity() {
             override fun onFailure(call: Call<List<RecipeDto>>, t: Throwable) {
                 progressBar.visibility = View.GONE
 
-                Toast.makeText(this@FoodRecipeActivity,
+                Toast.makeText(this@RecipeSearchActivity,
                     "서버 연결에 실패했습니다: ${t.message}",
                     Toast.LENGTH_LONG).show()
 

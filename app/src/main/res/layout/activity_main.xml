@@ -137,7 +137,7 @@
                         android:background="@android:color/transparent"
                         android:contentDescription="식자재 관리"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/foodmgmt" />
+                        android:src="@drawable/foodsearch" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -160,15 +160,15 @@
                         android:layout_width="64dp"
                         android:layout_height="64dp"
                         android:background="@android:color/transparent"
-                        android:contentDescription="식자재레시피"
+                        android:contentDescription="레시피 검색"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/foodrecipe" />
+                        android:src="@drawable/frige" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="식자재레시피"
+                        android:text="레시피 검색"
                         android:textAlignment="center" />
                 </LinearLayout>
 
@@ -185,15 +185,15 @@
                         android:layout_width="64dp"
                         android:layout_height="64dp"
                         android:background="@android:color/transparent"
-                        android:contentDescription="외부검색"
+                        android:contentDescription="소비패턴"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/search" />
+                        android:src="@drawable/red_circle" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="외부검색"
+                        android:text="소비패턴"
                         android:textAlignment="center" />
                 </LinearLayout>
 
@@ -210,15 +210,15 @@
                         android:layout_width="64dp"
                         android:layout_height="64dp"
                         android:background="@android:color/transparent"
-                        android:contentDescription="냉장고"
+                        android:contentDescription="가계부"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/frige" />
+                        android:src="@drawable/red_circle" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="냉장고"
+                        android:text="가계부"
                         android:textAlignment="center" />
                 </LinearLayout>
 
@@ -289,15 +289,15 @@
                         android:layout_width="64dp"
                         android:layout_height="64dp"
                         android:background="@android:color/transparent"
-                        android:contentDescription="음식검색"
+                        android:contentDescription="!!미정"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/foodsearch" />
+                        android:src="@drawable/red_circle" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="음식검색"
+                        android:text="!!!미정"
                         android:textAlignment="center" />
                 </LinearLayout>
 

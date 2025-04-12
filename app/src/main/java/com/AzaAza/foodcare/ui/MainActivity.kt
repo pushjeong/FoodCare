@@ -50,11 +50,11 @@ class MainActivity : AppCompatActivity() {
 
         val adapter = BannerAdapter(banners) { position ->
             val targetActivity = when (position) {
-                0 -> FridgeActivity::class.java
+                0 -> ExpenseActivity::class.java
                 1 -> UserInfoActivity::class.java
                 2 -> MemberActivity::class.java
                 3 -> FoodManagementActivity::class.java
-                4 -> FoodRecipeActivity::class.java
+                4 -> RecipeSearchActivity::class.java
                 else -> null
             }
             targetActivity?.let {
@@ -96,13 +96,13 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, FoodManagementActivity::class.java))
         }
         findViewById<ImageButton>(R.id.btnFoodRecipe).setOnClickListener {
-            startActivity(Intent(this, FoodRecipeActivity::class.java))
+            startActivity(Intent(this, RecipeSearchActivity::class.java))
         }
         findViewById<ImageButton>(R.id.btnSearch).setOnClickListener {
-            startActivity(Intent(this, ExternalSearchActivity::class.java))
+            startActivity(Intent(this, ExpenseAnalysisActivity::class.java))
         }
         findViewById<ImageButton>(R.id.btnFridge).setOnClickListener {
-            startActivity(Intent(this, FridgeActivity::class.java))
+            startActivity(Intent(this, ExpenseActivity::class.java))
         }
         findViewById<ImageButton>(R.id.btnInformation).setOnClickListener {
             startActivity(Intent(this, UserInfoActivity::class.java))
@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, MemberActivity::class.java))
         }
         findViewById<ImageButton>(R.id.btnFoodSearch).setOnClickListener {
-            startActivity(Intent(this, FoodSearchActivity::class.java))
+            startActivity(Intent(this, CommunityActivity::class.java))
         }
         findViewById<ImageButton>(R.id.btnSetting).setOnClickListener {
             startActivity(Intent(this, SettingActivity::class.java))

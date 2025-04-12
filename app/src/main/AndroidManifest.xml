@@ -19,12 +19,12 @@
 
         <!-- 새 액티비티 등록 -->
         <activity android:name=".ui.FoodManagementActivity"/>
-        <activity android:name=".ui.FoodRecipeActivity"/>
-        <activity android:name=".ui.ExternalSearchActivity"/>
-        <activity android:name=".ui.FridgeActivity"/>
+        <activity android:name=".ui.RecipeSearchActivity"/>
+        <activity android:name=".ui.ExpenseAnalysisActivity"/>
+        <activity android:name=".ui.ExpenseActivity"/>
         <activity android:name=".ui.UserInfoActivity"/>
         <activity android:name=".ui.MemberActivity"/>
-        <activity android:name=".ui.FoodSearchActivity"/>
+        <activity android:name=".ui.CommunityActivity"/>
         <activity android:name=".ui.SettingActivity"/>
 
         <!-- 메인 액티비티 -->

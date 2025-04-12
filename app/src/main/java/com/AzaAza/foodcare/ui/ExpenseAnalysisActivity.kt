@@ -2,16 +2,18 @@ package com.AzaAza.foodcare.ui
 
 import android.os.Bundle
 import android.view.MenuItem
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import com.AzaAza.foodcare.R
 
-class ExternalSearchActivity : AppCompatActivity() {
+class ExpenseAnalysisActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_external_search)
+        setContentView(R.layout.activity_expense_analysis)
 
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "외부검색"
+        // 뒤로가기 버튼
+        val backButton: ImageView = findViewById(R.id.backButton)
+        backButton.setOnClickListener { onBackPressed() }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

@@ -22,9 +22,35 @@ data class RecipeDto(
 
         // 음식 이름에 따라 이미지 선택
         val imageRes = when (name) {
-            "김치찌개" -> R.drawable.kimchistew
-            //"김치볶음밥" -> R.drawable.eggroll
-            // "된장찌개" -> R.drawable.soybeanstew
+            "김치찌개" -> R.drawable.dish_img_kimchi_stew
+            "김치볶음밥" -> R.drawable.dish_img_kimchi_bokkeumbap
+            "콩국수" -> R.drawable.dish_img_bean_noodles
+            "비빔밥" -> R.drawable.dish_img_bibimbap
+            "부대찌개" -> R.drawable.dish_img_budaejjigae
+            "청국장" -> R.drawable.dish_img_cheonggukjang
+            "잡채" -> R.drawable.dish_img_japchae
+            "카레" -> R.drawable.dish_img_curry
+            "갈비찜" -> R.drawable.dish_img_galbijjim
+            "감자볶음" -> R.drawable.dish_img_gamjabokkeum
+            "감자전" -> R.drawable.dish_img_gamjajeon
+            "김치라면" -> R.drawable.dish_img_kimchiramen
+            "김치전" -> R.drawable.dish_img_kimchijeon
+            "닭갈비" -> R.drawable.dish_img_dakgalbi
+            "된장찌개" -> R.drawable.dish_img_doenjangjjigae
+            "떡볶이" -> R.drawable.dish_img_tteokbokki
+            "미역국" -> R.drawable.dish_img_miyeokguk
+            "소불고기" -> R.drawable.dish_img_sobulgogi
+            "소시지볶음" -> R.drawable.dish_img_sosisibokkeum
+            "순두부찌개" -> R.drawable.dish_img_sundubujjigae
+            "오이무침" -> R.drawable.dish_img_oimumchim
+            "오트밀미역죽" -> R.drawable.dish_img_oatmealmiyukjuk
+            "유부초밥" -> R.drawable.dish_img_yubuchobap
+            "잔치국수" -> R.drawable.dish_img_janchiguksu
+            "콩나물국" -> R.drawable.dish_img_kongnamulguk
+            "토스트" -> R.drawable.dish_img_toast
+            "호박죽" -> R.drawable.dish_img_hobakjuk
+
+
 
             else -> R.drawable.bell  // 기본 이미지
         }

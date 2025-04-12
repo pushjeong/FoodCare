@@ -137,7 +137,7 @@
                         android:background="@android:color/transparent"
                         android:contentDescription="식자재 관리"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/foodsearch" />
+                        android:src="@drawable/icon_butt_frige" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -162,7 +162,7 @@
                         android:background="@android:color/transparent"
                         android:contentDescription="레시피 검색"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/frige" />
+                        android:src="@drawable/icon_butt_foodsearch" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -187,7 +187,7 @@
                         android:background="@android:color/transparent"
                         android:contentDescription="소비패턴"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/red_circle" />
+                        android:src="@drawable/icon_butt_expense_analysis" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -212,7 +212,7 @@
                         android:background="@android:color/transparent"
                         android:contentDescription="가계부"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/red_circle" />
+                        android:src="@drawable/icon_butt_expense" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -239,7 +239,7 @@
                         android:background="@android:color/transparent"
                         android:contentDescription="개인정보"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/information" />
+                        android:src="@drawable/icon_butt_information" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -265,7 +265,7 @@
                         android:background="@android:color/transparent"
                         android:contentDescription="구성원"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/member" />
+                        android:src="@drawable/icon_butt_member" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -291,7 +291,7 @@
                         android:background="@android:color/transparent"
                         android:contentDescription="!!미정"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/red_circle" />
+                        android:src="@drawable/icon_butt_community" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -317,7 +317,7 @@
                         android:background="@android:color/transparent"
                         android:contentDescription="설정"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/setting" />
+                        android:src="@drawable/icon_butt_setting" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -381,7 +381,7 @@
                             android:layout_height="120dp"
                             android:contentDescription="육개장 이미지"
                             android:scaleType="centerCrop"
-                            android:src="@drawable/yukgaejang" />
+                            android:src="@drawable/red_circle" />
 
                         <!-- 오른쪽 텍스트 정보 -->
                         <LinearLayout
@@ -458,7 +458,7 @@
                             android:layout_height="120dp"
                             android:contentDescription="샤브샤브 이미지"
                             android:scaleType="centerCrop"
-                            android:src="@drawable/shabushabu" />
+                            android:src="@drawable/red_circle" />
 
                         <!-- 오른쪽 텍스트 정보 -->
                         <LinearLayout
@@ -535,7 +535,7 @@
                             android:layout_height="120dp"
                             android:contentDescription="비빔밥 이미지"
                             android:scaleType="centerCrop"
-                            android:src="@drawable/bibimbap" />
+                            android:src="@drawable/dish_img_bibimbap" />
 
                         <!-- 오른쪽 텍스트 정보 -->
                         <LinearLayout
@@ -612,7 +612,7 @@
                             android:layout_height="120dp"
                             android:contentDescription="김치찌개 이미지"
                             android:scaleType="centerCrop"
-                            android:src="@drawable/kimchistew" />
+                            android:src="@drawable/dish_img_kimchi_stew" />
 
                         <!-- 오른쪽 텍스트 정보 -->
                         <LinearLayout

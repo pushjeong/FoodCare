@@ -1,8 +1,17 @@
 package com.AzaAza.foodcare.ui
 
+import android.Manifest
+import android.app.Activity
 import android.app.Dialog
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -12,16 +21,27 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.api.RetrofitClient
 import com.AzaAza.foodcare.models.IngredientDto
 import com.AzaAza.foodcare.models.IngredientResponse
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import okhttp3.MultipartBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.File
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import com.bumptech.glide.Glide
+
 
 class FoodManagementActivity : AppCompatActivity() {
 
@@ -31,12 +51,33 @@ class FoodManagementActivity : AppCompatActivity() {
     private val displayDateFormat = SimpleDateFormat("MM월 dd일", Locale.KOREA)
     private val apiDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
+    // 카메라 및 갤러리 관련 변수
+    private val CAMERA_PERMISSION_CODE = 100
+    private val STORAGE_PERMISSION_CODE = 101
+    private val CAMERA_REQUEST_CODE = 102
+    private val GALLERY_REQUEST_CODE = 103
+    private var currentPhotoPath: String = ""
+    private var currentPhotoUri: Uri? = null
+    private var selectedImageBitmap: Bitmap? = null
+    private lateinit var imageViewPhoto: ImageView
+    private lateinit var currentDialog: Dialog
+
+    // ID 매핑을 위한 Map
+    private val ingredientIdMap = mutableMapOf<String, Int>() // 키: 이름+위치+날짜, 값: 서버ID
+
     data class Ingredient(
         val name: String,
         val location: String,
         val expiryDate: Date,
-        val purchaseDate: Date
-    )
+        val purchaseDate: Date,
+        val imagePath: String? = null,   // 로컬 저장용
+        val imageUrl: String? = null     // 서버에서 받은 url 저장용
+    ) {
+        // 고유 식별자 생성
+        fun getUniqueKey(): String {
+            return "$name-$location-${expiryDate.time}"
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,20 +104,25 @@ class FoodManagementActivity : AppCompatActivity() {
         fabAdd.setOnClickListener {
             showAddIngredientDialog()
         }
+
         val backButton: ImageView = findViewById(R.id.backButton)
         backButton.setOnClickListener { onBackPressed() }
-
-
     }
 
+    // 서버에서 식자재 목록을 가져올 때 ID 매핑을 정확하게 처리
     private fun fetchIngredientsFromServer() {
+        Log.d("FoodManagement", "서버에서 식자재 목록 가져오기 시작")
+
         RetrofitClient.ingredientApiService.getIngredients().enqueue(object : Callback<List<IngredientDto>> {
             override fun onResponse(call: Call<List<IngredientDto>>, response: Response<List<IngredientDto>>) {
                 if (response.isSuccessful) {
                     val serverIngredients = response.body()
+                    Log.d("FoodManagement", "서버에서 ${serverIngredients?.size ?: 0}개 식자재 데이터 수신")
+
                     if (serverIngredients != null) {
                         // 기존 목록 비우기
                         ingredientsList.clear()
+                        ingredientIdMap.clear()
                         container.removeAllViews()
 
                         // 서버에서 받은 데이터로 목록 채우기
@@ -89,9 +135,16 @@ class FoodManagementActivity : AppCompatActivity() {
                                     dto.name,
                                     dto.location,
                                     expiryDate,
-                                    purchaseDate
+                                    purchaseDate,
+                                    null,                // 로컬경로 없음
+                                    dto.imageUrl         // 서버 image_url 넣어줌
                                 )
 
+                                // 서버에서 받은 ID 정확히 저장
+                                val id = dto.id  // IngredientDto에 id 필드가 있어야 함
+                                Log.d("FoodManagement", "식자재 추가: ${dto.name}, ID: $id, ImageURL: ${dto.imageUrl}")
+
+                                ingredientIdMap[ingredient.getUniqueKey()] = id
                                 ingredientsList.add(ingredient)
                                 addIngredientCard(ingredient)
                             } catch (e: Exception) {
@@ -99,17 +152,23 @@ class FoodManagementActivity : AppCompatActivity() {
                             }
                         }
 
+                        // ID 매핑 상태 로깅
+                        for ((key, value) in ingredientIdMap) {
+                            Log.d("FoodManagement", "ID 매핑: $key -> $value")
+                        }
+
                         showToast("서버에서 데이터를 성공적으로 불러왔습니다. (${serverIngredients.size}개)")
                     }
                 } else {
+                    val errorMsg = response.errorBody()?.string() ?: "알 수 없는 오류"
+                    Log.e("FoodManagement", "서버 응답 오류: ${response.code()}, $errorMsg")
                     showToast("서버에서 데이터를 불러오는데 실패했습니다.")
-                    Log.e("FoodManagement", "서버 응답 오류: ${response.code()}")
                 }
             }
 
             override fun onFailure(call: Call<List<IngredientDto>>, t: Throwable) {
-                showToast("서버 연결에 실패했습니다.")
                 Log.e("FoodManagement", "서버 연결 실패", t)
+                showToast("서버 연결에 실패했습니다.")
             }
         })
     }
@@ -131,6 +190,7 @@ class FoodManagementActivity : AppCompatActivity() {
     private fun showAddIngredientDialog() {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.add_ingredient)
+        currentDialog = dialog
 
         dialog.window?.apply {
             setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -145,6 +205,29 @@ class FoodManagementActivity : AppCompatActivity() {
         val editTextLocation = dialog.findViewById<EditText>(R.id.editTextLocation)
         val editTextExpiry = dialog.findViewById<EditText>(R.id.editTextExpiry)
         val editTextPurchase = dialog.findViewById<EditText>(R.id.editTextNotes)
+
+        // 이미지 관련 요소 초기화
+        imageViewPhoto = dialog.findViewById(R.id.imageViewPhoto)
+        val buttonCamera = dialog.findViewById<Button>(R.id.buttonCamera)
+        val buttonGallery = dialog.findViewById<Button>(R.id.buttonGallery)
+
+        // 카메라 버튼 클릭 시
+        buttonCamera.setOnClickListener {
+            if (checkCameraPermission()) {
+                openCamera()
+            } else {
+                requestCameraPermission()
+            }
+        }
+
+        // 갤러리 버튼 클릭 시
+        buttonGallery.setOnClickListener {
+            if (checkStoragePermission()) {
+                openGallery()
+            } else {
+                requestStoragePermission()
+            }
+        }
 
         // DatePicker 처리 추가 - 유통기한
         editTextExpiry.setOnClickListener {
@@ -177,8 +260,14 @@ class FoodManagementActivity : AppCompatActivity() {
                 val expiryDate = dateFormat.parse(expiryDateStr) ?: Date()
                 val purchaseDate = dateFormat.parse(purchaseDateStr) ?: Date()
 
-                // 데이터 추가
-                val newIngredient = Ingredient(name, location, expiryDate, purchaseDate)
+                // 데이터 추가 (이미지 경로 포함)
+                val newIngredient = Ingredient(
+                    name,
+                    location,
+                    expiryDate,
+                    purchaseDate,
+                    currentPhotoPath.ifEmpty { null }
+                )
 
                 // 서버에 데이터 전송
                 sendIngredientToServer(newIngredient, dialog)
@@ -192,24 +281,183 @@ class FoodManagementActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun sendIngredientToServer(ingredient: Ingredient, dialog: Dialog) {
-        // 날짜 형식 변환
-        val dto = IngredientDto(
-            name = ingredient.name,
-            location = ingredient.location,
-            expiryDate = apiDateFormat.format(ingredient.expiryDate),
-            purchaseDate = apiDateFormat.format(ingredient.purchaseDate)
-        )
+    private fun checkCameraPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+    }
 
-        // 서버로 데이터 전송
-        RetrofitClient.ingredientApiService.addIngredient(dto).enqueue(object : Callback<IngredientResponse> {
+    private fun requestCameraPermission() {
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.CAMERA),
+            CAMERA_PERMISSION_CODE
+        )
+    }
+
+    // 갤러리 권한 체크
+    private fun checkStoragePermission(): Boolean {
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_MEDIA_IMAGES
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    // 갤러리 권한 요청
+    private fun requestStoragePermission() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
+                STORAGE_PERMISSION_CODE
+            )
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                STORAGE_PERMISSION_CODE
+            )
+        }
+    }
+
+    private fun openCamera() {
+        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+            takePictureIntent.resolveActivity(packageManager)?.also {
+                // 파일 생성
+                val photoFile: File? = try {
+                    createImageFile()
+                } catch (ex: IOException) {
+                    Log.e("FoodManagement", "이미지 파일 생성 실패", ex)
+                    null
+                }
+
+                // 파일이 생성됐으면 계속 진행
+                photoFile?.also {
+                    val photoURI: Uri = FileProvider.getUriForFile(
+                        this,
+                        "com.AzaAza.foodcare.fileprovider",
+                        it
+                    )
+                    currentPhotoUri = photoURI
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                    startActivityForResult(takePictureIntent, CAMERA_REQUEST_CODE)
+                }
+            }
+        }
+    }
+
+    @Throws(IOException::class)
+    private fun createImageFile(): File {
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile(
+            "JPEG_${timeStamp}_", /* prefix */
+            ".jpg", /* suffix */
+            storageDir /* directory */
+        ).apply {
+            currentPhotoPath = absolutePath
+        }
+    }
+
+    private fun openGallery() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        startActivityForResult(intent, GALLERY_REQUEST_CODE)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            CAMERA_PERMISSION_CODE -> {
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    openCamera()
+                } else {
+                    showToast("카메라 권한이 필요합니다")
+                }
+            }
+            STORAGE_PERMISSION_CODE -> {
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    openGallery()
+                } else {
+                    showToast("저장소 접근 권한이 필요합니다")
+                }
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == Activity.RESULT_OK) {
+            when (requestCode) {
+                CAMERA_REQUEST_CODE -> {
+                    // 카메라로 찍은 사진 처리
+                    try {
+                        selectedImageBitmap = BitmapFactory.decodeFile(currentPhotoPath)
+                        imageViewPhoto.setImageBitmap(selectedImageBitmap)
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                        showToast("이미지 로드 실패")
+                    }
+                }
+                GALLERY_REQUEST_CODE -> {
+                    // 갤러리에서 선택한 사진 처리
+                    try {
+                        data?.data?.let { uri ->
+                            val inputStream = contentResolver.openInputStream(uri)
+                            selectedImageBitmap = BitmapFactory.decodeStream(inputStream)
+                            imageViewPhoto.setImageBitmap(selectedImageBitmap)
+
+                            // 갤러리에서 선택한 이미지 파일로 저장
+                            val photoFile = createImageFile()
+                            photoFile.outputStream().use { outputStream ->
+                                selectedImageBitmap?.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
+                            }
+                        }
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                        showToast("이미지 로드 실패")
+                    }
+                }
+            }
+        }
+    }
+
+    private fun sendIngredientToServer(ingredient: Ingredient, dialog: Dialog) {
+        val namePart = ingredient.name.toRequestBody("text/plain".toMediaTypeOrNull())
+        val locationPart = ingredient.location.toRequestBody("text/plain".toMediaTypeOrNull())
+        val expiryDatePart = apiDateFormat.format(ingredient.expiryDate).toRequestBody("text/plain".toMediaTypeOrNull())
+        val purchaseDatePart = apiDateFormat.format(ingredient.purchaseDate).toRequestBody("text/plain".toMediaTypeOrNull())
+
+        var imagePart: MultipartBody.Part? = null
+
+        if (ingredient.imagePath != null) {
+            val imageFile = File(ingredient.imagePath)
+            val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
+            imagePart = MultipartBody.Part.createFormData("image", imageFile.name, requestFile)
+        }
+
+        RetrofitClient.ingredientApiService.addIngredient(
+            namePart, locationPart, expiryDatePart, purchaseDatePart, imagePart
+        ).enqueue(object : Callback<IngredientResponse> {
             override fun onResponse(call: Call<IngredientResponse>, response: Response<IngredientResponse>) {
                 if (response.isSuccessful) {
-                    // 성공 시 로컬 목록 및 UI 업데이트
+                    // 서버에서 식별자 할당 (임시로 리스트 크기 + 1 사용)
+                    val newId = ingredientsList.size + 1
+                    ingredientIdMap[ingredient.getUniqueKey()] = newId
+
                     ingredientsList.add(ingredient)
                     addIngredientCard(ingredient)
-
-                    // 성공 메시지 표시
                     showToast(response.body()?.message ?: "${ingredient.name} 추가 성공!")
                     dialog.dismiss()
                 } else {
@@ -224,6 +472,69 @@ class FoodManagementActivity : AppCompatActivity() {
             }
         })
     }
+
+    // 식자재 삭제 기능
+    private fun deleteIngredient(ingredient: Ingredient, cardView: CardView) {
+        // 확인 다이얼로그 표시
+        android.app.AlertDialog.Builder(this)
+            .setTitle("식자재 삭제")
+            .setMessage("${ingredient.name}을(를) 정말 삭제하시겠습니까?")
+            .setPositiveButton("삭제") { _, _ ->
+                // 해당 식자재의 ID 찾기
+                val ingredientId = ingredientIdMap[ingredient.getUniqueKey()]
+                if (ingredientId == null) {
+                    showToast("식자재 ID를 찾을 수 없습니다.")
+                    return@setPositiveButton
+                }
+
+                // 삭제 요청을 보낼 때 로딩 표시
+                val progressDialog = android.app.ProgressDialog(this).apply {
+                    setMessage("삭제 중...")
+                    setCancelable(false)
+                    show()
+                }
+
+                // 서버에 삭제 요청
+                Log.d("FoodManagement", "식자재 삭제 요청 - ID: $ingredientId, 이름: ${ingredient.name}, 이미지: ${ingredient.imageUrl}")
+
+                RetrofitClient.ingredientApiService.deleteIngredient(ingredientId)
+                    .enqueue(object : Callback<IngredientResponse> {
+                        override fun onResponse(call: Call<IngredientResponse>, response: Response<IngredientResponse>) {
+                            progressDialog.dismiss()
+
+                            if (response.isSuccessful) {
+                                // 성공적으로 삭제된 경우
+                                ingredientsList.remove(ingredient)
+                                ingredientIdMap.remove(ingredient.getUniqueKey())
+                                container.removeView(cardView)
+                                showToast("${ingredient.name}이(가) 삭제되었습니다.")
+                                Log.d("FoodManagement", "삭제 성공 - ID: $ingredientId, 이름: ${ingredient.name}")
+                            } else {
+                                // 서버 응답 오류
+                                val errorBody = response.errorBody()?.string() ?: "알 수 없는 오류"
+                                Log.e("FoodManagement", "삭제 실패 - 코드: ${response.code()}, 응답: $errorBody")
+                                showToast("삭제 실패: ${response.code()}")
+
+                                // 실패 원인 분석 (로그에만 출력)
+                                when (response.code()) {
+                                    404 -> Log.e("FoodManagement", "해당 ID의 식자재를 찾을 수 없음: $ingredientId")
+                                    403 -> Log.e("FoodManagement", "삭제 권한 없음")
+                                    else -> Log.e("FoodManagement", "기타 서버 오류: ${response.code()}")
+                                }
+                            }
+                        }
+
+                        override fun onFailure(call: Call<IngredientResponse>, t: Throwable) {
+                            progressDialog.dismiss()
+                            Log.e("FoodManagement", "서버 연결 실패", t)
+                            showToast("서버 연결에 실패했습니다: ${t.message}")
+                        }
+                    })
+            }
+            .setNegativeButton("취소", null)
+            .show()
+    }
+
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
@@ -257,8 +568,24 @@ class FoodManagementActivity : AppCompatActivity() {
         val nameTextView = cardView.findViewById<TextView>(R.id.textViewName)
         val expiryTextView = cardView.findViewById<TextView>(R.id.textViewExpiry)
         val locationTextView = cardView.findViewById<TextView>(R.id.textViewLocation)
+        val imageView = cardView.findViewById<ImageView>(R.id.imageView)
 
         nameTextView.text = ingredient.name
+
+        // 이미지 설정
+        if (ingredient.imagePath != null) {
+            // 로컬 사진
+            val bitmap = BitmapFactory.decodeFile(ingredient.imagePath)
+            imageView.setImageBitmap(bitmap)
+        } else if (ingredient.imageUrl != null) {
+            // 서버 사진
+            Glide.with(this)
+                .load("https://foodcare-69ae76eec1bf.herokuapp.com${ingredient.imageUrl}")
+                .into(imageView)
+        } else {
+            // 기본 이미지
+            imageView.setImageResource(R.drawable.basicfood)
+        }
 
         // 유통기한 계산
         val today = Calendar.getInstance().time
@@ -282,7 +609,13 @@ class FoodManagementActivity : AppCompatActivity() {
 
         locationTextView.text = "${ingredient.location} · 구입 $purchaseStr"
 
-        // 카드를 상단에 추가 (기존 방법 대신)
+        // 길게 누르기 리스너 추가
+        cardView.setOnLongClickListener {
+            deleteIngredient(ingredient, cardView)
+            true  // 이벤트 소비
+        }
+
+        // 카드를 상단에 추가
         container.addView(cardView, 0)  // 인덱스 0에 추가하여 맨 위에 배치
     }
 
@@ -309,5 +642,4 @@ class FoodManagementActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-
 }

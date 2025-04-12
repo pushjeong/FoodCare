@@ -14,6 +14,7 @@ import androidx.core.widget.addTextChangedListener
 import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.adapter.RecipeAdapter
 import com.AzaAza.foodcare.api.RetrofitClient
+import com.AzaAza.foodcare.models.IngredientDto
 import com.AzaAza.foodcare.models.Recipe
 import com.AzaAza.foodcare.models.RecipeDto
 import retrofit2.Call
@@ -25,9 +26,7 @@ class RecipeSearchActivity : AppCompatActivity() {
     private lateinit var recipeRecyclerView: RecyclerView
     private lateinit var progressBar: ProgressBar
     private var allRecipes = listOf<Recipe>()
-
-    // 사용자의 식재료 목록 - 실제로는 DB에서 가져오거나 다른 방법으로 얻어야 함
-    private val userIngredients = listOf("밥", "김", "계란", "파", "두부")
+    private var userIngredients = listOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,15 +45,47 @@ class RecipeSearchActivity : AppCompatActivity() {
         recipeAdapter = RecipeAdapter(emptyList(), userIngredients)
         recipeRecyclerView.adapter = recipeAdapter
 
-        // 서버에서 레시피 데이터 가져오기
-        fetchRecipesFromServer()
-
-        // 검색 필터 적용
-        val searchBar: EditText = findViewById(R.id.search_bar)
-        searchBar.addTextChangedListener {
-            filterRecipes(it.toString())
-        }
+        // 서버에서 사용자 재료 목록과 레시피 데이터를 가져오기
+        fetchUserIngredients()
     }
+
+    private fun fetchUserIngredients() {
+        progressBar.visibility = View.VISIBLE
+
+        RetrofitClient.ingredientApiService.getIngredients().enqueue(object : Callback<List<IngredientDto>> {
+            override fun onResponse(call: Call<List<IngredientDto>>, response: Response<List<IngredientDto>>) {
+                progressBar.visibility = View.GONE
+
+                if (response.isSuccessful) {
+                    val ingredients = response.body()
+                    if (ingredients != null) {
+                        // 사용자 재료 목록 설정
+                        userIngredients = ingredients.map { it.name }
+
+                        // 레시피 데이터를 가져오기
+                        fetchRecipesFromServer()
+                    } else {
+                        Toast.makeText(this@RecipeSearchActivity,
+                            "재료 목록을 불러오는데 실패했습니다: 빈 응답",
+                            Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(this@RecipeSearchActivity,
+                        "재료 목록을 불러오는데 실패했습니다: ${response.code()}",
+                        Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(call: Call<List<IngredientDto>>, t: Throwable) {
+                progressBar.visibility = View.GONE
+
+                Toast.makeText(this@RecipeSearchActivity,
+                    "서버 연결에 실패했습니다: ${t.message}",
+                    Toast.LENGTH_LONG).show()
+            }
+        })
+    }
+
 
     private fun fetchRecipesFromServer() {
         progressBar.visibility = View.VISIBLE
@@ -69,7 +100,7 @@ class RecipeSearchActivity : AppCompatActivity() {
                         // DTO를 Recipe 객체로 변환
                         allRecipes = recipeDtos.map { dto ->
                             dto.toRecipe(userIngredients)
-                        }.sortedByDescending { it.matchedCount }
+                        }.sortedByDescending { it.matchedCount }  // 정렬: 일치하는 재료가 많은 순으로
 
                         // 어댑터 업데이트
                         recipeAdapter.updateList(allRecipes)
@@ -79,19 +110,13 @@ class RecipeSearchActivity : AppCompatActivity() {
                             Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(this@RecipeSearchActivity,
-                            "서버에서 데이터를 불러오는데 실패했습니다: 빈 응답",
+                            "레시피 데이터를 불러오는데 실패했습니다: 빈 응답",
                             Toast.LENGTH_SHORT).show()
-
-                        // 김치찌개 데이터만 보여주기
-                        showKimchiStewData()
                     }
                 } else {
                     Toast.makeText(this@RecipeSearchActivity,
-                        "서버에서 데이터를 불러오는데 실패했습니다: ${response.code()}",
+                        "레시피 데이터를 불러오는데 실패했습니다: ${response.code()}",
                         Toast.LENGTH_SHORT).show()
-
-                    // 김치찌개 데이터만 보여주기
-                    showKimchiStewData()
                 }
             }
 
@@ -101,34 +126,8 @@ class RecipeSearchActivity : AppCompatActivity() {
                 Toast.makeText(this@RecipeSearchActivity,
                     "서버 연결에 실패했습니다: ${t.message}",
                     Toast.LENGTH_LONG).show()
-
-                // 김치찌개 데이터만 보여주기
-                showKimchiStewData()
             }
         })
-    }
-
-    private fun showKimchiStewData() {
-        val ingredientsList = listOf("김치", "돼지고기", "두부", "대파", "양파", "마늘", "고춧가루", "국간장")
-        val kimchiStew = Recipe(
-            name = "김치찌개",
-            description = ingredientsList.joinToString(", "),
-            imageResId = R.drawable.kimchistew,
-            ingredients = ingredientsList
-        )
-
-
-        // 보유재료 일치 개수 계산
-        val matchedCount = kimchiStew.ingredients.count { it in userIngredients }
-        val finalRecipe = kimchiStew.copy(matchedCount = matchedCount)
-
-        // 어댑터 업데이트
-        allRecipes = listOf(finalRecipe)
-        recipeAdapter.updateList(allRecipes)
-
-        Toast.makeText(this,
-            "김치찌개 데이터를 표시합니다.",
-            Toast.LENGTH_SHORT).show()
     }
 
     private fun filterRecipes(query: String) {

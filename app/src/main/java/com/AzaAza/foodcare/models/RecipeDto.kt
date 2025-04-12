@@ -17,18 +17,33 @@ data class RecipeDto(
 ) {
     // RecipeDto를 Recipe 객체로 변환하는 함수
     fun toRecipe(userIngredients: List<String>): Recipe {
-        // 쉼표로 구분된 문자열을 리스트로 변환
         val ingredientsList = ingredients.split(",").map { it.trim() }
+        val matched = ingredientsList.filter { it in userIngredients }
 
-        // 일치하는 재료 수 계산
-        val matchedCount = ingredientsList.count { it in userIngredients }
+        // 음식 이름에 따라 이미지 선택
+        val imageRes = when (name) {
+            "김치찌개" -> R.drawable.kimchistew
+            //"김치볶음밥" -> R.drawable.eggroll
+            // "된장찌개" -> R.drawable.soybeanstew
+
+            else -> R.drawable.bell  // 기본 이미지
+        }
 
         return Recipe(
             name = name,
             description = instructions.take(50) + if (instructions.length > 50) "..." else "",
-            imageResId = R.drawable.bell,
+            imageResId = imageRes,
             ingredients = ingredientsList,
-            matchedCount = matchedCount
+            matchedCount = matched.size,
+            matchedIngredients = matched,
+            timeTaken = timetaken,
+            difficulty = difficultylevel,
+            allergies = allergies,
+            disease = disease,
+            diseaseReason = diseasereason,
+            category = category
         )
     }
+
+
 }

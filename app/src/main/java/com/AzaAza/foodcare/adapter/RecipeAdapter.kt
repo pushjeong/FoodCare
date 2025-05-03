@@ -1,9 +1,11 @@
 package com.AzaAza.foodcare.adapter
 
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.AzaAza.foodcare.R
@@ -43,25 +45,50 @@ class RecipeAdapter(
 
         // 설명 클릭 시 팝업 표시
         holder.descriptionText.setOnClickListener {
-            AlertDialog.Builder(holder.itemView.context)
-                .setTitle("${recipe.name} 상세 정보")
-                .setMessage(
-                    """
-                📝 레시피 설명: 
-                ${recipe.description}
+            val message = """
+        📝 레시피 설명:
+        ${recipe.description}
 
-                🧂 필요한 재료:
-                ${recipe.ingredients.joinToString(", ")}
+        🧂 필요한 재료:
+        ${recipe.ingredients.joinToString(", ")}
 
-                ⏱ 소요 시간: ${recipe.timeTaken ?: "알 수 없음"}
-                💪 난이도: ${recipe.difficulty ?: "알 수 없음"}
-                🩺 알레르기: ${recipe.allergies ?: "없음"}
-                🚫 질병 관련: ${recipe.disease ?: "없음"}
-                """.trimIndent()
+        ⏱ 소요 시간: ${recipe.timeTaken ?: "알 수 없음"}
+        💪 난이도: ${recipe.difficulty ?: "알 수 없음"}
+        🩺 알레르기: ${recipe.allergies ?: "없음"}
+        🚫 질병 관련: ${recipe.disease ?: "없음"}
+    """.trimIndent()
+
+            val context = holder.itemView.context
+
+            // 텍스트 뷰
+            val textView = TextView(context).apply {
+                text = message
+                textSize = 16f
+                setPadding(40, 40, 40, 40)
+                isVerticalScrollBarEnabled = true
+                movementMethod = android.text.method.ScrollingMovementMethod.getInstance() // 텍스트 자체에 스크롤 허용
+            }
+
+            // 스크롤 뷰로 감싸기
+            val scrollView = ScrollView(context).apply {
+                addView(textView)
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
                 )
+            }
+
+            // AlertDialog 생성
+            AlertDialog.Builder(context)
+                .setTitle("${recipe.name} 상세 정보")
+                .setView(scrollView)
                 .setPositiveButton("닫기", null)
                 .show()
         }
+
+
+
+
     }
 
 

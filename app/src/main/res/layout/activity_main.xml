@@ -379,9 +379,9 @@
                             android:id="@+id/yukgaejangImage"
                             android:layout_width="120dp"
                             android:layout_height="120dp"
-                            android:contentDescription="육개장 이미지"
+                            android:contentDescription="육개장"
                             android:scaleType="centerCrop"
-                            android:src="@drawable/red_circle" />
+                            android:src="@drawable/dish_img_yukgaejang" />
 
                         <!-- 오른쪽 텍스트 정보 -->
                         <LinearLayout
@@ -456,9 +456,9 @@
                             android:id="@+id/shabuShabuImage"
                             android:layout_width="120dp"
                             android:layout_height="120dp"
-                            android:contentDescription="샤브샤브 이미지"
+                            android:contentDescription="샤브샤브"
                             android:scaleType="centerCrop"
-                            android:src="@drawable/red_circle" />
+                            android:src="@drawable/dish_img_shabushabu" />
 
                         <!-- 오른쪽 텍스트 정보 -->
                         <LinearLayout

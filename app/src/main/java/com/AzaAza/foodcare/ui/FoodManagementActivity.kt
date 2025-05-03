@@ -120,12 +120,12 @@ class FoodManagementActivity : AppCompatActivity() {
                     Log.d("FoodManagement", "서버에서 ${serverIngredients?.size ?: 0}개 식자재 데이터 수신")
 
                     if (serverIngredients != null) {
-                        // 기존 목록 비우기
+                        // 기존 목록 초기화
                         ingredientsList.clear()
                         ingredientIdMap.clear()
                         container.removeAllViews()
 
-                        // 서버에서 받은 데이터로 목록 채우기
+                        // 서버에서 받은 데이터로 리스트 채우기
                         for (dto in serverIngredients) {
                             try {
                                 val expiryDate = apiDateFormat.parse(dto.expiryDate) ?: Date()
@@ -136,25 +136,25 @@ class FoodManagementActivity : AppCompatActivity() {
                                     dto.location,
                                     expiryDate,
                                     purchaseDate,
-                                    null,                // 로컬경로 없음
-                                    dto.imageUrl         // 서버 image_url 넣어줌
+                                    null, // 로컬 이미지 없음
+                                    dto.imageUrl
                                 )
 
-                                // 서버에서 받은 ID 정확히 저장
-                                val id = dto.id  // IngredientDto에 id 필드가 있어야 함
-                                Log.d("FoodManagement", "식자재 추가: ${dto.name}, ID: $id, ImageURL: ${dto.imageUrl}")
-
+                                val id = dto.id
                                 ingredientIdMap[ingredient.getUniqueKey()] = id
                                 ingredientsList.add(ingredient)
-                                addIngredientCard(ingredient)
+
                             } catch (e: Exception) {
                                 Log.e("FoodManagement", "데이터 파싱 오류", e)
                             }
                         }
 
-                        // ID 매핑 상태 로깅
-                        for ((key, value) in ingredientIdMap) {
-                            Log.d("FoodManagement", "ID 매핑: $key -> $value")
+                        // 유통기한 임박 순 정렬
+                        ingredientsList.sortBy { it.expiryDate }
+
+                        // 정렬된 리스트를 뒤집어서 상단에 추가되도록 처리
+                        for (ingredient in ingredientsList.reversed()) {
+                            addIngredientCard(ingredient) // 이 함수 내부에서 addView(cardView, 0) 해야 함
                         }
 
                         showToast("서버에서 데이터를 성공적으로 불러왔습니다. (${serverIngredients.size}개)")
@@ -594,7 +594,7 @@ class FoodManagementActivity : AppCompatActivity() {
 
         // 유통기한 스타일 설정
         if (ingredient.expiryDate.before(today) || isSameDay(ingredient.expiryDate, today)) {
-            expiryTextView.text = "유통기한: 오늘까지"
+            expiryTextView.text = "소비기한: 오늘까지"
             expiryTextView.setBackgroundResource(R.drawable.expiry_background)
             expiryTextView.setTextColor(Color.WHITE)
             expiryTextView.setPadding(
@@ -602,7 +602,7 @@ class FoodManagementActivity : AppCompatActivity() {
                 dpToPx(12), dpToPx(4)
             )
         } else {
-            expiryTextView.text = "유통기한: $expiryStr"
+            expiryTextView.text = "소비기한: $expiryStr"
             expiryTextView.setBackgroundResource(0)
             expiryTextView.setTextColor(Color.parseColor("#666666"))
         }

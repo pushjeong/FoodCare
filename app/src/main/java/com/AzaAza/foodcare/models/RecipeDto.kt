@@ -49,6 +49,23 @@ data class RecipeDto(
             "콩나물국" -> R.drawable.dish_img_kongnamulguk
             "토스트" -> R.drawable.dish_img_toast
             "호박죽" -> R.drawable.dish_img_hobakjuk
+            "육개장" -> R.drawable.dish_img_yukgaejang
+            "샤브샤브" -> R.drawable.dish_img_shabushabu
+            "닭볶음탕" -> R.drawable.dish_img_chicken_bokkeumtang
+            "대구탕" -> R.drawable.dish_img_daegutang
+            "감자탕" -> R.drawable.dish_img_gamjatang
+            "고르곤졸라피자" -> R.drawable.dish_img_gorgonzola_pizza
+            "궁중떡볶이" -> R.drawable.dish_img_gungjung_tteokbokki
+            "함박스테이크" -> R.drawable.dish_img_hamburger_steak
+            "마라탕" -> R.drawable.dish_img_malatang
+            "마파두부" -> R.drawable.dish_img_mapa_tofu
+            "쌀국수" -> R.drawable.dish_img_pad_thai
+            "봉골레파스타" -> R.drawable.dish_img_vongole_pasta
+            "나시 고랭" -> R.drawable.dish_img_nasi_goreng
+
+
+
+
 
 
 

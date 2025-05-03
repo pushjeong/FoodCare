@@ -63,9 +63,50 @@ data class RecipeDto(
             "봉골레파스타" -> R.drawable.dish_img_vongole_pasta
             "나시 고랭" -> R.drawable.dish_img_nasi_goreng
 
+            "도토리묵" -> R.drawable.dish_img_acorn_jello
+            "장어구이" -> R.drawable.dish_img_broiled_eels
+            "관자버터구이" -> R.drawable.dish_img_grilled_tube_butter
+            "마라샹궈" -> R.drawable.dish_img_malaxianguo
+            "오코노미야끼" -> R.drawable.dish_img_okonomiyakki
 
+            "고추잡채" -> R.drawable.dish_img_red_pepper_japchae
+            "곱도리탕" -> R.drawable.dish_img_gopdoritang
+            "동그랑땡" -> R.drawable.dish_img_donggeurangddang
+            "부추전" -> R.drawable.dish_img_buchujeon
+            "양장피" -> R.drawable.dish_img_sheepskin
+            "오리탕" -> R.drawable.dish_img_duck_soup
 
-
+            "LA양념갈비" -> R.drawable.dish_img_la_ribs
+            "감바스" -> R.drawable.dish_img_gambas
+            "계란말이" -> R.drawable.dish_img_egg_rolled
+            "계란볶음밥" -> R.drawable.dish_img_egg_fried_rice
+            "고등어구이" -> R.drawable.dish_img_grilled_mackerel
+            "꽃게탕" -> R.drawable.dish_img_crab_soup
+            "돈까스" -> R.drawable.dish_img_pork_cutlet
+            "동태탕" -> R.drawable.dish_img_pollack_soup
+            "로제파스타" -> R.drawable.dish_img_rose_pasta
+            "보쌈" -> R.drawable.dish_img_bossam
+            "브라우니" -> R.drawable.dish_img_brownie
+            "비빔국수" -> R.drawable.dish_img_bibimbap
+            "소고기무국" -> R.drawable.dish_img_beef_radish_soup
+            "수육" -> R.drawable.dish_img_boiled_pork
+            "순대볶음" -> R.drawable.dish_img_soondae
+            "스테이크" -> R.drawable.dish_img_steak
+            "알탕" -> R.drawable.dish_img_fish_roe_soup
+            "연포탕" -> R.drawable.dish_img_yeonpo_soup
+            "오므라이스" -> R.drawable.dish_img_omelet_rice
+            "조개탕" -> R.drawable.dish_img_clam_soup
+            "족발" -> R.drawable.dish_img_pig_hocks
+            "짜장면" -> R.drawable.dish_img_black_bean_sauce_noodles
+            "짬뽕" -> R.drawable.dish_img_jjambbong
+            "초밥" -> R.drawable.dish_img_sushi
+            "초코칩 쿠키" -> R.drawable.dish_img_chocolate_chip_cookies
+            "칼국수" -> R.drawable.dish_img_kalguksu
+            "케이크" -> R.drawable.dish_img_cake
+            "코다리찜" -> R.drawable.dish_img_kodarijjim
+            "콩나물불고기" -> R.drawable.dish_img_bean_sprout_bulgogi
+            "투움바파스타" -> R.drawable.dish_img_toowoomba_pasta
+            "피넛버터 쿠키" -> R.drawable.dish_img_peanut_butter_cookies
 
 
 

@@ -8,12 +8,13 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.core.widget.addTextChangedListener
 import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.adapter.RecipeAdapter
 import com.AzaAza.foodcare.api.RetrofitClient
+import com.AzaAza.foodcare.helper.RecipeSearchHelper
 import com.AzaAza.foodcare.models.IngredientDto
 import com.AzaAza.foodcare.models.Recipe
 import com.AzaAza.foodcare.models.RecipeDto
@@ -25,6 +26,7 @@ class RecipeSearchActivity : AppCompatActivity() {
     private lateinit var recipeAdapter: RecipeAdapter
     private lateinit var recipeRecyclerView: RecyclerView
     private lateinit var progressBar: ProgressBar
+    private lateinit var searchEditText: EditText
     private var allRecipes = listOf<Recipe>()
     private var userIngredients = listOf<String>()
 
@@ -38,6 +40,12 @@ class RecipeSearchActivity : AppCompatActivity() {
 
         // 프로그레스바 설정
         progressBar = findViewById(R.id.progressBar)
+
+        // 검색바 설정
+        searchEditText = findViewById(R.id.searchEditText)
+        searchEditText.addTextChangedListener { text ->
+            filterRecipes(text.toString())
+        }
 
         // RecyclerView 설정
         recipeRecyclerView = findViewById(R.id.recipeRecyclerView)
@@ -53,79 +61,92 @@ class RecipeSearchActivity : AppCompatActivity() {
         progressBar.visibility = View.VISIBLE
 
         RetrofitClient.ingredientApiService.getIngredients().enqueue(object : Callback<List<IngredientDto>> {
-            override fun onResponse(call: Call<List<IngredientDto>>, response: Response<List<IngredientDto>>) {
+            override fun onResponse(
+                call: Call<List<IngredientDto>>,
+                response: Response<List<IngredientDto>>
+            ) {
                 progressBar.visibility = View.GONE
 
                 if (response.isSuccessful) {
                     val ingredients = response.body()
                     if (ingredients != null) {
-                        // 사용자 재료 목록 설정
                         userIngredients = ingredients.map { it.name }
-
-                        // 레시피 데이터를 가져오기
                         fetchRecipesFromServer()
                     } else {
-                        Toast.makeText(this@RecipeSearchActivity,
+                        Toast.makeText(
+                            this@RecipeSearchActivity,
                             "재료 목록을 불러오는데 실패했습니다: 빈 응답",
-                            Toast.LENGTH_SHORT).show()
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 } else {
-                    Toast.makeText(this@RecipeSearchActivity,
+                    Toast.makeText(
+                        this@RecipeSearchActivity,
                         "재료 목록을 불러오는데 실패했습니다: ${response.code()}",
-                        Toast.LENGTH_SHORT).show()
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
 
             override fun onFailure(call: Call<List<IngredientDto>>, t: Throwable) {
                 progressBar.visibility = View.GONE
-
-                Toast.makeText(this@RecipeSearchActivity,
+                Toast.makeText(
+                    this@RecipeSearchActivity,
                     "서버 연결에 실패했습니다: ${t.message}",
-                    Toast.LENGTH_LONG).show()
+                    Toast.LENGTH_LONG
+                ).show()
             }
         })
     }
-
 
     private fun fetchRecipesFromServer() {
         progressBar.visibility = View.VISIBLE
 
         RetrofitClient.recipeApiService.getRecipes().enqueue(object : Callback<List<RecipeDto>> {
-            override fun onResponse(call: Call<List<RecipeDto>>, response: Response<List<RecipeDto>>) {
+            override fun onResponse(
+                call: Call<List<RecipeDto>>,
+                response: Response<List<RecipeDto>>
+            ) {
                 progressBar.visibility = View.GONE
 
                 if (response.isSuccessful) {
                     val recipeDtos = response.body()
                     if (recipeDtos != null) {
-                        // DTO를 Recipe 객체로 변환
-                        allRecipes = recipeDtos.map { dto ->
-                            dto.toRecipe(userIngredients)
-                        }.sortedByDescending { it.matchedCount }  // 정렬: 일치하는 재료가 많은 순으로
+                        // DTO를 Recipe 객체로 변환하고 일치 재료 개수로 정렬
+                        allRecipes = recipeDtos.map { it.toRecipe(userIngredients) }
+                            .sortedByDescending { it.matchedCount }
 
-                        // 어댑터 업데이트
-                        recipeAdapter.updateList(allRecipes)
+                        recipeAdapter = RecipeAdapter(allRecipes, userIngredients)
+                        recipeRecyclerView.adapter = recipeAdapter
 
-                        Toast.makeText(this@RecipeSearchActivity,
+                        Toast.makeText(
+                            this@RecipeSearchActivity,
                             "${allRecipes.size}개의 레시피를 가져왔습니다.",
-                            Toast.LENGTH_SHORT).show()
+                            Toast.LENGTH_SHORT
+                        ).show()
                     } else {
-                        Toast.makeText(this@RecipeSearchActivity,
+                        Toast.makeText(
+                            this@RecipeSearchActivity,
                             "레시피 데이터를 불러오는데 실패했습니다: 빈 응답",
-                            Toast.LENGTH_SHORT).show()
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 } else {
-                    Toast.makeText(this@RecipeSearchActivity,
+                    Toast.makeText(
+                        this@RecipeSearchActivity,
                         "레시피 데이터를 불러오는데 실패했습니다: ${response.code()}",
-                        Toast.LENGTH_SHORT).show()
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
 
             override fun onFailure(call: Call<List<RecipeDto>>, t: Throwable) {
                 progressBar.visibility = View.GONE
-
-                Toast.makeText(this@RecipeSearchActivity,
+                Toast.makeText(
+                    this@RecipeSearchActivity,
                     "서버 연결에 실패했습니다: ${t.message}",
-                    Toast.LENGTH_LONG).show()
+                    Toast.LENGTH_LONG
+                ).show()
             }
         })
     }
@@ -136,11 +157,7 @@ class RecipeSearchActivity : AppCompatActivity() {
             return
         }
 
-        val filtered = allRecipes.filter {
-            it.name.contains(query, ignoreCase = true) ||
-                    it.ingredients.any { ing -> ing.contains(query, ignoreCase = true) }
-        }
-
+        val filtered = RecipeSearchHelper.filter(query, allRecipes)
         recipeAdapter.updateList(filtered)
     }
 

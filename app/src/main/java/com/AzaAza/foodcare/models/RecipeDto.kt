@@ -20,6 +20,7 @@ data class RecipeDto(
         val ingredientsList = ingredients.split(",").map { it.trim() }
         val matched = ingredientsList.filter { it in userIngredients }
 
+
         // 음식 이름에 따라 이미지 선택
         val imageRes = when (name) {
             "김치찌개" -> R.drawable.dish_img_kimchi_stew
@@ -109,13 +110,13 @@ data class RecipeDto(
             "피넛버터 쿠키" -> R.drawable.dish_img_peanut_butter_cookies
 
 
-
             else -> R.drawable.bell  // 기본 이미지
         }
 
         return Recipe(
             name = name,
             description = instructions.take(50) + if (instructions.length > 50) "..." else "",
+            instructions = instructions,          // 전체 순서 저장
             imageResId = imageRes,
             ingredients = ingredientsList,
             matchedCount = matched.size,
@@ -127,7 +128,6 @@ data class RecipeDto(
             diseaseReason = diseasereason,
             category = category
         )
+
     }
-
-
 }

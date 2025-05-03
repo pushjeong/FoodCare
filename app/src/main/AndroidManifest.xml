@@ -36,6 +36,10 @@
         <activity android:name=".ui.CommunityActivity"/>
         <activity android:name=".ui.SettingActivity"/>
 
+        <activity
+            android:name=".ui.ExpiryNotificationActivity"
+            android:exported="false" />
+
         <!-- 메인 액티비티 -->
         <activity
             android:name=".ui.MainActivity"

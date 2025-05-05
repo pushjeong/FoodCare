@@ -41,7 +41,7 @@
             android:name=".ui.ExpiryNotificationActivity"
             android:exported="false" />
 
-        <!-- 메인 액티비티 -->
+        <!-- 메인 액티비티
         <activity
             android:name=".ui.MainActivity"
             android:exported="true">
@@ -50,7 +50,36 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>-->
+
+        <!-- 1) Launcher: AuthActivity -->
+        <activity
+            android:name=".ui.AuthActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
         </activity>
+
+        <!-- 2) 로그인 화면 -->
+        <activity
+            android:name=".ui.LoginActivity"
+            android:exported="false"/>
+
+        <!-- 3) 회원가입 화면 -->
+        <activity
+            android:name=".ui.SignUpActivity"
+            android:exported="false"/>
+
+        <!-- 4) 메인 화면 -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="false"/>
+
+        <activity android:name=".ui.FindIdActivity" android:exported="false"/>
+        <activity android:name=".ui.FindPwActivity" android:exported="false"/>
+
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -61,6 +90,10 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+
+
+
     </application>
 
 </manifest>

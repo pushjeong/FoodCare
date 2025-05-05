@@ -1,6 +1,8 @@
 package com.AzaAza.foodcare.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -11,16 +13,19 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.viewpager2.widget.ViewPager2
 import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.adapter.BannerAdapter
 import com.AzaAza.foodcare.api.RetrofitClient
 import com.AzaAza.foodcare.models.IngredientDto
+import com.AzaAza.foodcare.notification.ExpiryNotificationManager
 import com.tbuonomo.viewpagerdotsindicator.DotsIndicator
 import retrofit2.Call
 import retrofit2.Callback
@@ -40,6 +45,23 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
         androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)  // 다크모드 무시
+
+        // 알림 권한 확인 및 요청 (Android 13 이상)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val notificationPermission = Manifest.permission.POST_NOTIFICATIONS
+            if (ContextCompat.checkSelfPermission(this, notificationPermission) !=
+                PackageManager.PERMISSION_GRANTED) {
+                // 권한이 없으면 요청
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(notificationPermission),
+                    100 // 요청 코드
+                )
+            }
+        }
+
+        // 배터리 최적화 예외 확인 및 요청 - 이 부분을 추가
+        ExpiryNotificationManager.checkBatteryOptimization(this)
 
         // ✅ 상태 바 색상 변경 (Android 11 이상에서만 적용)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -165,6 +187,30 @@ class MainActivity : AppCompatActivity() {
 
         // 소비기한 알림 배지 업데이트
         updateNotificationBadge()
+
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == 100) { // 알림 권한 요청 코드
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // 권한 허용됨
+                Log.d("MainActivity", "알림 권한이 허용되었습니다")
+            } else {
+                // 권한 거부됨
+                Log.d("MainActivity", "알림 권한이 거부되었습니다")
+                Toast.makeText(
+                    this,
+                    "알림 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
     }
 
     private fun updateNotificationBadge() {
@@ -178,7 +224,7 @@ class MainActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     val ingredients = response.body()
                     if (ingredients != null) {
-                        // 소비기한이 3일 이내인 항목 개수 확인
+                        // 오늘 날짜 설정
                         val today = Calendar.getInstance().apply {
                             set(Calendar.HOUR_OF_DAY, 0)
                             set(Calendar.MINUTE, 0)
@@ -188,21 +234,35 @@ class MainActivity : AppCompatActivity() {
 
                         val apiDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
-                        val nearExpiryCount = ingredients.count { ingredient ->
+                        // 1. 소비기한이 지난 항목
+                        val expiredCount = ingredients.count { ingredient ->
                             try {
                                 val expiryDate = apiDateFormat.parse(ingredient.expiryDate) ?: return@count false
-                                val diffDays = ((expiryDate.time - today.time) / (1000 * 60 * 60 * 24)).toInt()
-                                diffDays in 0..3 // 오늘 포함 3일 이내
+                                expiryDate.before(today) // 소비기한이 오늘보다 이전이면 expired
                             } catch (e: Exception) {
                                 false
                             }
                         }
 
+                        // 2. 소비기한이 3일 이내인 항목 (오늘 포함)
+                        val nearExpiryCount = ingredients.count { ingredient ->
+                            try {
+                                val expiryDate = apiDateFormat.parse(ingredient.expiryDate) ?: return@count false
+                                val diffDays = ((expiryDate.time - today.time) / (1000 * 60 * 60 * 24)).toInt()
+                                diffDays in 0..3 && !expiryDate.before(today) // 0~3일 이내이고 소비기한이 지나지 않은 것
+                            } catch (e: Exception) {
+                                false
+                            }
+                        }
+
+                        // 총 알림 개수 (소비기한 지남 + 소비기한 3일 이내)
+                        val totalNotificationCount = expiredCount + nearExpiryCount
+
                         // 뱃지 표시 로직
-                        if (nearExpiryCount > 0) {
+                        if (totalNotificationCount > 0) {
                             badgeImage.visibility = View.VISIBLE
                             badgeText.visibility = View.VISIBLE
-                            badgeText.text = nearExpiryCount.toString()
+                            badgeText.text = totalNotificationCount.toString()
                         } else {
                             badgeImage.visibility = View.GONE
                             badgeText.visibility = View.GONE

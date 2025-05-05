@@ -3,7 +3,9 @@ package com.AzaAza.foodcare.ui
 import android.Manifest
 import android.app.Activity
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -65,6 +67,12 @@ class FoodManagementActivity : AppCompatActivity() {
     // ID 매핑을 위한 Map
     private val ingredientIdMap = mutableMapOf<String, Int>() // 키: 이름+위치+날짜, 값: 서버ID
 
+    // SharedPreferences 관련 상수 및 변수
+    private lateinit var sharedPreferences: SharedPreferences
+    private val PREF_NAME = "FoodcarePrefs"
+    private val EXPIRY_ALERT_PREFIX = "expiry_alert_"
+    private val LAST_ALERT_DATE = "last_alert_date"
+
     data class Ingredient(
         val name: String,
         val location: String,
@@ -82,6 +90,9 @@ class FoodManagementActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_food_management)
+
+        // SharedPreferences 초기화
+        sharedPreferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
         container = findViewById<LinearLayout>(R.id.ingredientsContainer)
         val fabAdd = findViewById<FloatingActionButton>(R.id.fabAdd)
@@ -153,6 +164,14 @@ class FoodManagementActivity : AppCompatActivity() {
                             set(Calendar.MILLISECOND, 0)
                         }.time
 
+                        // 전체 리스트를 소비기한 기준으로 정렬 (오름차순)
+                        ingredientsList.sortBy { it.expiryDate }
+
+                        // 오늘 날짜 확인
+                        val todayStr = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(today)
+                        val lastAlertDate = sharedPreferences.getString(LAST_ALERT_DATE, "")
+
+                        // 소비기한이 지난 식재료 필터링
                         val expiredIngredients = ingredientsList.filter {
                             val calendar = Calendar.getInstance().apply {
                                 time = it.expiryDate
@@ -164,6 +183,7 @@ class FoodManagementActivity : AppCompatActivity() {
                             calendar.time.before(today)
                         }
 
+                        // 유효기간이 지나지 않은 식재료 필터링
                         val validIngredients = ingredientsList.filter {
                             val cal = Calendar.getInstance().apply {
                                 time = it.expiryDate
@@ -175,32 +195,57 @@ class FoodManagementActivity : AppCompatActivity() {
                             !cal.time.before(today)
                         }.toMutableList()
 
-                        // 유통기한 지난 항목 처리 (삭제/취소 분기)
-                        for (expired in expiredIngredients) {
-                            android.app.AlertDialog.Builder(this@FoodManagementActivity)
-                                .setTitle("식자재 자동 삭제")
-                                .setMessage("${expired.name}의 소비기한이 지났습니다. 정말 삭제하시겠습니까?")
-                                .setPositiveButton("삭제") { _, _ ->
-                                    val fakeCard = CardView(this@FoodManagementActivity)
-                                    deleteIngredient(expired, fakeCard)
-                                }
-                                .setNegativeButton("취소") { _, _ ->
-                                    // ✅ 취소한 항목도 표시
-                                    addIngredientCard(expired)
-                                }
-                                .show()
+                        // 마지막으로 알림을 표시한 날짜가 오늘이 아닐 경우에만 알림 표시
+                        if (lastAlertDate != todayStr) {
+                            // 유통기한 지난 항목 처리 (삭제/취소 분기)
+                            for (expired in expiredIngredients) {
+                                // 이 식자재에 대한 알림을 오늘 이미 보여줬는지 확인
+                                val uniqueKey = expired.getUniqueKey()
+
+                                android.app.AlertDialog.Builder(this@FoodManagementActivity)
+                                    .setTitle("식자재 자동 삭제")
+                                    .setMessage("${expired.name}의 소비기한이 지났습니다. 정말 삭제하시겠습니까?")
+                                    .setPositiveButton("삭제") { _, _ ->
+                                        val fakeCard = CardView(this@FoodManagementActivity)
+                                        deleteIngredient(expired, fakeCard)
+                                    }
+                                    .setNegativeButton("취소") { _, _ ->
+                                        // 취소한 항목도 표시 (전체 리스트에 추가)
+                                        // 만약 이미 삭제된 상태라면 다시 추가
+                                        if (!ingredientsList.contains(expired)) {
+                                            ingredientsList.add(expired)
+                                        }
+
+                                        // 소비기한 기준으로 전체 재정렬 (오름차순)
+                                        ingredientsList.sortBy { it.expiryDate }
+
+                                        // 컨테이너 초기화 후 모든 항목 다시 표시
+                                        container.removeAllViews()
+                                        ingredientsList.forEach { ingredient ->
+                                            addIngredientCard(ingredient)
+                                        }
+                                    }
+                                    .show()
+                            }
+
+                            // 알림을 표시한 날짜를 오늘로 저장
+                            sharedPreferences.edit().putString(LAST_ALERT_DATE, todayStr).apply()
                         }
 
-                        // 유효한 식자재 카드 표시
-                        // 소비기한 임박순으로 정렬 (오름차순)
-                        validIngredients.sortBy { it.expiryDate }
-
-                        // 정렬된 항목 순서대로 표시
-                        validIngredients.forEach {
-                            addIngredientCard(it)
+                        // 모든 식자재 카드 표시 (만약 알림이 표시되지 않았을 경우)
+                        if (lastAlertDate == todayStr || expiredIngredients.isEmpty()) {
+                            container.removeAllViews()
+                            ingredientsList.forEach { ingredient ->
+                                addIngredientCard(ingredient)
+                            }
+                        } else {
+                            // 유효한 식자재만 먼저 표시 (알림이 표시되었을 경우 취소 처리 시 다시 전체가 그려짐)
+                            validIngredients.forEach {
+                                addIngredientCard(it)
+                            }
                         }
 
-                        showToast("데이터 로드 완료 (${validIngredients.size + expiredIngredients.size}개 표시됨)")
+                        showToast("데이터 로드 완료 (${ingredientsList.size}개 표시됨)")
                     }
                 } else {
                     val errorMsg = response.errorBody()?.string() ?: "알 수 없는 오류"
@@ -627,7 +672,14 @@ class FoodManagementActivity : AppCompatActivity() {
         val purchaseStr = displayDateFormat.format(ingredient.purchaseDate)
 
         when {
-            diffDays < 0 || isSameDay(ingredient.expiryDate, today) -> {
+            diffDays < 0 -> {
+                // 소비기한이 지난 경우: "소비기한: X일 지남" 형태로 표시
+                val daysOverdue = Math.abs(diffDays)
+                expiryTextView.text = "소비기한: ${daysOverdue}일 지남"
+                expiryTextView.setBackgroundResource(R.drawable.expiry_background) // 빨간색
+                expiryTextView.setTextColor(Color.WHITE)
+            }
+            diffDays == 0 || isSameDay(ingredient.expiryDate, today) -> {
                 expiryTextView.text = "소비기한: 오늘까지"
                 expiryTextView.setBackgroundResource(R.drawable.expiry_background) // 빨간색
                 expiryTextView.setTextColor(Color.WHITE)
@@ -646,6 +698,14 @@ class FoodManagementActivity : AppCompatActivity() {
 
         expiryTextView.setPadding(dpToPx(12), dpToPx(4), dpToPx(12), dpToPx(4))
         locationTextView.text = "${ingredient.location} · 구입 $purchaseStr"
+
+        // 카드 클릭 이벤트 추가 - 식자재를 기반으로 레시피 검색
+        cardView.setOnClickListener {
+            // 선택한 식자재 이름으로 레시피 검색 화면으로 이동
+            val intent = Intent(this, RecipeSearchActivity::class.java)
+            intent.putExtra("SELECTED_INGREDIENT", ingredient.name)
+            startActivity(intent)
+        }
 
         cardView.setOnLongClickListener {
             android.app.AlertDialog.Builder(this)

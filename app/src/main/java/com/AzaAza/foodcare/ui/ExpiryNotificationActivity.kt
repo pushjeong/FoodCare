@@ -1,6 +1,7 @@
 package com.AzaAza.foodcare.ui
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
@@ -105,32 +106,36 @@ class ExpiryNotificationActivity : AppCompatActivity() {
             set(Calendar.MILLISECOND, 0)
         }.time
 
-        // 소비기한이 3일 이내인 식자재 필터링
-        val nearExpiryIngredients = ingredients.filter { ingredient ->
+        // 표시할 식자재 목록
+        // 1. 소비기한이 3일 이내인 식자재
+        // 2. 소비기한이 지난 식자재
+        val nearExpiryAndExpiredIngredients = ingredients.filter { ingredient ->
+            // 소비기한이 지난 경우
+            val isExpired = ingredient.expiryDate.before(today)
+
+            // 소비기한이 3일 이내인 경우
             val cal = Calendar.getInstance().apply { time = today }
             cal.add(Calendar.DAY_OF_MONTH, 3) // 오늘로부터 3일 후
             val threeDaysLater = cal.time
+            val isNearExpiry = ingredient.expiryDate.after(today) &&
+                    !ingredient.expiryDate.after(threeDaysLater)
 
-            // 소비기한이 오늘부터 3일 이내인지 확인
-            val expiryTime = ingredient.expiryDate.time
-            val todayTime = today.time
-            val diffDays = (expiryTime - todayTime) / (1000 * 60 * 60 * 24)
-
-            diffDays in 0..3 // 0일부터 3일 이내 (오늘 포함)
+            // 두 조건 중 하나라도 만족하면 표시
+            isExpired || isNearExpiry
         }
 
-        if (nearExpiryIngredients.isEmpty()) {
-            // 소비기한이 임박한 식자재가 없는 경우
+        if (nearExpiryAndExpiredIngredients.isEmpty()) {
+            // 소비기한이 임박하거나 지난 식자재가 없는 경우
             val emptyView = TextView(this).apply {
-                text = "소비기한이 임박한 식자재가 없습니다."
+                text = "소비기한이 임박하거나 지난 식자재가 없습니다."
                 textSize = 18f
                 gravity = android.view.Gravity.CENTER
                 setPadding(0, 50, 0, 0)
             }
             container.addView(emptyView)
         } else {
-            // 소비기한이 임박한 식자재 표시 (소비기한이 가장 임박한 순으로 정렬)
-            nearExpiryIngredients
+            // 소비기한이 임박하거나 지난 식자재 표시 (소비기한 순으로 정렬)
+            nearExpiryAndExpiredIngredients
                 .sortedBy { it.expiryDate }
                 .forEach { ingredient ->
                     addIngredientCard(ingredient)
@@ -225,10 +230,19 @@ class ExpiryNotificationActivity : AppCompatActivity() {
 
             val diffDays = ((ingredient.expiryDate.time - today.time) / (1000 * 60 * 60 * 24)).toInt()
 
-            text = "소비기한이 ${if (diffDays == 0) "오늘까지" else "${diffDays}일 남았습니다"}! ${ingredient.name}이(가) 포함된 레시피를 추천해 드릴까요?"
+            // 소비기한 상태에 따른 메시지 설정
+            text = if (diffDays < 0) {
+                val daysOverdue = Math.abs(diffDays)
+                "소비기한이 ${daysOverdue}일 지났습니다! ${ingredient.name}이(가) 포함된 레시피를 추천해 드릴까요?"
+            } else if (diffDays == 0) {
+                "소비기한이 오늘까지입니다! ${ingredient.name}이(가) 포함된 레시피를 추천해 드릴까요?"
+            } else {
+                "소비기한이 ${diffDays}일 남았습니다! ${ingredient.name}이(가) 포함된 레시피를 추천해 드릴까요?"
+            }
 
+            // 색상 설정
             when {
-                diffDays <= 0 -> {
+                diffDays < 0 -> {
                     setBackgroundResource(R.drawable.expiry_background) // 빨간색 배경
                     setTextColor(Color.WHITE)
                 }
@@ -258,6 +272,15 @@ class ExpiryNotificationActivity : AppCompatActivity() {
         cardContent.addView(textContainer)
 
         cardView.addView(cardContent)
+
+        // 카드 클릭 이벤트 추가 - 식자재를 기반으로 레시피 검색
+        cardView.setOnClickListener {
+            // 선택한 식자재 이름으로 레시피 검색 화면으로 이동
+            val intent = Intent(this, RecipeSearchActivity::class.java)
+            intent.putExtra("SELECTED_INGREDIENT", ingredient.name)
+            startActivity(intent)
+        }
+
         container.addView(cardView)
     }
 

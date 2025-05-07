@@ -51,6 +51,9 @@ dependencies {
     implementation ("com.squareup.okhttp3:logging-interceptor:4.9.1")
     implementation ("com.squareup.okhttp3:okhttp-urlconnection:4.9.1")
     implementation ("com.github.bumptech.glide:glide:4.16.0")
+    implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")  // 차트 라이브러리
+    implementation ("com.squareup.retrofit2:retrofit:2.9.0")      // Retrofit
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")// Gson 컨버터
     annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

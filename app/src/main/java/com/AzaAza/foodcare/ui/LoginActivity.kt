@@ -10,6 +10,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.AzaAza.foodcare.R
+import com.AzaAza.foodcare.models.UserRequest
+import com.AzaAza.foodcare.models.UserResponse
+import com.AzaAza.foodcare.api.RetrofitClient
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
 
 class LoginActivity : AppCompatActivity() {
 
@@ -36,19 +43,30 @@ class LoginActivity : AppCompatActivity() {
 
         // 로그인 처리
         btnLogin.setOnClickListener {
-            val email     = etEmail.text.toString()
-            val pw        = etPw.text.toString()
-            val savedEmail= prefs.getString("USER_EMAIL", null)
-            val savedPw   = prefs.getString("USER_PW", null)
+            val email = etEmail.text.toString().trim()
+            val pw    = etPw.text.toString().trim()
+            val req = UserRequest(email, pw)
 
-            if (email == savedEmail && pw == savedPw) {
-                prefs.edit().putBoolean("IS_LOGGED_IN", true).apply()
-                startActivity(Intent(this, MainActivity::class.java))
-                finish()
-            } else {
-                Toast.makeText(this, "이메일 또는 비밀번호가 틀렸습니다.", Toast.LENGTH_SHORT).show()
-            }
+            RetrofitClient.userApiService.login(req).enqueue(object : Callback<UserResponse> {
+                override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
+                    val body = response.body()
+                    if (response.isSuccessful && body?.success == true) {
+                        // 로그인 성공: SharedPreferences에 로그인 상태만 저장
+                        prefs.edit().putBoolean("IS_LOGGED_IN", true)
+                            .putString("USER_EMAIL", email)
+                            .apply()
+                        startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                        finish()
+                    } else {
+                        Toast.makeText(this@LoginActivity, body?.message ?: "로그인 실패", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                override fun onFailure(call: Call<UserResponse>, t: Throwable) {
+                    Toast.makeText(this@LoginActivity, "네트워크 오류: ${t.message}", Toast.LENGTH_SHORT).show()
+                }
+            })
         }
+
 
         // 회원가입 화면 이동
         btnSignUp.setOnClickListener {

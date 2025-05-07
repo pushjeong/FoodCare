@@ -1,35 +1,35 @@
 package com.AzaAza.foodcare.ui
 
-import android.content.Context
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
+import android.util.Log
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.AzaAza.foodcare.R
+import com.AzaAza.foodcare.api.RetrofitClient
+import com.AzaAza.foodcare.models.UserRequest
+import com.AzaAza.foodcare.models.UserResponse
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class SignUpActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_signup)
-// 툴바 타이틀
+
         findViewById<TextView>(R.id.topBarTitle).text = "회원가입"
-        // 뒤로가기
         findViewById<ImageView>(R.id.backButton).setOnClickListener { finish() }
 
-        val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-        val etEmail      = findViewById<EditText>(R.id.etSignEmail)
-        val etPw         = findViewById<EditText>(R.id.etSignPw)
-        val etPwConfirm  = findViewById<EditText>(R.id.etSignPwConfirm)
-        val btnSignUp    = findViewById<Button>(R.id.btnSignUp)
+        val etEmail = findViewById<EditText>(R.id.etSignEmail)
+        val etPw = findViewById<EditText>(R.id.etSignPw)
+        val etPwConfirm = findViewById<EditText>(R.id.etSignPwConfirm)
+        val btnSignUp = findViewById<Button>(R.id.btnSignUp)
 
         btnSignUp.setOnClickListener {
-            val email   = etEmail.text.toString()
-            val pw      = etPw.text.toString()
-            val pwConfirm = etPwConfirm.text.toString()
+            val email = etEmail.text.toString().trim()
+            val pw = etPw.text.toString().trim()
+            val pwConfirm = etPwConfirm.text.toString().trim()
 
             when {
                 email.isBlank() || pw.isBlank() -> {
@@ -39,12 +39,24 @@ class SignUpActivity : AppCompatActivity() {
                     Toast.makeText(this, "비밀번호가 일치하지 않습니다.", Toast.LENGTH_SHORT).show()
                 }
                 else -> {
-                    prefs.edit()
-                        .putString("USER_EMAIL", email)
-                        .putString("USER_PW", pw)
-                        .apply()
-                    Toast.makeText(this, "회원가입 성공! 로그인 화면으로 돌아갑니다.", Toast.LENGTH_SHORT).show()
-                    finish()
+                    val request = UserRequest(email, pw)
+
+                    RetrofitClient.userApiService.signUp(request).enqueue(object : Callback<UserResponse> {
+                        override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
+                            if (response.isSuccessful && response.body()?.success == true) {
+                                Toast.makeText(this@SignUpActivity, "회원가입 성공!", Toast.LENGTH_SHORT).show()
+                                finish()
+                            } else {
+                                Log.e("SIGNUP_ERROR", response.errorBody()?.string() ?: "Unknown error")
+                                Toast.makeText(this@SignUpActivity, "회원가입 실패", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+
+                        override fun onFailure(call: Call<UserResponse>, t: Throwable) {
+                            Log.e("SIGNUP_FAILURE", "네트워크 오류: ${t.message}")
+                            Toast.makeText(this@SignUpActivity, "네트워크 오류: ${t.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    })
                 }
             }
         }

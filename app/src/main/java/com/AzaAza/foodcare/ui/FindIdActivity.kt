@@ -24,5 +24,6 @@ class FindIdActivity : AppCompatActivity() {
             // TODO: 실제 로직 (서버 호출 등) 후 결과 처리
             Toast.makeText(this, "입력하신 이메일로 아이디를 전송했습니다.", Toast.LENGTH_SHORT).show()
         }
+
     }
 }

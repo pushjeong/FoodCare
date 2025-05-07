@@ -46,18 +46,9 @@
             android:name=".ui.ExpiryNotificationActivity"
             android:exported="false" />
 
-        <!-- 메인 액티비티를 런처로 설정 -->
-        <activity
-            android:name=".ui.MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <!-- 로그인 및 인증 관련 액티비티 주석 처리 -->
-        <!--
+        <!-- 1) Launcher: AuthActivity -->
+        <!-- 로그인/인증 관련 액티비티 -->
+        <!-- 1) Launcher: AuthActivity -->
         <activity
             android:name=".ui.AuthActivity"
             android:exported="true">
@@ -67,22 +58,20 @@
             </intent-filter>
         </activity>
 
+        <!-- 2) 로그인 화면 -->
         <activity
             android:name=".ui.LoginActivity"
             android:exported="false"/>
 
+        <!-- 3) 회원가입 화면 -->
         <activity
             android:name=".ui.SignUpActivity"
             android:exported="false"/>
 
+        <!-- 4) 메인 화면 -->
         <activity
-            android:name=".ui.FindIdActivity"
+            android:name=".ui.MainActivity"
             android:exported="false"/>
-
-        <activity
-            android:name=".ui.FindPwActivity"
-            android:exported="false"/>
-        -->
 
         <!-- 아이디/비밀번호 찾기 화면 -->
         <activity android:name=".ui.FindIdActivity" android:exported="false"/>
@@ -115,4 +104,3 @@
     </application>
 
 </manifest>
-

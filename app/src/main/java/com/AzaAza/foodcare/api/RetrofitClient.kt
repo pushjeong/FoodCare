@@ -20,7 +20,9 @@ object RetrofitClient {
     val recipeApiService: RecipeApiService by lazy {
         instance.create(RecipeApiService::class.java)
     }
-
+    val userApiService: UserApiService by lazy {
+        instance.create(UserApiService::class.java)
+    }
     // 가계부 API 서비스 추가
     val expenseApiService: ExpenseApiService by lazy {
         instance.create(ExpenseApiService::class.java)

@@ -24,5 +24,6 @@ class FindPwActivity : AppCompatActivity() {
             // TODO: 실제 로직 (서버 호출 등) 후 결과 처리
             Toast.makeText(this, "입력하신 아이디로 비밀번호 재설정 링크를 전송했습니다.", Toast.LENGTH_SHORT).show()
         }
+
     }
 }

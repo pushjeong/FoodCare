@@ -3,6 +3,7 @@ package com.AzaAza.foodcare.ui
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -23,7 +24,6 @@ import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
-import com.github.mikephil.charting.utils.ColorTemplate
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -108,7 +108,7 @@ class ExpenseActivity : AppCompatActivity() {
         }
 
         // 지출 추가 버튼
-        val addExpenseButton: FloatingActionButton = findViewById(R.id.addExpenseButton)
+        val addExpenseButton: Button = findViewById(R.id.addExpenseButton)
         addExpenseButton.setOnClickListener {
             showAddExpenseDialog()
         }
@@ -222,6 +222,21 @@ class ExpenseActivity : AppCompatActivity() {
 
                 categories.clear()
                 categories.addAll(categoryResponse)
+
+                // '기타' 카테고리가 없는 경우 추가
+                if (categories.none { it.name == "기타" }) {
+                    // 기타 카테고리 추가 (ID는 서버에서 할당되므로 임시로 큰 값 사용)
+                    val etcCategory = CategoryDto(
+                        id = 999,
+                        name = "기타",
+                        icon = null,
+                        totalAmount = 0.0
+                    )
+                    categories.add(etcCategory)
+
+                    // 서버에 '기타' 카테고리 추가 요청을 보낼 수도 있음
+                    // 이 예제에서는 생략
+                }
 
                 withContext(Dispatchers.Main) {
                     categoryAdapter.notifyDataSetChanged()
@@ -358,10 +373,19 @@ class ExpenseActivity : AppCompatActivity() {
             }
         }
 
-        val dataSet = PieDataSet(pieEntries, "지출 카테고리")
+        // 범례 텍스트 없이 데이터셋 생성
+        val dataSet = PieDataSet(pieEntries, "")  // 빈 문자열로 설정하여 범례 텍스트 제거
 
-        // ColorTemplate에서 색상 가져오기
-        val colors = ColorTemplate.COLORFUL_COLORS.toList()
+        // 고정된 색상 배열 사용 - 밝고 선명한 색상 팔레트
+        val colors = listOf(
+            Color.parseColor("#5B8FF9"),  // 배달 - 푸른색
+            Color.parseColor("#FF6B3B"),  // 외식 - 주황색
+            Color.parseColor("#FFD666"),  // 주류 - 노란색
+            Color.parseColor("#65D1AA"),  // 장보기 - 연두색
+            Color.parseColor("#F28CB1"),  // 간식 - 분홍색
+            Color.parseColor("#8A67E8")   // 기타 - 보라색
+        )
+
         dataSet.colors = colors
 
         // 색상 정보를 저장 (카테고리 어댑터에서 사용하기 위해)

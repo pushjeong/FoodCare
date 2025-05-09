@@ -1,5 +1,6 @@
 package com.AzaAza.foodcare.adapter
 
+import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
@@ -50,8 +51,17 @@ class CategoryAdapter(
 
         // 테두리 색상 설정 (색상 리스트가 비어있지 않은 경우에만)
         if (categoryColors.isNotEmpty()) {
-            // 원형 차트와 동일한 색상 사용 (위치에 맞게)
-            val colorIndex = position % categoryColors.size
+            // 카테고리 이름을 기준으로 색상 할당
+            val colorIndex = when (category.name) {
+                "배달" -> 0
+                "외식" -> 1
+                "주류" -> 2
+                "장보기" -> 3
+                "간식" -> 4
+                "기타" -> 5
+                else -> position % categoryColors.size
+            }
+
             val color = categoryColors[colorIndex]
 
             // 테두리 설정을 위한 drawable 생성

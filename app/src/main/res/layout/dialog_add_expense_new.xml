@@ -5,26 +5,10 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- 카테고리 선택 -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="카테고리"
-        android:textSize="16sp"
-        android:textColor="#000000" />
-
-    <Spinner
-        android:id="@+id/categorySpinner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:minHeight="48dp" />
-
     <!-- 상품명 입력 -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:text="상품명"
         android:textSize="16sp"
         android:textColor="#000000" />
@@ -94,5 +78,21 @@
         android:hint="메모를 입력하세요"
         android:inputType="textMultiLine"
         android:minLines="2" />
+
+    <!-- 카테고리 선택 (마지막으로 이동) -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="카테고리"
+        android:textSize="16sp"
+        android:textColor="#000000" />
+
+    <Spinner
+        android:id="@+id/categorySpinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:minHeight="48dp" />
 
 </LinearLayout>

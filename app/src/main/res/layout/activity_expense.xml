@@ -167,22 +167,36 @@
                 android:layout_height="match_parent" />
         </FrameLayout>
 
+        <!-- 지출 추가 버튼 (원형 차트와 카테고리 목록 사이) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:paddingBottom="16dp">
+
+            <Button
+                android:id="@+id/addExpenseButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="추가"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp"
+                android:background="@drawable/rounded_button_background"
+                android:drawableStart="@drawable/add"
+                android:drawablePadding="8dp"
+                android:gravity="center" />
+        </LinearLayout>
+
         <!-- 카테고리별 목록 섹션 -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/categoriesRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="8dp" />
-
-        <!-- 지출 추가 버튼 -->
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/addExpenseButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end|bottom"
-            android:layout_margin="16dp"
-            android:src="@drawable/add"
-            app:fabSize="normal" />
 
     </LinearLayout>
 </ScrollView>

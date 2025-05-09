@@ -1,7 +1,9 @@
 package com.AzaAza.foodcare.api
 
+import UserApiService
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+
 
 object RetrofitClient {
     private const val BASE_URL = "https://foodcare-69ae76eec1bf.herokuapp.com/"

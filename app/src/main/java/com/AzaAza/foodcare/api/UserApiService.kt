@@ -1,15 +1,23 @@
-package com.AzaAza.foodcare.api
-
-import com.AzaAza.foodcare.models.UserRequest
+import com.AzaAza.foodcare.models.SignUpRequest
+import com.AzaAza.foodcare.models.LoginRequest
+import com.AzaAza.foodcare.models.SignupResponse
 import com.AzaAza.foodcare.models.UserResponse
 import retrofit2.Call
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
 
 interface UserApiService {
+    // 회원가입
     @POST("/user")
-    fun signUp(@Body request: UserRequest): Call<UserResponse>
+    fun signUp(@Body request: SignUpRequest): Call<SignupResponse>
 
-    @POST("/login")   // 새로 추가하는 로그인
-    fun login(@Body req: UserRequest): Call<UserResponse>
+    // 로그인 (login_id + password)
+    @POST("/login")
+    fun login(@Body request: LoginRequest): Call<UserResponse>
+
+
+    // (Optional) 전체 사용자 조회: GET /user
+    @GET("/user")
+    fun getUsers(): Call<List<UserResponse>>
 }

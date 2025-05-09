@@ -10,7 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.AzaAza.foodcare.R
-import com.AzaAza.foodcare.models.UserRequest
+import com.AzaAza.foodcare.models.LoginRequest
 import com.AzaAza.foodcare.models.UserResponse
 import com.AzaAza.foodcare.api.RetrofitClient
 import retrofit2.Call
@@ -34,8 +34,9 @@ class LoginActivity : AppCompatActivity() {
         }
 
         val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-        val etEmail   = findViewById<EditText>(R.id.etLoginEmail)
-        val etPw      = findViewById<EditText>(R.id.etLoginPw)
+        val etLoginId = findViewById<EditText>(R.id.etLoginId)  // 로그인 아이디 입력
+        val etPw      = findViewById<EditText>(R.id.etLoginPw)  // 비밀번호 입력
+
         val btnLogin  = findViewById<Button>(R.id.btnLogin)
         val btnSignUp = findViewById<Button>(R.id.btnGoSignUp)
         val btnFindId = findViewById<Button>(R.id.btnFindId)
@@ -43,17 +44,17 @@ class LoginActivity : AppCompatActivity() {
 
         // 로그인 처리
         btnLogin.setOnClickListener {
-            val email = etEmail.text.toString().trim()
-            val pw    = etPw.text.toString().trim()
-            val req = UserRequest(email, pw)
+            val loginId = etLoginId.text.toString().trim()
+            val pw      = etPw.text.toString().trim()
+
+            val req = LoginRequest(login_id = loginId, password = pw)  // 수정된 요청
 
             RetrofitClient.userApiService.login(req).enqueue(object : Callback<UserResponse> {
                 override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
                     val body = response.body()
                     if (response.isSuccessful && body?.success == true) {
-                        // 로그인 성공: SharedPreferences에 로그인 상태만 저장
                         prefs.edit().putBoolean("IS_LOGGED_IN", true)
-                            .putString("USER_EMAIL", email)
+                            .putString("USER_LOGIN_ID", loginId)  // 저장되는 키도 login_id로
                             .apply()
                         startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                         finish()
@@ -66,7 +67,6 @@ class LoginActivity : AppCompatActivity() {
                 }
             })
         }
-
 
         // 회원가입 화면 이동
         btnSignUp.setOnClickListener {

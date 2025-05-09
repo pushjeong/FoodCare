@@ -13,6 +13,7 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.AzaAza.foodcare.R
@@ -24,7 +25,6 @@ import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,6 +36,19 @@ import kotlin.collections.ArrayList
 import kotlin.math.abs
 
 class ExpenseActivity : AppCompatActivity() {
+
+    // 고정된 카테고리 색상 맵 추가
+    companion object {
+        // 고정된 카테고리 색상 맵 (카테고리 이름 -> 색상)
+        val CATEGORY_COLORS = mapOf(
+            "외식" to Color.parseColor("#5B8FF9"),   // 푸른색
+            "배달" to Color.parseColor("#FF6B3B"),   // 주황색
+            "주류" to Color.parseColor("#FFD666"),   // 노란색
+            "장보기" to Color.parseColor("#65D1AA"), // 연두색
+            "간식" to Color.parseColor("#F28CB1"),   // 분홍색
+            "기타" to Color.parseColor("#8A67E8")    // 보라색
+        )
+    }
 
     private lateinit var pieChart: PieChart
     private lateinit var categoriesRecyclerView: RecyclerView
@@ -62,6 +75,9 @@ class ExpenseActivity : AppCompatActivity() {
     // 현재 실제 연도와 월 (현재 날짜)
     private var currentYear: Int = 0
     private var currentMonth: Int = 0
+
+    // 현재 대화상자의 어댑터를 추적하기 위한 변수 추가
+    private var currentExpenseListAdapter: ExpenseListAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -244,7 +260,11 @@ class ExpenseActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.e("ExpenseActivity", "카테고리 데이터 로드 실패: ${e.message}", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@ExpenseActivity, "카테고리 데이터 로드 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@ExpenseActivity,
+                        "카테고리 데이터 로드 실패: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -262,7 +282,8 @@ class ExpenseActivity : AppCompatActivity() {
             try {
                 // 선택한 달 데이터 가져오기
                 Log.d("ExpenseActivity", "선택한 달 데이터 요청: $selectedYear-$selectedMonth")
-                val currentMonthData = RetrofitClient.expenseApiService.getMonthlySummary(selectedYear, selectedMonth)
+                val currentMonthData =
+                    RetrofitClient.expenseApiService.getMonthlySummary(selectedYear, selectedMonth)
                 currentMonthTotal = currentMonthData.totalAmount
 
                 // 파이 차트와 카테고리 목록 업데이트를 위한 데이터
@@ -270,7 +291,8 @@ class ExpenseActivity : AppCompatActivity() {
 
                 // 이전 달 데이터 가져오기
                 Log.d("ExpenseActivity", "이전 달 데이터 요청: $previousYear-$previousMonth")
-                val previousMonthData = RetrofitClient.expenseApiService.getMonthlySummary(previousYear, previousMonth)
+                val previousMonthData =
+                    RetrofitClient.expenseApiService.getMonthlySummary(previousYear, previousMonth)
                 previousMonthTotal = previousMonthData.totalAmount
 
                 withContext(Dispatchers.Main) {
@@ -293,7 +315,11 @@ class ExpenseActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.e("ExpenseActivity", "월별 데이터 로드 실패: ${e.message}", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@ExpenseActivity, "데이터 로드 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@ExpenseActivity,
+                        "데이터 로드 실패: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -328,19 +354,22 @@ class ExpenseActivity : AppCompatActivity() {
         if (difference > 0) {
             // 전월보다 많이 사용함
             comparisonTextView.text = "+ ${formatter.format(difference.toInt())}"
-            comparisonTextView.setTextColor(resources.getColor(R.color.blue, null))
+            comparisonTextView.setTextColor(ContextCompat.getColor(this, R.color.blue))
         } else if (difference < 0) {
             // 전월보다 적게 사용함
             comparisonTextView.text = "- ${formatter.format(abs(difference.toInt()))}"
-            comparisonTextView.setTextColor(resources.getColor(R.color.red, null))
+            comparisonTextView.setTextColor(ContextCompat.getColor(this, R.color.red))
         } else {
             // 동일함
             comparisonTextView.text = "변동 없음"
-            comparisonTextView.setTextColor(resources.getColor(R.color.black, null))
+            comparisonTextView.setTextColor(ContextCompat.getColor(this, R.color.black))
         }
     }
 
-    private fun updateCategoryList(categorySummaries: List<com.AzaAza.foodcare.api.CategorySummary>, colors: List<Int>? = null) {
+    private fun updateCategoryList(
+        categorySummaries: List<com.AzaAza.foodcare.api.CategorySummary>,
+        colors: List<Int>? = null
+    ) {
         // 카테고리 목록 업데이트
         for (category in categories) {
             // 초기화
@@ -370,27 +399,18 @@ class ExpenseActivity : AppCompatActivity() {
         for (category in categorySummaries) {
             if (category.amount > 0) {
                 pieEntries.add(PieEntry(category.amount.toFloat(), category.categoryName))
+
+                // 고정된 색상 맵에서 색상 가져오기
+                val color = CATEGORY_COLORS[category.categoryName] ?: Color.GRAY
+                categoryColors.add(color)
             }
         }
 
         // 범례 텍스트 없이 데이터셋 생성
         val dataSet = PieDataSet(pieEntries, "")  // 빈 문자열로 설정하여 범례 텍스트 제거
 
-        // 고정된 색상 배열 사용 - 밝고 선명한 색상 팔레트
-        val colors = listOf(
-            Color.parseColor("#5B8FF9"),  // 배달 - 푸른색
-            Color.parseColor("#FF6B3B"),  // 외식 - 주황색
-            Color.parseColor("#FFD666"),  // 주류 - 노란색
-            Color.parseColor("#65D1AA"),  // 장보기 - 연두색
-            Color.parseColor("#F28CB1"),  // 간식 - 분홍색
-            Color.parseColor("#8A67E8")   // 기타 - 보라색
-        )
-
-        dataSet.colors = colors
-
-        // 색상 정보를 저장 (카테고리 어댑터에서 사용하기 위해)
-        categoryColors.clear()
-        categoryColors.addAll(colors)
+        // 위에서 생성한 색상 목록 사용
+        dataSet.colors = categoryColors
 
         val pieData = PieData(dataSet)
         pieData.setValueTextSize(12f)
@@ -409,8 +429,11 @@ class ExpenseActivity : AppCompatActivity() {
         pieChart.animateY(1000)
         pieChart.invalidate()
 
-        // 카테고리 어댑터에 색상 정보 전달
-        updateCategoryList(categorySummaries, colors)
+        // 카테고리 목록에도 같은 색상 정보 전달
+        val categoryAdapterColors = categories.map { category ->
+            CATEGORY_COLORS[category.name] ?: Color.GRAY
+        }
+        updateCategoryList(categorySummaries, categoryAdapterColors)
     }
 
     private fun showAddExpenseDialog() {
@@ -420,7 +443,6 @@ class ExpenseActivity : AppCompatActivity() {
         val productNameEdit = dialogView.findViewById<EditText>(R.id.productNameEdit)
         val amountEdit = dialogView.findViewById<EditText>(R.id.amountEdit)
         val dateButton = dialogView.findViewById<Button>(R.id.dateButton)
-        val timeButton = dialogView.findViewById<Button>(R.id.timeButton)
         val memoEdit = dialogView.findViewById<EditText>(R.id.memoEdit)
         val categorySpinner = dialogView.findViewById<Spinner>(R.id.categorySpinner)
 
@@ -436,16 +458,12 @@ class ExpenseActivity : AppCompatActivity() {
             calendar.set(Calendar.DAY_OF_MONTH, 1)
         }
 
+        // 시간 부분 기본값 설정 (00:00)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-
         dateButton.text = dateFormat.format(calendar.time)
-        timeButton.text = timeFormat.format(calendar.time)
-
-        // 카테고리 스피너 설정
-        val categoryNames = categories.map { it.name }
-        val categoryAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, categoryNames)
-        categorySpinner.adapter = categoryAdapter
 
         // 날짜 선택
         dateButton.setOnClickListener {
@@ -477,14 +495,11 @@ class ExpenseActivity : AppCompatActivity() {
             }.show()
         }
 
-        // 시간 선택
-        timeButton.setOnClickListener {
-            TimePickerDialog(this, { _, hour, minute ->
-                calendar.set(Calendar.HOUR_OF_DAY, hour)
-                calendar.set(Calendar.MINUTE, minute)
-                timeButton.text = timeFormat.format(calendar.time)
-            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show()
-        }
+        // 카테고리 스피너 설정
+        val categoryNames = categories.map { it.name }
+        val categoryAdapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, categoryNames)
+        categorySpinner.adapter = categoryAdapter
 
         AlertDialog.Builder(this)
             .setTitle("지출 입력")
@@ -501,7 +516,9 @@ class ExpenseActivity : AppCompatActivity() {
                 }
 
                 val amount = amountText.replace(",", "").toDoubleOrNull() ?: 0.0
-                val dateTime = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(calendar.time)
+                // 시간은 기본값(00:00)으로 설정하여 날짜만 사용
+                val dateTime =
+                    SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(calendar.time)
                 val selectedCategory = categories[selectedCategoryPos]
 
                 // 서버에 데이터 저장
@@ -511,7 +528,13 @@ class ExpenseActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun saveExpense(categoryId: Int, productName: String, amount: Double, dateTime: String, memo: String) {
+    private fun saveExpense(
+        categoryId: Int,
+        productName: String,
+        amount: Double,
+        dateTime: String,
+        memo: String
+    ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 // 새로운 지출 객체 생성 - 서버에서 ID가 생성되므로 임시 ID 0 사용
@@ -532,16 +555,22 @@ class ExpenseActivity : AppCompatActivity() {
                     loadMonthlyData()
 
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@ExpenseActivity, "지출이 추가되었습니다", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@ExpenseActivity, "지출이 추가되었습니다", Toast.LENGTH_SHORT)
+                            .show()
                     }
                 } else {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@ExpenseActivity, "저장 실패: ${response.message()}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@ExpenseActivity,
+                            "저장 실패: ${response.message()}",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@ExpenseActivity, "저장 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ExpenseActivity, "저장 실패: ${e.message}", Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
         }
@@ -562,17 +591,81 @@ class ExpenseActivity : AppCompatActivity() {
 
         // 총액 표시
         val formatter = NumberFormat.getInstance(Locale.KOREA)
-        categoryTotalText.text = "${category.name} 총액: ${formatter.format(category.totalAmount.toInt())}원"
+        categoryTotalText.text =
+            "${category.name} 총액: ${formatter.format(category.totalAmount.toInt())}원"
 
-        // 리스트 어댑터 설정
-        val adapter = ExpenseListAdapter(this, categoryExpenses)
+        // 리스트 어댑터 설정 - 변경 가능한 리스트로 변환
+        val adapter = ExpenseListAdapter(this, categoryExpenses.toMutableList())
         expenseListView.adapter = adapter
+        currentExpenseListAdapter = adapter // 현재 어댑터 참조 저장
 
-        AlertDialog.Builder(this)
+        // 롱클릭 안내 메시지 추가
+        val dialog = AlertDialog.Builder(this)
             .setTitle("${category.name} 상세 내역")
             .setView(dialogView)
             .setPositiveButton("확인", null)
+            .create()
+
+        dialog.show()
+
+        // 다이얼로그가 표시된 후 안내 메시지 토스트 표시
+        Toast.makeText(this, "항목을 길게 누르면 삭제할 수 있습니다", Toast.LENGTH_SHORT).show()
+    }
+
+    // 지출 항목 삭제 확인 다이얼로그
+    private fun showDeleteConfirmDialog(expense: ExpenseDto) {
+        AlertDialog.Builder(this)
+            .setTitle("지출 항목 삭제")
+            .setMessage(
+                "'${expense.productName}' 항목을 삭제하시겠습니까?\n금액: ${
+                    NumberFormat.getInstance(
+                        Locale.KOREA
+                    ).format(expense.amount.toInt())
+                }원"
+            )
+            .setPositiveButton("삭제") { _, _ ->
+                deleteExpense(expense.id)
+            }
+            .setNegativeButton("취소", null)
             .show()
+    }
+
+    // 지출 항목 삭제 API 호출
+    private fun deleteExpense(expenseId: Int) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // API 호출
+                val response = RetrofitClient.expenseApiService.deleteExpense(expenseId)
+
+                if (response.isSuccessful) {
+                    // 즉시 어댑터 업데이트
+                    withContext(Dispatchers.Main) {
+                        // 대화상자가 열려있다면 목록 업데이트
+                        currentExpenseListAdapter?.removeExpense(expenseId)
+
+                        // 메인 목록도 업데이트하고 월별 데이터 다시 로드
+                        expenses.removeAll { it.id == expenseId }
+                        loadMonthlyData()
+
+                        Toast.makeText(this@ExpenseActivity, "지출 항목이 삭제되었습니다", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@ExpenseActivity,
+                            "삭제 실패: ${response.message()}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@ExpenseActivity, "삭제 실패: ${e.message}", Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -581,15 +674,25 @@ class ExpenseActivity : AppCompatActivity() {
                 onBackPressed()
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
 
-    // 지출 내역 목록용 어댑터 클래스
+    // 지출 내역 목록용 어댑터 클래스 수정
     inner class ExpenseListAdapter(
         private val context: Context,
-        private val expenses: List<ExpenseDto>
+        private val expenses: MutableList<ExpenseDto> // List에서 MutableList로 변경
     ) : BaseAdapter() {
+
+        // 새로운 메서드 추가: 지출 항목 제거
+        fun removeExpense(expenseId: Int) {
+            val position = expenses.indexOfFirst { it.id == expenseId }
+            if (position != -1) {
+                expenses.removeAt(position)
+                notifyDataSetChanged()
+            }
+        }
 
         override fun getCount(): Int = expenses.size
 
@@ -614,7 +717,12 @@ class ExpenseActivity : AppCompatActivity() {
             val formatter = NumberFormat.getInstance(Locale.KOREA)
             amountText.text = "${formatter.format(expense.amount.toInt())}원"
 
-            dateTimeText.text = expense.dateTime
+            // 날짜만 표시하도록 변경 (시간 제거)
+            // dateTimeText.text = expense.dateTime // 이전 코드
+
+            // 날짜 부분만 추출해서 표시
+            val dateOnly = expense.dateTime.split(" ")[0] // "yyyy-MM-dd HH:mm"에서 "yyyy-MM-dd" 추출
+            dateTimeText.text = dateOnly
 
             // 메모가 있는 경우에만 표시
             if (!expense.memo.isNullOrEmpty()) {
@@ -622,6 +730,12 @@ class ExpenseActivity : AppCompatActivity() {
                 memoText.text = expense.memo
             } else {
                 memoText.visibility = View.GONE
+            }
+
+            // 아이템 롱클릭 리스너 추가
+            view.setOnLongClickListener {
+                showDeleteConfirmDialog(expense)
+                true
             }
 
             return view

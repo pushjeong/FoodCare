@@ -38,28 +38,21 @@
         android:hint="금액을 입력하세요"
         android:inputType="number" />
 
-    <!-- 날짜 및 시간 입력 -->
-    <LinearLayout
-        android:layout_width="match_parent"
+    <!-- 날짜 입력 (시간 버튼 제거) -->
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:orientation="horizontal">
+        android:text="날짜"
+        android:textSize="16sp"
+        android:textColor="#000000" />
 
-        <Button
-            android:id="@+id/dateButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="날짜" />
-
-        <Button
-            android:id="@+id/timeButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:text="시간" />
-    </LinearLayout>
+    <Button
+        android:id="@+id/dateButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="날짜 선택" />
 
     <!-- 메모 입력 (선택사항) -->
     <TextView

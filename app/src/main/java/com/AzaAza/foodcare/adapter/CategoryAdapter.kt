@@ -51,18 +51,8 @@ class CategoryAdapter(
 
         // 테두리 색상 설정 (색상 리스트가 비어있지 않은 경우에만)
         if (categoryColors.isNotEmpty()) {
-            // 카테고리 이름을 기준으로 색상 할당
-            val colorIndex = when (category.name) {
-                "배달" -> 0
-                "외식" -> 1
-                "주류" -> 2
-                "장보기" -> 3
-                "간식" -> 4
-                "기타" -> 5
-                else -> position % categoryColors.size
-            }
-
-            val color = categoryColors[colorIndex]
+            // 포지션에 맞게 색상을 사용 (고정된 순서로)
+            val color = categoryColors[position % categoryColors.size]
 
             // 테두리 설정을 위한 drawable 생성
             val shape = GradientDrawable()
@@ -71,7 +61,7 @@ class CategoryAdapter(
             shape.setColor(ContextCompat.getColor(holder.itemView.context, android.R.color.white))
             shape.setStroke(5, color) // 5px 두께와 해당 색상으로 테두리 설정
 
-            // 배경으로 설정 (API 16 이상 필요)
+            // 배경으로 설정
             holder.cardView.background = shape
         }
 

@@ -124,8 +124,9 @@ class ExpenseActivity : AppCompatActivity() {
         }
 
         // 지출 추가 버튼
-        val addExpenseButton: Button = findViewById(R.id.addExpenseButton)
-        addExpenseButton.setOnClickListener {
+        val addExpenseTextView: TextView = findViewById(R.id.addExpenseTextView)
+        addExpenseTextView.setOnClickListener {
+            // 기존 버튼의 동작 수행
             showAddExpenseDialog()
         }
 

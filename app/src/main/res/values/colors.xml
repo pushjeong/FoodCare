@@ -4,6 +4,11 @@
     <color name="white">#FFFFFFFF</color>
     <color name="blue">#0000FF</color>
     <color name="red">#FF0000</color>
+    <color name="green_500">#00C471</color>
+    <color name="blue_500">#0066FF</color>
+    <color name="purple_500">#6200EE</color>
+    <color name="text_dark">#222222</color>
+    <color name="text_gray">#777777</color>
     <!-- <color name="top_bar">#E8DB6B</color> -->
 
     <color name="top_bar">#323232</color>

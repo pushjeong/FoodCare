@@ -29,9 +29,4 @@ object RetrofitClient {
     val expenseApiService: ExpenseApiService by lazy {
         instance.create(ExpenseApiService::class.java)
     }
-
-    val userInfoApiService: UserInfoApiService by lazy {
-        instance.create(UserInfoApiService::class.java)
-    }
-
 }

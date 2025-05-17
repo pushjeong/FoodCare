@@ -54,6 +54,8 @@ dependencies {
     implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")  // 차트 라이브러리
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")      // Retrofit
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")// Gson 컨버터
+    implementation ("com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:0.9.2")
+    implementation ("com.squareup.okhttp3:logging-interceptor:4.10.0")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
 
 

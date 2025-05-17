@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         val adapter = BannerAdapter(banners) { position ->
             val targetActivity = when (position) {
                 0 -> ExpenseActivity::class.java
-                1 -> UserInfoActivity::class.java
+                1 -> UserInfoShowActivity::class.java
                 2 -> MemberActivity::class.java
                 3 -> FoodManagementActivity::class.java
                 4 -> RecipeSearchActivity::class.java
@@ -142,8 +142,9 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, ExpenseActivity::class.java))
         }
         findViewById<ImageButton>(R.id.btnInformation).setOnClickListener {
-            startActivity(Intent(this, UserInfoActivity::class.java))
+            startActivity(Intent(this, UserInfoShowActivity::class.java))
         }
+
         findViewById<ImageButton>(R.id.btnMember).setOnClickListener {
             startActivity(Intent(this, MemberActivity::class.java))
         }

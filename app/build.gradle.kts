@@ -55,6 +55,11 @@ dependencies {
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")      // Retrofit
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")// Gson 컨버터
     annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
+
+
+    implementation ("com.google.android.flexbox:flexbox:3.0.0")
+
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

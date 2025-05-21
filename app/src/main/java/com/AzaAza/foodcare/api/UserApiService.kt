@@ -31,4 +31,7 @@ interface UserApiService {
     // (Optional) 전체 사용자 조회: GET /user
     @GET("/user")
     fun getUsers(): Call<List<UserResponse>>
+
+    @GET("/user")
+    fun getUserListAsSignUpRequest(): Call<List<SignUpRequest>>
 }

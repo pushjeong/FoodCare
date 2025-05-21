@@ -41,6 +41,7 @@
         <activity android:name=".ui.MemberActivity"/>
         <activity android:name=".ui.CommunityActivity"/>
         <activity android:name=".ui.SettingActivity"/>
+        <activity android:name=".ui.ProfileSettingActivity" />
 
                 <activity android:name=".ui.UserInfoShowActivity" />
 

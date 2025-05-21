@@ -131,7 +131,7 @@
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:src="@drawable/red_circle"
+                    android:src="@drawable/ic_logout"
                     android:contentDescription="로그아웃 아이콘" />
 
                 <TextView

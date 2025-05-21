@@ -73,35 +73,6 @@ class ExpiryNotificationManager {
             }
         }
 
-        // 배터리 최적화 예외 확인 및 요청 함수
-        fun checkBatteryOptimization(context: Context) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                val packageName = context.packageName
-                val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-
-                if (!pm.isIgnoringBatteryOptimizations(packageName)) {
-                    // 배터리 최적화 예외가 되어 있지 않은 경우 사용자에게 안내
-                    val batteryOptimizationDialog = androidx.appcompat.app.AlertDialog.Builder(context)
-                        .setTitle("배터리 최적화 예외 설정")
-                        .setMessage("정확한 알림 수신을 위해 배터리 최적화 예외 설정이 필요합니다.")
-                        .setPositiveButton("설정하기") { _, _ ->
-                            // 배터리 최적화 예외 설정 화면으로 이동
-                            requestBatteryOptimizationExemption(context)
-                        }
-                        .setNegativeButton("나중에") { dialog, _ ->
-                            dialog.dismiss()
-                        }
-                        .create()
-
-                    batteryOptimizationDialog.show()
-
-                    Log.d(TAG, "배터리 최적화 예외 설정 필요")
-                } else {
-                    Log.d(TAG, "배터리 최적화 예외 설정됨")
-                }
-            }
-        }
-
         // 배터리 최적화 예외 설정 화면으로 이동
         fun requestBatteryOptimizationExemption(context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -178,11 +149,6 @@ class ExpiryNotificationManager {
                         } else {
                             Log.w(TAG, "정확한 알람 권한이 없습니다. 설정에서 권한을 허용해 주세요.")
                             // 사용자에게 권한 설정 화면으로 이동 안내
-                            Toast.makeText(
-                                context,
-                                "정확한 알림을 위해 설정에서 정확한 알람 권한을 허용해 주세요.",
-                                Toast.LENGTH_LONG
-                            ).show()
 
                             // 정확한 알람 권한 설정 화면으로 이동
                             try {

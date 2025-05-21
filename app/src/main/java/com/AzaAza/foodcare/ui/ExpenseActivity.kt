@@ -34,6 +34,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.abs
+import com.AzaAza.foodcare.adapter.ExpenseGroupAdapter
+import com.AzaAza.foodcare.models.ExpenseGroup
 
 class ExpenseActivity : AppCompatActivity() {
 
@@ -77,7 +79,8 @@ class ExpenseActivity : AppCompatActivity() {
     private var currentMonth: Int = 0
 
     // 현재 대화상자의 어댑터를 추적하기 위한 변수 추가
-    private var currentExpenseListAdapter: ExpenseListAdapter? = null
+    private var currentExpenseListAdapter: ExpenseListAdapter? =null
+    private var currentGroupAdapter: ExpenseGroupAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -578,7 +581,6 @@ class ExpenseActivity : AppCompatActivity() {
     }
 
     private fun showCategoryDetailDialog(category: CategoryDto) {
-        // 해당 카테고리의 지출 내역만 필터링
         val categoryExpenses = expenses.filter { it.categoryId == category.id }
 
         if (categoryExpenses.isEmpty()) {
@@ -587,29 +589,31 @@ class ExpenseActivity : AppCompatActivity() {
         }
 
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_category_detail, null)
-        val expenseListView = dialogView.findViewById<ListView>(R.id.expenseListView)
-        val categoryTotalText = dialogView.findViewById<TextView>(R.id.categoryTotalText)
+        val expenseGroupRecyclerView = dialogView.findViewById<RecyclerView>(R.id.expenseGroupRecyclerView)
+        val categoryNameText = dialogView.findViewById<TextView>(R.id.categoryNameText)
+        val totalAmountText = dialogView.findViewById<TextView>(R.id.totalAmountText)
 
-        // 총액 표시
+        categoryNameText.text = category.name
         val formatter = NumberFormat.getInstance(Locale.KOREA)
-        categoryTotalText.text =
-            "${category.name} 총액: ${formatter.format(category.totalAmount.toInt())}원"
+        totalAmountText.text = "${formatter.format(category.totalAmount.toInt())}원"
 
-        // 리스트 어댑터 설정 - 변경 가능한 리스트로 변환
-        val adapter = ExpenseListAdapter(this, categoryExpenses.toMutableList())
-        expenseListView.adapter = adapter
-        currentExpenseListAdapter = adapter // 현재 어댑터 참조 저장
+        val expenseGroups = groupExpensesByDate(categoryExpenses)
 
-        // 롱클릭 안내 메시지 추가
+        expenseGroupRecyclerView.layoutManager = LinearLayoutManager(this)
+        val adapter = ExpenseGroupAdapter(expenseGroups) { expense ->
+            showDeleteConfirmDialog(expense)
+        }
+        expenseGroupRecyclerView.adapter = adapter
+
+        // ✅ 어댑터 참조 저장해서 삭제 시 UI 즉시 반영 가능하게
+        currentGroupAdapter = adapter
+
         val dialog = AlertDialog.Builder(this)
-            .setTitle("${category.name} 상세 내역")
             .setView(dialogView)
-            .setPositiveButton("확인", null)
             .create()
 
         dialog.show()
 
-        // 다이얼로그가 표시된 후 안내 메시지 토스트 표시
         Toast.makeText(this, "항목을 길게 누르면 삭제할 수 있습니다", Toast.LENGTH_SHORT).show()
     }
 
@@ -631,39 +635,102 @@ class ExpenseActivity : AppCompatActivity() {
             .show()
     }
 
+
+    // 지출 내역을 날짜별로 그룹화하는 helper 메서드
+    private fun groupExpensesByDate(expenses: List<ExpenseDto>): MutableList<ExpenseGroup> {
+        val result = mutableListOf<ExpenseGroup>()
+        val calendar = Calendar.getInstance()
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
+
+        calendar.add(Calendar.DATE, -1)
+        val yesterday = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
+
+        // 날짜별로 그룹화
+        val dateMap = expenses.groupBy {
+            it.dateTime.split(" ")[0]  // "yyyy-MM-dd HH:mm"에서 "yyyy-MM-dd" 추출
+        }
+
+        // 날짜 역순으로 정렬 (최신 날짜가 먼저 오도록)
+        val sortedDates = dateMap.keys.sortedDescending()
+
+        for (date in sortedDates) {
+            val displayTitle = when (date) {
+                today -> "오늘"
+                yesterday -> "어제"
+                else -> {
+                    val dateParts = date.split("-")
+                    if (dateParts.size == 3) {
+                        // 요일 계산
+                        val year = dateParts[0].toInt()
+                        val month = dateParts[1].toInt() - 1 // 월은 0-based
+                        val day = dateParts[2].toInt()
+
+                        val cal = Calendar.getInstance()
+                        cal.set(year, month, day)
+
+                        val dayOfWeek = when (cal.get(Calendar.DAY_OF_WEEK)) {
+                            Calendar.SUNDAY -> "일"
+                            Calendar.MONDAY -> "월"
+                            Calendar.TUESDAY -> "화"
+                            Calendar.WEDNESDAY -> "수"
+                            Calendar.THURSDAY -> "목"
+                            Calendar.FRIDAY -> "금"
+                            Calendar.SATURDAY -> "토"
+                            else -> ""
+                        }
+
+                        "$date ($dayOfWeek)"
+                    } else {
+                        date
+                    }
+                }
+            }
+
+            val group = ExpenseGroup(
+                date = date,
+                displayTitle = displayTitle,
+                expenses = dateMap[date]?.toMutableList() ?: mutableListOf(),
+                isExpanded = false
+            )
+
+            result.add(group)
+        }
+
+        // 첫 번째 그룹은 기본적으로 펼침
+        if (result.isNotEmpty()) {
+            result[0].isExpanded = true
+        }
+
+        return result
+    }
+
     // 지출 항목 삭제 API 호출
     private fun deleteExpense(expenseId: Int) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // API 호출
                 val response = RetrofitClient.expenseApiService.deleteExpense(expenseId)
 
                 if (response.isSuccessful) {
-                    // 즉시 어댑터 업데이트
                     withContext(Dispatchers.Main) {
-                        // 대화상자가 열려있다면 목록 업데이트
-                        currentExpenseListAdapter?.removeExpense(expenseId)
-
-                        // 메인 목록도 업데이트하고 월별 데이터 다시 로드
+                        // 삭제된 항목 expenseId 기반으로 제거
                         expenses.removeAll { it.id == expenseId }
+
+                        // ✅ 현재 상세 다이얼로그 어댑터에 삭제 반영
+                        currentGroupAdapter?.removeExpense(expenseId)
+
+                        // ✅ 상단 카드(카테고리 금액 등) 갱신
                         loadMonthlyData()
 
-                        Toast.makeText(this@ExpenseActivity, "지출 항목이 삭제되었습니다", Toast.LENGTH_SHORT)
-                            .show()
+                        Toast.makeText(this@ExpenseActivity, "지출 항목이 삭제되었습니다", Toast.LENGTH_SHORT).show()
                     }
                 } else {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                            this@ExpenseActivity,
-                            "삭제 실패: ${response.message()}",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Toast.makeText(this@ExpenseActivity, "삭제 실패: ${response.message()}", Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@ExpenseActivity, "삭제 실패: ${e.message}", Toast.LENGTH_SHORT)
-                        .show()
+                    Toast.makeText(this@ExpenseActivity, "삭제 실패: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -679,7 +746,6 @@ class ExpenseActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-
     // 지출 내역 목록용 어댑터 클래스 수정
     inner class ExpenseListAdapter(
         private val context: Context,
@@ -694,7 +760,6 @@ class ExpenseActivity : AppCompatActivity() {
                 notifyDataSetChanged()
             }
         }
-
         override fun getCount(): Int = expenses.size
 
         override fun getItem(position: Int): Any = expenses[position]

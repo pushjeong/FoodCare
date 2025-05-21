@@ -247,10 +247,10 @@ class FindPwActivity : AppCompatActivity() {
     private fun showPasswordInfo(password: String) {
         val dialogBuilder = AlertDialog.Builder(this)
         dialogBuilder.setTitle("비밀번호 찾기 결과")
-        dialogBuilder.setMessage("회원님의 비밀번호는 ${password}입니다. 안전을 위해 로그인 후 비밀번호를 변경해주세요.")
+        dialogBuilder.setMessage("회원님의 임시 비밀번호는 ${password}입니다.\n\n로그인 후 반드시 비밀번호를 변경해주세요.")
         dialogBuilder.setPositiveButton("확인") { dialog, _ ->
             dialog.dismiss()
-            finish()  // 확인 후 화면 종료
+            finish()
         }
         dialogBuilder.setCancelable(false)
         dialogBuilder.show()

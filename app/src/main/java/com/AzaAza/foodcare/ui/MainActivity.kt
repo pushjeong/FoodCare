@@ -70,9 +70,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 배터리 최적화 예외 확인 및 요청 - 이 부분을 추가
-        ExpiryNotificationManager.checkBatteryOptimization(this)
-
         // ✅ 상태 바 색상 변경 (Android 11 이상에서만 적용)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.setDecorFitsSystemWindows(false) // Edge-to-edge 활성화

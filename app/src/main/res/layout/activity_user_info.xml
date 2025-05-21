@@ -148,9 +148,22 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textStyle="bold"
             android:text="알레르기"
             android:textSize="16sp"
             android:layout_marginTop="12dp" />
+
+        <TextView
+            android:id="@+id/tvSulfurInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="※ 아황산류 예시: 무, 마늘, 양파, 양배추, 마른 새우, 건표고, 건조 과채류, 과실 주(와인 등), 박고지, 설탕, 식초, 물엿"
+            android:textColor="#B00020"
+            android:textSize="13sp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="0dp"
+            />
+
 
         <!-- 알레르기 뱃지 -->
         <com.google.android.flexbox.FlexboxLayout
@@ -185,6 +198,8 @@
                 android:layout_marginStart="12dp"
                 android:backgroundTint="#BDBDBD"
                 android:textColor="#000000"/>
+
+
         </LinearLayout>
 
 
@@ -193,6 +208,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textStyle="bold"
             android:text="질병"
             android:textSize="16sp"
             android:layout_marginTop="12dp" />

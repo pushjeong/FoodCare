@@ -6,6 +6,7 @@ import com.google.gson.annotations.SerializedName
 data class RecipeDto(
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String,
+    @SerializedName("summary") val summary: String?,
     @SerializedName("ingredients") val ingredients: String,  // DB에는 텍스트로 저장되어 있음
     @SerializedName("instructions") val instructions: String,
     @SerializedName("timetaken") val timetaken: String,
@@ -115,6 +116,7 @@ data class RecipeDto(
 
         return Recipe(
             name = name,
+            summary = summary,
             description = instructions.take(50) + if (instructions.length > 50) "..." else "",
             instructions = instructions,          // 전체 순서 저장
             imageResId = imageRes,

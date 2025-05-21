@@ -12,6 +12,7 @@
     <!-- <color name="top_bar">#E8DB6B</color> -->
 
     <color name="top_bar">#323232</color>
+    <color name="green_700">#3C7A50</color>
 
     <color name="your_background_color">#323232</color>
 </resources>

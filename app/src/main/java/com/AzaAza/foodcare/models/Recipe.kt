@@ -2,6 +2,7 @@ package com.AzaAza.foodcare.models
 
 data class Recipe(
     val name: String,
+    val summary: String? = null,
     val description: String,// 요약
     val instructions: String,// 전체 조리 순서
     val imageResId: Int,  // 이미지 리소스 ID

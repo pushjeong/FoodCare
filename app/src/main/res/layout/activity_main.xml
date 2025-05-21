@@ -327,7 +327,7 @@
                 </LinearLayout>
             </GridLayout>
 
-            <!-- 추가: 오늘의 추천 식사 섹션 -->
+
             <TextView
                 android:id="@+id/todayMealTitle"
                 android:layout_width="match_parent"
@@ -343,7 +343,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/gridButtons" />
 
-            <!-- 추천 식사 카드들을 담을 LinearLayout -->
             <LinearLayout
                 android:id="@+id/foodRecommendationsContainer"
                 android:layout_width="match_parent"
@@ -351,319 +350,19 @@
                 android:orientation="vertical"
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="24dp"
+
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/todayMealTitle"
+                app:layout_constraintTop_toBottomOf="@id/todayMealTitle"
                 app:layout_constraintBottom_toBottomOf="parent">
-
-                <!-- 육개장 카드 -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/yukgaejangCard"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="12dp">
-
-                        <!-- 육개장 이미지 -->
-                        <ImageView
-                            android:id="@+id/yukgaejangImage"
-                            android:layout_width="120dp"
-                            android:layout_height="120dp"
-                            android:contentDescription="육개장"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/dish_img_yukgaejang" />
-
-                        <!-- 오른쪽 텍스트 정보 -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:layout_marginStart="16dp"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:id="@+id/yukgaejangTitle"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="육개장"
-                                android:textColor="#333333"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/yukgaejangDescription"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="소고기와 나물로 끓인 얼큰한 국물 요리"
-                                android:textColor="#666666"
-                                android:textSize="14sp" />
-
-                            <TextView
-                                android:id="@+id/yukgaejangCalories"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="재료: 고사리, 고기 등"
-                                android:textColor="#888888"
-                                android:textSize="12sp" />
-
-                            <Button
-                                android:id="@+id/btnViewYukgaejangRecipe"
-                                android:layout_width="wrap_content"
-                                android:layout_height="48dp"
-                                android:layout_marginTop="8dp"
-                                android:backgroundTint="#3C7A50"
-                                android:minWidth="88dp"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="16dp"
-                                android:text="레시피 보기"
-                                android:textColor="#FFFFFF"
-                                android:textSize="14sp" />
-                        </LinearLayout>
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- 샤브샤브 카드 -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/shabuShabuCard"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="12dp">
-
-                        <!-- 샤브샤브 이미지 -->
-                        <ImageView
-                            android:id="@+id/shabuShabuImage"
-                            android:layout_width="120dp"
-                            android:layout_height="120dp"
-                            android:contentDescription="샤브샤브"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/dish_img_shabushabu" />
-
-                        <!-- 오른쪽 텍스트 정보 -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:layout_marginStart="16dp"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:id="@+id/shabuShabuTitle"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="샤브샤브"
-                                android:textColor="#333333"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/shabuShabuDescription"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="얇게 썬 고기와 신선한 채소로 만드는 건강한 요리"
-                                android:textColor="#666666"
-                                android:textSize="14sp" />
-
-                            <TextView
-                                android:id="@+id/shabuShabuCalories"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="재료: 배추, 소고기 등"
-                                android:textColor="#888888"
-                                android:textSize="12sp" />
-
-                            <Button
-                                android:id="@+id/btnViewShabuShabuRecipe"
-                                android:layout_width="wrap_content"
-                                android:layout_height="48dp"
-                                android:layout_marginTop="8dp"
-                                android:backgroundTint="#3C7A50"
-                                android:minWidth="88dp"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="16dp"
-                                android:text="레시피 보기"
-                                android:textColor="#FFFFFF"
-                                android:textSize="14sp" />
-                        </LinearLayout>
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- 비빔밥 카드 - 추가 스크롤 시 보임 -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/bibimbapCard"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="12dp">
-
-                        <!-- 비빔밥 이미지 -->
-                        <ImageView
-                            android:id="@+id/bibimbapImage"
-                            android:layout_width="120dp"
-                            android:layout_height="120dp"
-                            android:contentDescription="비빔밥 이미지"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/dish_img_bibimbap" />
-
-                        <!-- 오른쪽 텍스트 정보 -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:layout_marginStart="16dp"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:id="@+id/bibimbapTitle"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="비빔밥"
-                                android:textColor="#333333"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/bibimbapDescription"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="다양한 나물과 고기를 고추장과 함께 비벼 먹는 한식"
-                                android:textColor="#666666"
-                                android:textSize="14sp" />
-
-                            <TextView
-                                android:id="@+id/bibimbapCalories"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="재료: 밥, 고추장, 콩나물 등"
-                                android:textColor="#888888"
-                                android:textSize="12sp" />
-
-                            <Button
-                                android:id="@+id/btnViewBibimbapRecipe"
-                                android:layout_width="wrap_content"
-                                android:layout_height="48dp"
-                                android:layout_marginTop="8dp"
-                                android:backgroundTint="#3C7A50"
-                                android:minWidth="88dp"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="16dp"
-                                android:text="레시피 보기"
-                                android:textColor="#FFFFFF"
-                                android:textSize="14sp" />
-                        </LinearLayout>
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- 김치찌개 카드 - 추가 스크롤 시 보임 -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/kimchiStewCard"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="12dp">
-
-                        <!-- 김치찌개 이미지 -->
-                        <ImageView
-                            android:id="@+id/kimchiStewImage"
-                            android:layout_width="120dp"
-                            android:layout_height="120dp"
-                            android:contentDescription="김치찌개 이미지"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/dish_img_kimchi_stew" />
-
-                        <!-- 오른쪽 텍스트 정보 -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:layout_marginStart="16dp"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:id="@+id/kimchiStewTitle"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="김치찌개"
-                                android:textColor="#333333"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/kimchiStewDescription"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="돼지고기와 김치로 끓인 매콤한 한국 전통 찌개"
-                                android:textColor="#666666"
-                                android:textSize="14sp" />
-
-                            <TextView
-                                android:id="@+id/kimchiStewCalories"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="재료: 김치, 돼지고기 등"
-                                android:textColor="#888888"
-                                android:textSize="12sp" />
-
-                            <Button
-                                android:id="@+id/btnViewKimchiStewRecipe"
-                                android:layout_width="wrap_content"
-                                android:layout_height="48dp"
-                                android:layout_marginTop="8dp"
-                                android:backgroundTint="#3C7A50"
-                                android:minWidth="88dp"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="16dp"
-                                android:text="레시피 보기"
-                                android:textColor="#FFFFFF"
-                                android:textSize="14sp" />
-                        </LinearLayout>
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
+                <!-- 카드가 코드로 동적으로 추가됩니다 -->
             </LinearLayout>
+
+
+
+
+
+
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

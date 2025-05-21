@@ -1,6 +1,7 @@
 package com.AzaAza.foodcare.ui
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -8,13 +9,18 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
@@ -25,6 +31,8 @@ import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.adapter.BannerAdapter
 import com.AzaAza.foodcare.api.RetrofitClient
 import com.AzaAza.foodcare.models.IngredientDto
+import com.AzaAza.foodcare.models.Recipe
+import com.AzaAza.foodcare.models.RecipeDto
 import com.AzaAza.foodcare.notification.ExpiryNotificationManager
 import com.tbuonomo.viewpagerdotsindicator.DotsIndicator
 import retrofit2.Call
@@ -45,6 +53,8 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
         androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)  // 다크모드 무시
+
+        fetchRecommendedRecipes()
 
         // 알림 권한 확인 및 요청 (Android 13 이상)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -155,30 +165,6 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, SettingActivity::class.java))
         }
 
-        // ✅ 레시피 버튼 클릭 이벤트
-        findViewById<Button>(R.id.btnViewYukgaejangRecipe).setOnClickListener {
-            val intent = Intent(this, RecipeSearchActivity::class.java)
-            intent.putExtra("RECIPE_NAME", "육개장")
-            startActivity(intent)
-        }
-
-        findViewById<Button>(R.id.btnViewShabuShabuRecipe).setOnClickListener {
-            val intent = Intent(this, RecipeSearchActivity::class.java)
-            intent.putExtra("RECIPE_NAME", "샤브샤브")
-            startActivity(intent)
-        }
-
-        findViewById<Button>(R.id.btnViewBibimbapRecipe).setOnClickListener {
-            val intent = Intent(this, RecipeSearchActivity::class.java)
-            intent.putExtra("RECIPE_NAME", "비빔밥")
-            startActivity(intent)
-        }
-
-        findViewById<Button>(R.id.btnViewKimchiStewRecipe).setOnClickListener {
-            val intent = Intent(this, RecipeSearchActivity::class.java)
-            intent.putExtra("RECIPE_NAME", "김치찌개")
-            startActivity(intent)
-        }
 
         // ✅ 알림 벨 아이콘 클릭 이벤트 추가
         val notificationBell: ImageView = findViewById(R.id.imageView) // 벨 아이콘 ID
@@ -190,6 +176,8 @@ class MainActivity : AppCompatActivity() {
         updateNotificationBadge()
 
     }
+
+
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -292,4 +280,115 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         handler.removeCallbacks(runnable)
     }
+    private fun fetchRecommendedRecipes() {
+        val recommendationsContainer = findViewById<LinearLayout>(R.id.foodRecommendationsContainer)
+        recommendationsContainer.removeAllViews()
+
+        RetrofitClient.recipeApiService.getRecipes().enqueue(object : Callback<List<RecipeDto>> {
+            override fun onResponse(
+                call: Call<List<RecipeDto>>,
+                response: Response<List<RecipeDto>>
+            ) {
+                if (response.isSuccessful) {
+                    val recipeDtos = response.body() ?: return
+
+                    val randomRecipes = recipeDtos.shuffled().take(5)
+                    for (dto in randomRecipes) {
+                        val recipe = dto.toRecipe(emptyList())
+                        val cardView = layoutInflater.inflate(R.layout.item_today_recommendation, recommendationsContainer, false)
+
+                        val imageView = cardView.findViewById<ImageView>(R.id.recipeImage)
+
+                        val nameText = cardView.findViewById<TextView>(R.id.recipeName)
+                        val summaryText = cardView.findViewById<TextView>(R.id.recipeSummary)
+                        val ingredientsText = cardView.findViewById<TextView>(R.id.recipeIngredients)
+                        val btnDetail = cardView.findViewById<Button>(R.id.btnViewRecipe)
+
+                        imageView.setImageResource(recipe.imageResId)
+                        nameText.text = recipe.name
+                        summaryText.text = recipe.summary ?: "" // 한 줄 소개 표시
+                        ingredientsText.text = "재료: " + recipe.ingredients.joinToString(", ")
+
+                        btnDetail.setOnClickListener {
+                            showRecipeDetailDialog(recipe, cardView.context)
+                        }
+
+                        recommendationsContainer.addView(cardView)
+                    }
+
+                    val moreBtn = Button(this@MainActivity).apply {
+                        text = "더 많은 레시피 확인하기!"
+                        // '레시피 보기' 버튼과 비슷하게 스타일 적용
+                        setBackgroundTintList(ContextCompat.getColorStateList(this@MainActivity, R.color.green_700))
+                        setTextColor(ContextCompat.getColor(this@MainActivity, android.R.color.white))
+                        textSize = 15f
+                        setPadding(40, 18, 40, 18)
+                        background = ContextCompat.getDrawable(this@MainActivity, R.drawable.rounded_button_bg) // 선택
+                        // layoutParams도 CardView 내부 버튼과 맞춰줌
+                        val params = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        )
+                        params.topMargin = 36
+                        params.gravity = Gravity.CENTER_HORIZONTAL
+                        layoutParams = params
+
+                        setOnClickListener {
+                            startActivity(Intent(this@MainActivity, RecipeSearchActivity::class.java))
+                        }
+                    }
+                    recommendationsContainer.addView(moreBtn)
+
+                }
+            }
+
+
+            override fun onFailure(call: Call<List<RecipeDto>>, t: Throwable) {
+                // 에러 처리
+            }
+        })
+    }
+
+    // RecipeAdapter의 상세 다이얼로그 로직 복붙 또는 함수로 분리해서 사용
+    private fun showRecipeDetailDialog(recipe: Recipe, context: Context) {
+        val message = """
+📝 레시피 설명:
+${recipe.instructions}
+
+🧂 필요한 재료:
+${recipe.ingredients.joinToString(", ")}
+
+⏱ 소요 시간: ${recipe.timeTaken ?: "알 수 없음"}
+💪 난이도: ${recipe.difficulty ?: "알 수 없음"}
+🩺 알레르기: ${recipe.allergies ?: "없음"}
+🚫 질병 관련: ${recipe.disease ?: "없음"}
+""".trimIndent()
+
+        val textView = TextView(context).apply {
+            text = message
+            textSize = 16f
+            setPadding(40, 40, 40, 40)
+            isVerticalScrollBarEnabled = true
+            movementMethod = android.text.method.ScrollingMovementMethod.getInstance()
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        val scrollView = ScrollView(context).apply {
+            addView(textView)
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        AlertDialog.Builder(context)
+            .setTitle("${recipe.name} 상세 정보")
+            .setView(scrollView)
+            .setPositiveButton("닫기", null)
+            .show()
+    }
+
 }

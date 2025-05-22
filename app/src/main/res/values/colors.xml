@@ -9,6 +9,16 @@
     <color name="purple_500">#6200EE</color>
     <color name="text_dark">#222222</color>
     <color name="text_gray">#777777</color>
+
+    <color name="gray_700">#374151</color>
+
+    <!-- 등록 버튼 색상 -->
+    <color name="register_green">#00C471</color>
+    <color name="register_green_pressed">#00A55E</color>
+
+    <!-- 에러 색상 -->
+    <color name="error_red">#EF4444</color>
+
     <!-- <color name="top_bar">#E8DB6B</color> -->
 
     <color name="top_bar">#323232</color>

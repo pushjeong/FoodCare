@@ -34,7 +34,6 @@ import com.AzaAza.foodcare.models.IngredientDto
 import com.AzaAza.foodcare.models.Recipe
 import com.AzaAza.foodcare.models.RecipeDto
 import com.AzaAza.foodcare.models.SignUpRequest
-import com.AzaAza.foodcare.notification.ExpiryNotificationManager
 import com.tbuonomo.viewpagerdotsindicator.DotsIndicator
 import retrofit2.Call
 import retrofit2.Callback
@@ -102,8 +101,8 @@ class MainActivity : AppCompatActivity() {
                 4 -> RecipeSearchActivity::class.java
                 else -> null
             }
-            targetActivity?.let {
-                startActivity(Intent(this, it))
+            targetActivity?.let { activityClass ->
+                startActivity(Intent(this, activityClass))
             }
         }
 
@@ -157,7 +156,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, MemberActivity::class.java))
         }
         findViewById<ImageButton>(R.id.btnFoodSearch).setOnClickListener {
-            startActivity(Intent(this, CommunityActivity::class.java))
+            startActivity(Intent(this, AddRecipeActivity::class.java))
         }
         findViewById<ImageButton>(R.id.btnSetting).setOnClickListener {
             startActivity(Intent(this, SettingActivity::class.java))
@@ -359,9 +358,10 @@ class MainActivity : AppCompatActivity() {
                         val params = LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.WRAP_CONTENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
-                        )
-                        params.topMargin = 36
-                        params.gravity = Gravity.CENTER_HORIZONTAL
+                        ).apply {
+                            topMargin = 36
+                            gravity = Gravity.CENTER_HORIZONTAL
+                        }
                         layoutParams = params
 
                         setOnClickListener {

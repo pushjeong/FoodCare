@@ -39,7 +39,7 @@
         <activity android:name=".ui.ExpenseActivity"/>
         <activity android:name=".ui.UserInfoActivity"/>
         <activity android:name=".ui.MemberActivity"/>
-        <activity android:name=".ui.CommunityActivity"/>
+        <activity android:name=".ui.AddRecipeActivity"/>
         <activity android:name=".ui.SettingActivity"/>
         <activity android:name=".ui.ProfileSettingActivity" />
 

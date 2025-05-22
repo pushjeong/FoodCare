@@ -82,6 +82,9 @@
         <activity android:name=".ui.FindIdActivity" android:exported="false"/>
         <activity android:name=".ui.FindPwActivity" android:exported="false"/>
 
+        <!-- 비밀번호 변경 화면 -->
+        <activity android:name=".ui.PasswordChangeActivity" android:exported="false" />
+
         <!-- 프로바이더 설정 -->
         <provider
             android:name="androidx.core.content.FileProvider"

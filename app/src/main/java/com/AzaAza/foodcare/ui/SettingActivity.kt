@@ -22,17 +22,14 @@ class SettingActivity : AppCompatActivity() {
 
         // 로그아웃
         findViewById<View>(R.id.logoutBar).setOnClickListener {
-            AlertDialog.Builder(this)
-                .setTitle("로그아웃")
-                .setMessage("로그아웃 하시겠습니까?")
-                .setPositiveButton("예") { _, _ ->
-                    performLogout()
-                }
-                .setNegativeButton("아니오", null)
-                .show()
+            val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+            prefs.edit().clear().apply()
+            val intent = Intent(this, LoginActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            startActivity(intent)
+            finish()
         }
-
-
 
         // 프로필 설정
         findViewById<View>(R.id.profileSettingBar).setOnClickListener {
@@ -55,7 +52,7 @@ class SettingActivity : AppCompatActivity() {
                 .setNegativeButton("아니오", null)
                 .show()
         }
-/*
+
         // 서비스 이용약관
         findViewById<View>(R.id.termsServiceBar).setOnClickListener {
             openWebPage("https://yourdomain.com/terms")
@@ -64,8 +61,9 @@ class SettingActivity : AppCompatActivity() {
         // 개인정보 처리방침
         findViewById<View>(R.id.privacyPolicyBar).setOnClickListener {
             openWebPage("https://yourdomain.com/privacy")
-        }*/
+        }
     }
+
     // 로그아웃 처리 함수 분리
     private fun performLogout() {
         val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)

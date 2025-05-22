@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.AzaAza.foodcare.R
+import com.AzaAza.foodcare.api.RetrofitClient
 
 class SettingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,14 +22,17 @@ class SettingActivity : AppCompatActivity() {
 
         // 로그아웃
         findViewById<View>(R.id.logoutBar).setOnClickListener {
-            val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-            prefs.edit().clear().apply()
-            val intent = Intent(this, LoginActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
-            startActivity(intent)
-            finish()
+            AlertDialog.Builder(this)
+                .setTitle("로그아웃")
+                .setMessage("로그아웃 하시겠습니까?")
+                .setPositiveButton("예") { _, _ ->
+                    performLogout()
+                }
+                .setNegativeButton("아니오", null)
+                .show()
         }
+
+
 
         // 프로필 설정
         findViewById<View>(R.id.profileSettingBar).setOnClickListener {
@@ -51,7 +55,7 @@ class SettingActivity : AppCompatActivity() {
                 .setNegativeButton("아니오", null)
                 .show()
         }
-
+/*
         // 서비스 이용약관
         findViewById<View>(R.id.termsServiceBar).setOnClickListener {
             openWebPage("https://yourdomain.com/terms")
@@ -60,12 +64,10 @@ class SettingActivity : AppCompatActivity() {
         // 개인정보 처리방침
         findViewById<View>(R.id.privacyPolicyBar).setOnClickListener {
             openWebPage("https://yourdomain.com/privacy")
-        }
+        }*/
     }
-
-    private fun deleteAccount() {
-        // 실제 API 호출 필요 시 Retrofit 사용
-        Toast.makeText(this, "회원 탈퇴되었습니다.", Toast.LENGTH_SHORT).show()
+    // 로그아웃 처리 함수 분리
+    private fun performLogout() {
         val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         prefs.edit().clear().apply()
         val intent = Intent(this, LoginActivity::class.java).apply {
@@ -74,6 +76,39 @@ class SettingActivity : AppCompatActivity() {
         startActivity(intent)
         finish()
     }
+
+
+    private fun deleteAccount() {
+        val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        val loginId = prefs.getString("USER_LOGIN_ID", null)
+
+        if (loginId == null) {
+            Toast.makeText(this, "로그인 정보 없음", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // 서버에 회원 삭제 요청
+        RetrofitClient.userApiService.deleteUser(loginId)
+            .enqueue(object : retrofit2.Callback<Void> {
+                override fun onResponse(call: retrofit2.Call<Void>, response: retrofit2.Response<Void>) {
+                    if (response.isSuccessful) {
+                        Toast.makeText(this@SettingActivity, "회원 탈퇴되었습니다.", Toast.LENGTH_SHORT).show()
+                        prefs.edit().clear().apply()
+                        val intent = Intent(this@SettingActivity, LoginActivity::class.java).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        }
+                        startActivity(intent)
+                        finish()
+                    } else {
+                        Toast.makeText(this@SettingActivity, "서버 오류: 탈퇴 실패", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                override fun onFailure(call: retrofit2.Call<Void>, t: Throwable) {
+                    Toast.makeText(this@SettingActivity, "통신 실패: ${t.message}", Toast.LENGTH_SHORT).show()
+                }
+            })
+    }
+
 
     private fun openWebPage(url: String) {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))

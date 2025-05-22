@@ -8,8 +8,10 @@ import com.AzaAza.foodcare.models.VerificationConfirmDto
 import com.AzaAza.foodcare.models.VerificationResponseDto
 import retrofit2.Call
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface UserApiService {
     // 회원가입
@@ -34,4 +36,9 @@ interface UserApiService {
 
     @GET("/user")
     fun getUserListAsSignUpRequest(): Call<List<SignUpRequest>>
+
+    @DELETE("/user/{login_id}")
+    fun deleteUser(@Path("login_id") loginId: String): Call<Void>
+
+
 }

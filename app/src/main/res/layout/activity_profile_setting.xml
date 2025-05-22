@@ -22,7 +22,7 @@
                 android:id="@+id/backButton"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
-                android:src="@drawable/back_button"
+                android:src="@drawable/ic_arrow_left"
                 android:contentDescription="뒤로가기" />
 
             <TextView

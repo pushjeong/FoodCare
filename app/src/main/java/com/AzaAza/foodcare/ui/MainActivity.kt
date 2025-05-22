@@ -33,6 +33,7 @@ import com.AzaAza.foodcare.api.RetrofitClient
 import com.AzaAza.foodcare.models.IngredientDto
 import com.AzaAza.foodcare.models.Recipe
 import com.AzaAza.foodcare.models.RecipeDto
+import com.AzaAza.foodcare.models.SignUpRequest
 import com.AzaAza.foodcare.notification.ExpiryNotificationManager
 import com.tbuonomo.viewpagerdotsindicator.DotsIndicator
 import retrofit2.Call
@@ -171,6 +172,39 @@ class MainActivity : AppCompatActivity() {
 
         // 소비기한 알림 배지 업데이트
         updateNotificationBadge()
+
+
+        val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        val loginId = prefs.getString("USER_LOGIN_ID", null)
+        val welcomeTextView = findViewById<TextView>(R.id.textView2)
+
+        if (loginId == null) {
+            welcomeTextView.text = "이름없음 님 반가워요!"
+        } else {
+            RetrofitClient.userApiService.getUserListAsSignUpRequest().enqueue(object : Callback<List<SignUpRequest>> {
+
+            override fun onResponse(
+                    call: Call<List<SignUpRequest>>,
+                    response: Response<List<SignUpRequest>>
+                ) {
+                    if (response.isSuccessful) {
+                        val user = response.body()?.find { it.login_id == loginId }
+                        val username = user?.username ?: "이름없음"
+                        welcomeTextView.text = "$username 님 반가워요!"
+
+                        // 클릭 시 프로필 이동
+                        welcomeTextView.setOnClickListener {
+                            startActivity(Intent(this@MainActivity, ProfileSettingActivity::class.java))
+                        }
+                    }
+                }
+
+                override fun onFailure(call: Call<List<SignUpRequest>>, t: Throwable) {
+                    welcomeTextView.text = "이름없음 님 반가워요!"
+                }
+            })
+        }
+
 
     }
 

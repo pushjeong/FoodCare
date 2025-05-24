@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
@@ -27,6 +28,7 @@ import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.random.Random
+import android.Manifest
 
 class ExpiryNotificationManager {
 
@@ -34,6 +36,7 @@ class ExpiryNotificationManager {
         private const val CHANNEL_ID = "expiry_notification_channel"
         private const val NOTIFICATION_ID = 1001
         private const val TAG = "ExpiryNotification"
+        private const val INVITE_CHANNEL_ID = "invite_notification_channel"
 
         private val notificationTexts = listOf(
             // 기본형 (직관적이고 명확한 표현)
@@ -378,7 +381,48 @@ class ExpiryNotificationManager {
                 }
             }
         }
+
+        fun showInviteNotification(context: Context, inviterName: String) {
+            // 1. 채널 생성(최초 1회)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channelName = "구성원 초대 알림"
+                val descriptionText = "다른 사용자가 나를 구성원으로 초대했을 때 알림"
+                val importance = NotificationManager.IMPORTANCE_HIGH
+                val channel = NotificationChannel(INVITE_CHANNEL_ID, channelName, importance)
+                channel.description = descriptionText
+                val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                notificationManager.createNotificationChannel(channel)
+            }
+
+            // 2. 알림 빌드
+            val builder = NotificationCompat.Builder(context, INVITE_CHANNEL_ID)
+                .setSmallIcon(R.drawable.bell)
+                .setContentTitle("구성원 초대 알림")
+                .setContentText("$inviterName 님이 당신을 구성원으로 추가하셨습니다") // ⭐ 변수와 한글 띄어쓰기!
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+
+            // 3. 권한 체크 후 알림 표시
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED
+            ) {
+                with(NotificationManagerCompat.from(context)) {
+                    notify(Random.nextInt(), builder.build())
+                }
+            } else {
+                Log.e("Notification", "알림 권한이 없어 알림을 표시하지 못함")
+            }
+        }
+
+
+
+
     }
+
+
+
+
 }
 
 // BroadcastReceiver - 알림 시간에 자동으로 호출됨

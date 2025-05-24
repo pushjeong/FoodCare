@@ -3,6 +3,7 @@ package com.AzaAza.foodcare.ui
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -13,6 +14,7 @@ import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.models.LoginRequest
 import com.AzaAza.foodcare.models.UserResponse
 import com.AzaAza.foodcare.api.RetrofitClient
+import com.AzaAza.foodcare.models.LoginResponse
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -49,23 +51,27 @@ class LoginActivity : AppCompatActivity() {
 
             val req = LoginRequest(login_id = loginId, password = pw)  // 수정된 요청
 
-            RetrofitClient.userApiService.login(req).enqueue(object : Callback<UserResponse> {
-                override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
+            RetrofitClient.userApiService.login(req).enqueue(object : Callback<LoginResponse> {
+                override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
                     val body = response.body()
                     if (response.isSuccessful && body?.success == true) {
-                        prefs.edit().putBoolean("IS_LOGGED_IN", true)
-                            .putString("USER_LOGIN_ID", loginId)  // 저장되는 키도 login_id로
+                        prefs.edit()
+                            .putBoolean("IS_LOGGED_IN", true)
+                            .putString("USER_LOGIN_ID", body.login_id ?: "")
+                            .putInt("USER_ID", body.id ?: 0)
                             .apply()
+                        Log.d("LoginActivity", "SharedPreferences 저장한 id=${body.id}")
                         startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                         finish()
                     } else {
                         Toast.makeText(this@LoginActivity, body?.message ?: "로그인 실패", Toast.LENGTH_SHORT).show()
                     }
                 }
-                override fun onFailure(call: Call<UserResponse>, t: Throwable) {
+                override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                     Toast.makeText(this@LoginActivity, "네트워크 오류: ${t.message}", Toast.LENGTH_SHORT).show()
                 }
             })
+
         }
 
         // 회원가입 화면 이동

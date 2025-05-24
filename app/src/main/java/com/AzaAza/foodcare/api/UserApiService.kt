@@ -1,6 +1,11 @@
 // UserApiService.kt
+import com.AzaAza.foodcare.models.AcceptInviteRequest
+import com.AzaAza.foodcare.models.InviteRequest
+import com.AzaAza.foodcare.models.InviteResponse
 import com.AzaAza.foodcare.models.SignUpRequest
 import com.AzaAza.foodcare.models.LoginRequest
+import com.AzaAza.foodcare.models.LoginResponse
+import com.AzaAza.foodcare.models.MemberResponse
 import com.AzaAza.foodcare.models.SignupResponse
 import com.AzaAza.foodcare.models.UserResponse
 import com.AzaAza.foodcare.models.VerificationRequestDto
@@ -22,7 +27,7 @@ interface UserApiService {
 
     // 로그인 (login_id + password)
     @POST("/login")
-    fun login(@Body request: LoginRequest): Call<UserResponse>
+    fun login(@Body request: LoginRequest): Call<LoginResponse>
 
     // 이메일 인증 코드 요청
     @POST("/user/verify/request")
@@ -45,4 +50,19 @@ interface UserApiService {
     // 비밀번호 변경
     @POST("user/password/change")
     suspend fun changePassword(@Body request: PasswordChangeRequestDto): PasswordChangeResponseDto
+
+    @POST("/members/invite")
+    fun inviteMember(@Body req: InviteRequest): Call<InviteResponse>
+
+    @GET("/members/{owner_id}")
+    fun getMembers(@Path("owner_id") ownerId: Int): Call<List<MemberResponse>>
+
+    @POST("/members/accept")
+    fun acceptInvite(@Body req: AcceptInviteRequest): Call<InviteResponse>
+
+    @DELETE("/members/{owner_id}/{member_id}")
+    fun deleteMember(
+        @Path("owner_id") ownerId: Int,
+        @Path("member_id") memberId: Int
+    ): Call<InviteResponse>
 }

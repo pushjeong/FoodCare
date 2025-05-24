@@ -6,6 +6,8 @@ import com.AzaAza.foodcare.models.UserResponse
 import com.AzaAza.foodcare.models.VerificationRequestDto
 import com.AzaAza.foodcare.models.VerificationConfirmDto
 import com.AzaAza.foodcare.models.VerificationResponseDto
+import com.AzaAza.foodcare.models.PasswordChangeRequestDto
+import com.AzaAza.foodcare.models.PasswordChangeResponseDto
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -40,5 +42,7 @@ interface UserApiService {
     @DELETE("/user/{login_id}")
     fun deleteUser(@Path("login_id") loginId: String): Call<Void>
 
-
+    // 비밀번호 변경
+    @POST("user/password/change")
+    suspend fun changePassword(@Body request: PasswordChangeRequestDto): PasswordChangeResponseDto
 }

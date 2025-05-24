@@ -5,9 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 
-/**
- * 기기가 부팅될 때 알림 예약을 다시 설정하는 BroadcastReceiver
- */
 class BootCompletedReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -19,6 +16,10 @@ class BootCompletedReceiver : BroadcastReceiver() {
 
             // 알림 예약 다시 설정
             ExpiryNotificationManager.scheduleNotifications(context)
+
+            // ✅ 즉시 만료 식자재 확인 및 알림 테스트 실행
+            ExpiryNotificationManager.checkExpiringIngredients(context)
+
         }
     }
 }

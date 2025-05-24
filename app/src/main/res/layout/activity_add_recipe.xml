@@ -61,24 +61,186 @@
             android:orientation="vertical"
             android:padding="24dp">
 
+            <!-- 🔥 NEW: 음식 사진 등록 섹션 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="음식 사진 *"
+                        android:textColor="#374151"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="음식의 완성된 모습을 사진으로 등록해주세요"
+                        android:textColor="#6B7280"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- 사진 선택 영역 -->
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <!-- 기본 사진 선택 레이아웃 -->
+                        <LinearLayout
+                            android:id="@+id/photoSelectionLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="220dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:background="@drawable/dashed_border"
+                            android:padding="24dp">
+
+                            <ImageView
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:src="@drawable/ic_gallery"
+                                android:background="@drawable/circle_background_gray"
+                                android:padding="12dp"
+                                android:layout_marginBottom="12dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="사진을 선택하거나 촬영해주세요"
+                                android:textColor="#6B7280"
+                                android:textSize="14sp"
+                                android:layout_marginBottom="16dp" />
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center">
+
+                                <LinearLayout
+                                    android:id="@+id/btnCamera"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="40dp"
+                                    android:orientation="horizontal"
+                                    android:gravity="center"
+                                    android:background="@drawable/button_camera"
+                                    android:paddingStart="16dp"
+                                    android:paddingEnd="16dp"
+                                    android:layout_marginEnd="12dp"
+                                    android:clickable="true"
+                                    android:focusable="true">
+
+                                    <ImageView
+                                        android:layout_width="16dp"
+                                        android:layout_height="16dp"
+                                        android:src="@drawable/ic_camera"
+                                        android:layout_marginEnd="8dp"
+                                        android:scaleType="fitCenter" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="카메라"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="14sp" />
+
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:id="@+id/btnGallery"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="40dp"
+                                    android:orientation="horizontal"
+                                    android:gravity="center"
+                                    android:background="@drawable/button_gallery"
+                                    android:paddingStart="16dp"
+                                    android:paddingEnd="16dp"
+                                    android:clickable="true"
+                                    android:focusable="true">
+
+                                    <ImageView
+                                        android:layout_width="16dp"
+                                        android:layout_height="16dp"
+                                        android:src="@drawable/ic_gallery"
+                                        android:layout_marginEnd="8dp"
+                                        android:scaleType="fitCenter" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="갤러리"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="14sp" />
+
+                                </LinearLayout>
+
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <!-- 선택된 사진 미리보기 -->
+                        <FrameLayout
+                            android:id="@+id/photoPreviewLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="220dp"
+                            android:visibility="gone">
+
+                            <ImageView
+                                android:id="@+id/previewImage"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="centerCrop"
+                                android:background="@drawable/image_border" />
+
+                            <ImageView
+                                android:id="@+id/btnRemovePhoto"
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:layout_gravity="top|end"
+                                android:layout_margin="8dp"
+                                android:src="@drawable/ic_close"
+                                android:background="@drawable/circle_background_red"
+                                android:padding="6dp"
+                                android:contentDescription="사진 삭제" />
+
+                        </FrameLayout>
+
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/errorPhoto"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="음식 사진을 등록해주세요."
+                        android:textColor="#EF4444"
+                        android:textSize="12sp"
+                        android:layout_marginTop="8dp"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
             <!-- 레시피 이름 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="레시피 이름"
+                android:text="레시피 이름 *"
                 android:textColor="#374151"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="*"
-                android:textColor="#EF4444"
-                android:textSize="16sp"
-                android:layout_marginTop="-24dp"
-                android:layout_marginStart="80dp" />
 
             <EditText
                 android:id="@+id/editRecipeName"
@@ -90,7 +252,7 @@
                 android:paddingEnd="16dp"
                 android:textSize="14sp"
                 android:textColorHint="#9CA3AF"
-                android:layout_marginBottom="24dp" />
+                android:layout_marginBottom="8dp" />
 
             <TextView
                 android:id="@+id/errorRecipeName"
@@ -99,11 +261,77 @@
                 android:text="레시피 이름을 입력해주세요."
                 android:textColor="#EF4444"
                 android:textSize="12sp"
-                android:layout_marginTop="-20dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="20dp"
                 android:visibility="gone" />
 
-            <!-- 레시피 설명 -->
+            <!-- 음식 설명 (Summary) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="음식 설명 *"
+                android:textColor="#374151"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="음식에 대한 짧고 직관적인 설명을 입력하세요"
+                android:textColor="#6B7280"
+                android:textSize="12sp"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/editFoodSummary"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/edit_text_modern"
+                android:hint="예: 양념에 재운 갈비를 푹 익힌 고급 찜요리"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:textSize="14sp"
+                android:textColorHint="#9CA3AF"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/errorFoodSummary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="음식 설명을 입력해주세요."
+                android:textColor="#EF4444"
+                android:textSize="12sp"
+                android:layout_marginBottom="20dp"
+                android:visibility="gone" />
+
+            <!-- 카테고리 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="카테고리 *"
+                android:textColor="#374151"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <Spinner
+                android:id="@+id/spinnerCategory"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/spinner_modern"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/errorCategory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="카테고리를 선택해주세요."
+                android:textColor="#EF4444"
+                android:textSize="12sp"
+                android:layout_marginBottom="20dp"
+                android:visibility="gone" />
+
+            <!-- 레시피 설명 (Instructions) -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -113,12 +341,20 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp" />
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="상세한 조리 과정과 방법을 입력하세요"
+                android:textColor="#6B7280"
+                android:textSize="12sp"
+                android:layout_marginBottom="8dp" />
+
             <EditText
-                android:id="@+id/editRecipeDescription"
+                android:id="@+id/editRecipeInstructions"
                 android:layout_width="match_parent"
-                android:layout_height="100dp"
+                android:layout_height="120dp"
                 android:background="@drawable/edit_text_modern"
-                android:hint="레시피에 대한 간단한 설명을 입력하세요"
+                android:hint="조리 과정을 단계별로 자세히 입력하세요"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:paddingTop="12dp"
@@ -126,18 +362,17 @@
                 android:textSize="14sp"
                 android:textColorHint="#9CA3AF"
                 android:inputType="textMultiLine"
-                android:maxLines="4"
-                android:layout_marginBottom="24dp" />
+                android:maxLines="6"
+                android:layout_marginBottom="8dp" />
 
             <TextView
-                android:id="@+id/errorRecipeDescription"
+                android:id="@+id/errorRecipeInstructions"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="레시피 설명을 입력해주세요."
                 android:textColor="#EF4444"
                 android:textSize="12sp"
-                android:layout_marginTop="-20dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="20dp"
                 android:visibility="gone" />
 
             <!-- 필요한 재료 -->
@@ -155,7 +390,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="120dp"
                 android:background="@drawable/edit_text_modern"
-                android:hint="필요한 재료를 입력하세요&#10;(예: 양파 1개, 당근 1/2개, 감자 2개)"
+                android:hint="필요한 재료를 입력하세요&#10;(예: 양파, 당근, 감자)"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:paddingTop="12dp"
@@ -192,7 +427,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="24dp">
+                android:layout_marginBottom="8dp">
 
                 <EditText
                     android:id="@+id/editCookingTime"
@@ -236,8 +471,7 @@
                 android:text="소요 시간을 올바르게 입력해주세요."
                 android:textColor="#EF4444"
                 android:textSize="12sp"
-                android:layout_marginTop="-20dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="20dp"
                 android:visibility="gone" />
 
             <!-- 난이도 -->
@@ -255,7 +489,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:background="@drawable/spinner_modern"
-                android:layout_marginBottom="24dp" />
+                android:layout_marginBottom="8dp" />
 
             <TextView
                 android:id="@+id/errorDifficulty"
@@ -264,8 +498,7 @@
                 android:text="난이도를 선택해주세요."
                 android:textColor="#EF4444"
                 android:textSize="12sp"
-                android:layout_marginTop="-20dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="20dp"
                 android:visibility="gone" />
 
             <!-- 알레르기 관련 정보 -->

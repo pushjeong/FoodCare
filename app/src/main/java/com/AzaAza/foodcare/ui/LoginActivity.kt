@@ -15,6 +15,8 @@ import com.AzaAza.foodcare.models.LoginRequest
 import com.AzaAza.foodcare.models.UserResponse
 import com.AzaAza.foodcare.api.RetrofitClient
 import com.AzaAza.foodcare.models.LoginResponse
+import com.AzaAza.foodcare.models.UpdateFcmTokenRequest
+import com.google.firebase.messaging.FirebaseMessaging
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -60,7 +62,30 @@ class LoginActivity : AppCompatActivity() {
                             .putString("USER_LOGIN_ID", body.login_id ?: "")
                             .putInt("USER_ID", body.id ?: 0)
                             .apply()
-                        Log.d("LoginActivity", "SharedPreferences 저장한 id=${body.id}")
+
+                        // 👇 로그인 직후 FCM 토큰 강제 전송
+                        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                val token = task.result
+                                Log.d("FCM", "로그인 직후 강제 토큰 전송: $token, loginId=${body.login_id}")
+                                if (body.login_id != null) {
+                                    val req = UpdateFcmTokenRequest(login_id = body.login_id, fcm_token = token)
+                                    RetrofitClient.userApiService.updateFcmToken(req)
+                                        .enqueue(object : retrofit2.Callback<Void> {
+                                            override fun onResponse(call: retrofit2.Call<Void>, response: retrofit2.Response<Void>) {
+                                                Log.d("FCM", "서버로 FCM 토큰 저장 성공")
+                                            }
+                                            override fun onFailure(call: retrofit2.Call<Void>, t: Throwable) {
+                                                Log.e("FCM", "서버로 FCM 토큰 저장 실패: ${t.message}")
+                                            }
+                                        })
+                                }
+                            } else {
+                                Log.e("FCM", "FCM 토큰 받아오기 실패: ${task.exception}")
+                            }
+                        }
+
+                        // 기존 이동
                         startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                         finish()
                     } else {

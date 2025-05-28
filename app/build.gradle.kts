@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -60,9 +61,13 @@ dependencies {
 
 
     implementation ("com.google.android.flexbox:flexbox:3.0.0")
+    implementation ("com.google.firebase:firebase-messaging:23.4.1")
 
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+
+
 }

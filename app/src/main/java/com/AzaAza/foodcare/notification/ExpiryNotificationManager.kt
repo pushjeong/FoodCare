@@ -36,7 +36,7 @@ class ExpiryNotificationManager {
         private const val CHANNEL_ID = "expiry_notification_channel"
         private const val NOTIFICATION_ID = 1001
         private const val TAG = "ExpiryNotification"
-        private const val INVITE_CHANNEL_ID = "invite_notification_channel"
+       // private const val INVITE_CHANNEL_ID = "invite_notification_channel"
 
         private val notificationTexts = listOf(
             // 기본형 (직관적이고 명확한 표현)
@@ -382,6 +382,7 @@ class ExpiryNotificationManager {
             }
         }
 
+        /*
         fun showInviteNotification(context: Context, inviterName: String) {
             // 1. 채널 생성(최초 1회)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -415,7 +416,7 @@ class ExpiryNotificationManager {
             }
         }
 
-
+*/
 
 
     }

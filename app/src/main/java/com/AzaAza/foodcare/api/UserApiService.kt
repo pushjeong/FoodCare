@@ -13,6 +13,7 @@ import com.AzaAza.foodcare.models.VerificationConfirmDto
 import com.AzaAza.foodcare.models.VerificationResponseDto
 import com.AzaAza.foodcare.models.PasswordChangeRequestDto
 import com.AzaAza.foodcare.models.PasswordChangeResponseDto
+import com.AzaAza.foodcare.models.UpdateFcmTokenRequest
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -65,4 +66,12 @@ interface UserApiService {
         @Path("owner_id") ownerId: Int,
         @Path("member_id") memberId: Int
     ): Call<InviteResponse>
+
+    @POST("/user/update_token")
+    fun updateFcmToken(@Body request: UpdateFcmTokenRequest): Call<Void>
+
+    @GET("/members/pending/{member_id}")
+    fun getPendingInvites(@Path("member_id") memberId: Int): Call<List<InviteResponse>>
+
+
 }

@@ -34,12 +34,14 @@ import com.AzaAza.foodcare.models.IngredientDto
 import com.AzaAza.foodcare.models.Recipe
 import com.AzaAza.foodcare.models.RecipeDto
 import com.AzaAza.foodcare.models.SignUpRequest
+import com.AzaAza.foodcare.models.UpdateFcmTokenRequest
 import com.tbuonomo.viewpagerdotsindicator.DotsIndicator
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
+import com.google.firebase.messaging.FirebaseMessaging
 
 class MainActivity : AppCompatActivity() {
 
@@ -202,6 +204,24 @@ class MainActivity : AppCompatActivity() {
                     welcomeTextView.text = "이름없음 님 반가워요!"
                 }
             })
+        }
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val token = task.result
+                Log.d("FCM", "로그인 직후 강제 토큰 전송: $token, loginId=$loginId")
+                if (loginId != null) {
+                    val req = UpdateFcmTokenRequest(login_id = loginId, fcm_token = token)
+                    RetrofitClient.userApiService.updateFcmToken(req)
+                        .enqueue(object : retrofit2.Callback<Void> {
+                            override fun onResponse(call: retrofit2.Call<Void>, response: retrofit2.Response<Void>) {
+                                Log.d("FCM", "서버로 FCM 토큰 저장 성공")
+                            }
+                            override fun onFailure(call: retrofit2.Call<Void>, t: Throwable) {
+                                Log.e("FCM", "서버로 FCM 토큰 저장 실패: ${t.message}")
+                            }
+                        })
+                }
+            }
         }
 
 

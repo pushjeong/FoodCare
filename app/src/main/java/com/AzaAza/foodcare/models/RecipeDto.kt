@@ -111,11 +111,41 @@ data class RecipeDto(
             "피넛버터 쿠키" -> R.drawable.dish_img_peanut_butter_cookies
 
 
-            "제육볶음" -> R.drawable.dish_img_jaeyukbbokeum
-            "마제소바" -> R.drawable.dish_img_majaesoba
+            "제육볶음" -> R.drawable.dish_img_jeyuk_bokkeum
+            "마제소바" -> R.drawable.dish_img_mazesoba
             "시래기국" -> R.drawable.dish_img_siraegikuk
             "크림소스 뇨끼" -> R.drawable.dish_img_cream_gnocchi
-           // "똠양꿍" -> R.drawable.dish_img_tomyumgoong
+            "똠양꿍" -> R.drawable.dish_img_tomyumgoong
+            "카레 프라이드 누들" -> R.drawable.dish_img_curry_fried_noodle
+            "팟타이" -> R.drawable.dish_img_pad_thai
+            "탄두리 치킨" -> R.drawable.dish_img_tandoori_chicken
+            "고이꾸온" -> R.drawable.dish_img_goicuon
+            "치킨 라이스" -> R.drawable.dish_img_chicken_rice
+            "아도보" -> R.drawable.dish_img_adobo
+            "팔보채" -> R.drawable.dish_img_eight_bodied_vegetables
+            "깐풍기" -> R.drawable.dish_img_deep_fried_chickeninhot_pepper_sauce
+
+            "비리야니" -> R.drawable.dish_img_biryani
+            "까르보나라" -> R.drawable.dish_img_carbonara
+            "치킨 커리" -> R.drawable.dish_img_chicken_curry
+            "동파육" -> R.drawable.dish_img_dongpo_pork
+            "깐쇼새우" -> R.drawable.dish_img_gansho_shrimp
+            "망고 스티키 라이스" -> R.drawable.dish_img_mango_sticky_rice
+            "멘보샤" -> R.drawable.dish_img_menbosha
+            "나시 르막" -> R.drawable.dish_img_menbosha
+            "매생이국" -> R.drawable.dish_img_maesaengi_guk
+            "팔락 파니르" -> R.drawable.dish_img_palak_paneer
+            "사테" -> R.drawable.dish_img_satay
+            "탕수육" -> R.drawable.dish_img_tangsuyuk
+            "똠양누들" -> R.drawable.dish_img_tomyam_noodle
+            "샤오롱바오" -> R.drawable.dish_img_xiaolongbao
+            "야끼소바" -> R.drawable.dish_img_yakisoba
+            "엿" -> R.drawable.dish_img_yeot
+            "유린기" -> R.drawable.dish_img_yurinji
+            "짜사이무침" -> R.drawable.dish_img_zhacai_muchim
+
+
+
 
             else -> R.drawable.bell  // 기본 이미지
         }

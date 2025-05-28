@@ -223,7 +223,9 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-
+        if (intent.getBooleanExtra("goToMember", false)) {
+            startActivity(Intent(this, MemberActivity::class.java))
+        }
 
     }
 

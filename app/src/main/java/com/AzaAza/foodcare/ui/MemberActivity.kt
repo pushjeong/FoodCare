@@ -1,6 +1,7 @@
 package com.AzaAza.foodcare.ui
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -79,11 +80,23 @@ class MemberActivity : AppCompatActivity() {
 
     private fun refreshMemberList() {
         RetrofitClient.userApiService.getMembers(ownerId)
-
             .enqueue(object : Callback<List<MemberResponse>> {
                 override fun onResponse(call: Call<List<MemberResponse>>, response: Response<List<MemberResponse>>) {
+                    val members = response.body() ?: emptyList()
                     memberListContainer.removeAllViews()
-                    response.body()?.forEach { member ->
+
+                    // 🔥 멤버가 아예 없거나, 내 아이디가 없으면 내 집을 반드시 만든다
+                    val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                    if (members.isEmpty() || members.none { it.id == myUserId }) {
+                        // ownerId도 반드시 내 아이디로 갱신!
+                        prefs.edit().putInt("OWNER_ID", myUserId).apply()
+                        createMyOwnGroup()
+                        return
+                    }
+
+                    // 중복 멤버 방지
+                    val uniqueMembers = members.distinctBy { it.id }
+                    uniqueMembers.forEach { member ->
                         addMemberView(member)
                     }
                 }
@@ -91,6 +104,21 @@ class MemberActivity : AppCompatActivity() {
             })
     }
 
+    private fun createMyOwnGroup() {
+        RetrofitClient.userApiService.createMyGroup(myUserId)
+            .enqueue(object : Callback<InviteResponse> {
+                override fun onResponse(call: Call<InviteResponse>, response: Response<InviteResponse>) {
+                    // 생성이 끝난 후 MainActivity로 강제 이동
+                    val intent = Intent(this@MemberActivity, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                    startActivity(intent)
+                    finish()
+                }
+                override fun onFailure(call: Call<InviteResponse>, t: Throwable) {
+                    Toast.makeText(this@MemberActivity, "내 집 생성 실패!", Toast.LENGTH_SHORT).show()
+                }
+            })
+    }
 
     private fun showAddMemberDialog() {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit_text, null)
@@ -185,11 +213,23 @@ class MemberActivity : AppCompatActivity() {
             .setTitle("그룹 나가기")
             .setMessage("정말로 그룹에서 나가시겠습니까?")
             .setPositiveButton("나가기") { _, _ ->
-                deleteMember(member)  // 기존 delete API 활용
+                RetrofitClient.userApiService.deleteMember(ownerId, myUserId)  // <-- 여기서 ownerId/myUserId 올바른지 확인!
+                    .enqueue(object : Callback<InviteResponse> {
+                        override fun onResponse(call: Call<InviteResponse>, response: Response<InviteResponse>) {
+                            // 성공/실패 처리
+                            val res = response.body()
+                            Toast.makeText(this@MemberActivity, res?.message ?: "오류", Toast.LENGTH_SHORT).show()
+                            refreshMemberList()
+                        }
+                        override fun onFailure(call: Call<InviteResponse>, t: Throwable) {
+                            Toast.makeText(this@MemberActivity, "네트워크 오류", Toast.LENGTH_SHORT).show()
+                        }
+                    })
             }
             .setNegativeButton("취소", null)
             .show()
     }
+
 
     private fun confirmAndDeleteMember(member: MemberResponse) {
         AlertDialog.Builder(this)
@@ -203,13 +243,22 @@ class MemberActivity : AppCompatActivity() {
     }
 
     private fun deleteMember(member: MemberResponse) {
-        // member.id를 직접 사용!
-        RetrofitClient.userApiService.deleteMember(myUserId, member.id)
+        RetrofitClient.userApiService.deleteMember(ownerId, member.id)
             .enqueue(object : Callback<InviteResponse> {
                 override fun onResponse(call: Call<InviteResponse>, response: Response<InviteResponse>) {
                     val res = response.body()
                     if (res?.success == true) {
-                        Toast.makeText(this@MemberActivity, "삭제/취소 완료", Toast.LENGTH_SHORT).show()
+
+                        if (member.id == myUserId) {
+                            val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                            prefs.edit().putInt("OWNER_ID", myUserId).apply()
+                            // finish()나 MainActivity 이동 없이 바로
+                            refreshMemberList()
+                            return
+                        }
+
+
+                        // 즉시 최신 멤버리스트로 갱신
                         refreshMemberList()
                     } else {
                         Toast.makeText(this@MemberActivity, res?.message ?: "실패", Toast.LENGTH_SHORT).show()
@@ -220,6 +269,7 @@ class MemberActivity : AppCompatActivity() {
                 }
             })
     }
+
 
 
     private fun getMyUserIdFromPrefs(): Int {
@@ -299,21 +349,29 @@ class MemberActivity : AppCompatActivity() {
         RetrofitClient.userApiService.acceptInvite(req)
             .enqueue(object : Callback<InviteResponse> {
                 override fun onResponse(call: Call<InviteResponse>, response: Response<InviteResponse>) {
-                    // 여기서 ownerId를 SharedPreferences에 저장
+                    // ownerId를 SharedPreferences에 저장
                     val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
                     prefs.edit().putInt("OWNER_ID", ownerId).apply()
                     Toast.makeText(this@MemberActivity, "초대 수락 완료!", Toast.LENGTH_SHORT).show()
-                    refreshMemberList()
+                    // MainActivity로 이동 + 구성원 화면을 자동으로 열기
+                    val intent = Intent(this@MemberActivity, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                    // 구성원 화면으로 바로 이동하고 싶으면 아래처럼
+                    intent.putExtra("goToMember", true)
+                    startActivity(intent)
+                    finish()
                 }
                 override fun onFailure(call: Call<InviteResponse>, t: Throwable) {}
             })
     }
 
 
+
     override fun onResume() {
         super.onResume()
         refreshMemberList()
     }
+
 
 
 

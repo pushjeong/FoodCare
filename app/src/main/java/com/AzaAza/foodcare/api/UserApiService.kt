@@ -73,5 +73,7 @@ interface UserApiService {
     @GET("/members/pending/{member_id}")
     fun getPendingInvites(@Path("member_id") memberId: Int): Call<List<InviteResponse>>
 
+    @POST("/members/create_my_group")
+    fun createMyGroup(@Body userId: Int): Call<InviteResponse>
 
 }

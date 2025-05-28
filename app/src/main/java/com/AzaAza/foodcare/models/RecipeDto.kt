@@ -111,6 +111,12 @@ data class RecipeDto(
             "피넛버터 쿠키" -> R.drawable.dish_img_peanut_butter_cookies
 
 
+            "제육볶음" -> R.drawable.dish_img_jaeyukbbokeum
+            "마제소바" -> R.drawable.dish_img_majaesoba
+            "시래기국" -> R.drawable.dish_img_siraegikuk
+            "크림소스 뇨끼" -> R.drawable.dish_img_cream_gnocchi
+           // "똠양꿍" -> R.drawable.dish_img_tomyumgoong
+
             else -> R.drawable.bell  // 기본 이미지
         }
 

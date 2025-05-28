@@ -1,31 +1,65 @@
 package com.AzaAza.foodcare.ui
 
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import com.AzaAza.foodcare.R
+import com.AzaAza.foodcare.api.RetrofitClient
+import com.AzaAza.foodcare.models.RecipeCreateRequest
+import com.AzaAza.foodcare.models.RecipeCreateResponse
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.io.File
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
 
 class AddRecipeActivity : AppCompatActivity() {
 
     // UI 요소들
     private lateinit var editRecipeName: EditText
-    private lateinit var editRecipeDescription: EditText
+    private lateinit var spinnerCategory: Spinner
+    private lateinit var editFoodSummary: EditText
     private lateinit var editIngredients: EditText
+    private lateinit var editRecipeInstructions: EditText
     private lateinit var editCookingTime: EditText
     private lateinit var spinnerDifficulty: Spinner
     private lateinit var allergyCheckboxGrid: GridLayout
     private lateinit var diseaseCheckboxGrid: GridLayout
     private lateinit var btnRegisterRecipe: Button
 
+    // 사진 관련 UI 요소들
+    private lateinit var photoSelectionLayout: LinearLayout
+    private lateinit var photoPreviewLayout: FrameLayout
+    private lateinit var previewImage: ImageView
+    private lateinit var btnCamera: LinearLayout
+    private lateinit var btnGallery: LinearLayout
+    private lateinit var btnRemovePhoto: ImageView
+    private lateinit var errorPhoto: TextView
+
     // 에러 메시지 TextView들
     private lateinit var errorRecipeName: TextView
-    private lateinit var errorRecipeDescription: TextView
+    private lateinit var errorCategory: TextView
+    private lateinit var errorFoodSummary: TextView
     private lateinit var errorIngredients: TextView
+    private lateinit var errorRecipeInstructions: TextView
     private lateinit var errorCookingTime: TextView
     private lateinit var errorDifficulty: TextView
     private lateinit var errorAllergies: TextView
@@ -34,6 +68,35 @@ class AddRecipeActivity : AppCompatActivity() {
     // 데이터 저장용
     private val selectedAllergies = mutableSetOf<String>()
     private val selectedDiseases = mutableSetOf<String>()
+
+    // 사진 관련 변수들
+    private var selectedImageUri: Uri? = null
+    private var currentPhotoPath: String = ""
+
+    // 권한 요청 코드
+    private val CAMERA_PERMISSION_CODE = 100
+    private val STORAGE_PERMISSION_CODE = 101
+
+    // ActivityResultLauncher들
+    private val cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            // 카메라에서 촬영한 이미지 처리
+            val photoFile = File(currentPhotoPath)
+            if (photoFile.exists()) {
+                selectedImageUri = Uri.fromFile(photoFile)
+                showSelectedImage(selectedImageUri!!)
+            }
+        }
+    }
+
+    private val galleryLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+            selectedImageUri = result.data?.data
+            selectedImageUri?.let { uri ->
+                showSelectedImage(uri)
+            }
+        }
+    }
 
     // 알레르기 옵션들
     private val allergyOptions = arrayOf(
@@ -86,6 +149,7 @@ class AddRecipeActivity : AppCompatActivity() {
         setupCheckboxes()
         setupTextWatchers()
         setupClickListeners()
+        setupPhotoListeners()
     }
 
     private fun initViews() {
@@ -95,11 +159,13 @@ class AddRecipeActivity : AppCompatActivity() {
 
         // EditText들
         editRecipeName = findViewById(R.id.editRecipeName)
-        editRecipeDescription = findViewById(R.id.editRecipeDescription)
+        editFoodSummary = findViewById(R.id.editFoodSummary)
         editIngredients = findViewById(R.id.editIngredients)
+        editRecipeInstructions = findViewById(R.id.editRecipeInstructions)
         editCookingTime = findViewById(R.id.editCookingTime)
 
-        // Spinner
+        // Spinner들
+        spinnerCategory = findViewById(R.id.spinnerCategory)
         spinnerDifficulty = findViewById(R.id.spinnerDifficulty)
 
         // GridLayout들
@@ -109,17 +175,179 @@ class AddRecipeActivity : AppCompatActivity() {
         // 버튼
         btnRegisterRecipe = findViewById(R.id.btnRegisterRecipe)
 
+        // 사진 관련 UI 요소들
+        photoSelectionLayout = findViewById(R.id.photoSelectionLayout)
+        photoPreviewLayout = findViewById(R.id.photoPreviewLayout)
+        previewImage = findViewById(R.id.previewImage)
+        btnCamera = findViewById(R.id.btnCamera)
+        btnGallery = findViewById(R.id.btnGallery)
+        btnRemovePhoto = findViewById(R.id.btnRemovePhoto)
+        errorPhoto = findViewById(R.id.errorPhoto)
+
         // 에러 메시지 TextView들
         errorRecipeName = findViewById(R.id.errorRecipeName)
-        errorRecipeDescription = findViewById(R.id.errorRecipeDescription)
+        errorCategory = findViewById(R.id.errorCategory)
+        errorFoodSummary = findViewById(R.id.errorFoodSummary)
         errorIngredients = findViewById(R.id.errorIngredients)
+        errorRecipeInstructions = findViewById(R.id.errorRecipeInstructions)
         errorCookingTime = findViewById(R.id.errorCookingTime)
         errorDifficulty = findViewById(R.id.errorDifficulty)
         errorAllergies = findViewById(R.id.errorAllergies)
         errorDiseases = findViewById(R.id.errorDiseases)
     }
 
+    private fun setupPhotoListeners() {
+        // 카메라 버튼 클릭
+        btnCamera.setOnClickListener {
+            if (checkCameraPermission()) {
+                openCamera()
+            } else {
+                requestCameraPermission()
+            }
+        }
+
+        // 갤러리 버튼 클릭
+        btnGallery.setOnClickListener {
+            if (checkStoragePermission()) {
+                openGallery()
+            } else {
+                requestStoragePermission()
+            }
+        }
+
+        // 사진 삭제 버튼 클릭
+        btnRemovePhoto.setOnClickListener {
+            removeSelectedImage()
+        }
+    }
+
+    private fun checkCameraPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun checkStoragePermission(): Boolean {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestCameraPermission() {
+        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), CAMERA_PERMISSION_CODE)
+    }
+
+    private fun requestStoragePermission() {
+        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), STORAGE_PERMISSION_CODE)
+    }
+
+    private fun openCamera() {
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+
+        // 임시 파일 생성
+        val photoFile: File? = try {
+            createImageFile()
+        } catch (ex: IOException) {
+            Log.e("AddRecipe", "Error creating image file", ex)
+            null
+        }
+
+        photoFile?.also {
+            val photoURI: Uri = FileProvider.getUriForFile(
+                this,
+                "com.AzaAza.foodcare.fileprovider", // AndroidManifest.xml에 정의된 authorities와 일치해야 함
+                it
+            )
+            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+            cameraLauncher.launch(takePictureIntent)
+        }
+    }
+
+    private fun openGallery() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        intent.type = "image/*"
+        galleryLauncher.launch(intent)
+    }
+
+    @Throws(IOException::class)
+    private fun createImageFile(): File {
+        // 타임스탬프를 이용해 고유한 파일명 생성
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val storageDir: File? = getExternalFilesDir("Pictures")
+        return File.createTempFile(
+            "RECIPE_${timeStamp}_",
+            ".jpg",
+            storageDir
+        ).apply {
+            currentPhotoPath = absolutePath
+        }
+    }
+
+    private fun showSelectedImage(uri: Uri) {
+        try {
+            previewImage.setImageURI(uri)
+            photoSelectionLayout.visibility = View.GONE
+            photoPreviewLayout.visibility = View.VISIBLE
+            hideError(errorPhoto)
+
+            Log.d("AddRecipe", "이미지 선택됨: $uri")
+        } catch (e: Exception) {
+            Log.e("AddRecipe", "이미지 로딩 실패", e)
+            Toast.makeText(this, "이미지를 불러올 수 없습니다.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun removeSelectedImage() {
+        selectedImageUri = null
+        photoSelectionLayout.visibility = View.VISIBLE
+        photoPreviewLayout.visibility = View.GONE
+        previewImage.setImageURI(null)
+
+        Log.d("AddRecipe", "이미지 제거됨")
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            CAMERA_PERMISSION_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    openCamera()
+                } else {
+                    Toast.makeText(this, "카메라 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            STORAGE_PERMISSION_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    openGallery()
+                } else {
+                    Toast.makeText(this, "저장소 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
     private fun setupSpinner() {
+        // 카테고리 스피너 설정
+        val categories = arrayOf(
+            "카테고리를 선택하세요",
+            "한식",
+            "양식",
+            "일식",
+            "중식",
+            "아시아",
+            "디저트"
+        )
+
+        val categoryAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories)
+        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerCategory.adapter = categoryAdapter
+
+        spinnerCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                if (position > 0) {
+                    hideError(errorCategory)
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        // 난이도 스피너 설정
         val difficultyLevels = arrayOf(
             "난이도를 선택하세요",
             "쉬움 ⭐",
@@ -128,9 +356,9 @@ class AddRecipeActivity : AppCompatActivity() {
             "매우 어려움 ⭐⭐⭐⭐"
         )
 
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, difficultyLevels)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerDifficulty.adapter = adapter
+        val difficultyAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, difficultyLevels)
+        difficultyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerDifficulty.adapter = difficultyAdapter
 
         spinnerDifficulty.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
@@ -293,12 +521,12 @@ class AddRecipeActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
 
-        // 레시피 설명 텍스트 변경 감지
-        editRecipeDescription.addTextChangedListener(object : TextWatcher {
+        // 음식 설명 텍스트 변경 감지
+        editFoodSummary.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 if (!s.isNullOrBlank()) {
-                    hideError(errorRecipeDescription)
-                    resetEditTextStyle(editRecipeDescription)
+                    hideError(errorFoodSummary)
+                    resetEditTextStyle(editFoodSummary)
                 }
             }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -311,6 +539,18 @@ class AddRecipeActivity : AppCompatActivity() {
                 if (!s.isNullOrBlank()) {
                     hideError(errorIngredients)
                     resetEditTextStyle(editIngredients)
+                }
+            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        })
+
+        // 레시피 설명 텍스트 변경 감지
+        editRecipeInstructions.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                if (!s.isNullOrBlank()) {
+                    hideError(errorRecipeInstructions)
+                    resetEditTextStyle(editRecipeInstructions)
                 }
             }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -342,6 +582,12 @@ class AddRecipeActivity : AppCompatActivity() {
     private fun validateForm(): Boolean {
         var isValid = true
 
+        // 사진 검증 (선택사항이지만 필요시 활성화)
+        // if (selectedImageUri == null) {
+        //     showError(errorPhoto, "음식 사진을 등록해주세요.")
+        //     isValid = false
+        // }
+
         // 레시피 이름 검증
         if (editRecipeName.text.toString().trim().isEmpty()) {
             showError(errorRecipeName, "레시피 이름을 입력해주세요.")
@@ -349,10 +595,16 @@ class AddRecipeActivity : AppCompatActivity() {
             isValid = false
         }
 
-        // 레시피 설명 검증
-        if (editRecipeDescription.text.toString().trim().isEmpty()) {
-            showError(errorRecipeDescription, "레시피 설명을 입력해주세요.")
-            setEditTextError(editRecipeDescription)
+        // 카테고리 검증
+        if (spinnerCategory.selectedItemPosition == 0) {
+            showError(errorCategory, "카테고리를 선택해주세요.")
+            isValid = false
+        }
+
+        // 음식 설명 검증
+        if (editFoodSummary.text.toString().trim().isEmpty()) {
+            showError(errorFoodSummary, "음식 설명을 입력해주세요.")
+            setEditTextError(editFoodSummary)
             isValid = false
         }
 
@@ -360,6 +612,13 @@ class AddRecipeActivity : AppCompatActivity() {
         if (editIngredients.text.toString().trim().isEmpty()) {
             showError(errorIngredients, "필요한 재료를 입력해주세요.")
             setEditTextError(editIngredients)
+            isValid = false
+        }
+
+        // 레시피 설명 검증
+        if (editRecipeInstructions.text.toString().trim().isEmpty()) {
+            showError(errorRecipeInstructions, "레시피 설명을 입력해주세요.")
+            setEditTextError(editRecipeInstructions)
             isValid = false
         }
 
@@ -393,37 +652,180 @@ class AddRecipeActivity : AppCompatActivity() {
     }
 
     private fun registerRecipe() {
-        // 레시피 데이터 수집
-        val recipeData = RecipeData(
+        // 버튼 비활성화 (중복 클릭 방지)
+        btnRegisterRecipe.isEnabled = false
+        btnRegisterRecipe.text = "등록 중..."
+
+        // 카테고리 변환
+        val categoryText = when (spinnerCategory.selectedItemPosition) {
+            1 -> "한식"
+            2 -> "양식"
+            3 -> "일식"
+            4 -> "중식"
+            5 -> "아시아"
+            6 -> "디저트"
+            else -> "한식" // 기본값
+        }
+
+        // 난이도 레벨 변환
+        val difficultyLevel = when (spinnerDifficulty.selectedItemPosition) {
+            1 -> "쉬움"
+            2 -> "보통"
+            3 -> "어려움"
+            4 -> "매우 어려움"
+            else -> "보통"
+        }
+
+        // 알레르기 정보를 문자열로 변환
+        val allergiesString = if (selectedAllergies.contains("none")) {
+            "없음"
+        } else {
+            selectedAllergies.joinToString(", ") { key ->
+                allergyOptions.find { it.first == key }?.second ?: key
+            }
+        }
+
+        // 질병 정보를 문자열로 변환
+        val diseaseString = if (selectedDiseases.contains("normal")) {
+            "일반 건강식"
+        } else {
+            selectedDiseases.joinToString(", ") { key ->
+                diseaseOptions.find { it.first == key }?.second ?: key
+            }
+        }
+
+        // 질병 이유 생성 (선택된 질병에 따라)
+        val diseaseReason = if (selectedDiseases.contains("normal")) {
+            "일반적인 건강한 식단을 위한 레시피입니다."
+        } else {
+            "해당 질병을 가진 분들의 건강 관리에 도움이 되는 레시피입니다."
+        }
+
+        // API 요청 객체 생성 (새로운 필드 순서)
+        val request = RecipeCreateRequest(
             name = editRecipeName.text.toString().trim(),
-            description = editRecipeDescription.text.toString().trim(),
+            summary = editFoodSummary.text.toString().trim(),  // 음식 설명
             ingredients = editIngredients.text.toString().trim(),
-            cookingTime = editCookingTime.text.toString().toInt(),
-            difficulty = spinnerDifficulty.selectedItemPosition,
-            allergies = selectedAllergies.toList(),
-            diseases = selectedDiseases.toList()
+            instructions = editRecipeInstructions.text.toString().trim(),  // 레시피 설명
+            timetaken = "${editCookingTime.text}분",
+            difficultylevel = difficultyLevel,
+            allergies = allergiesString,
+            disease = diseaseString,
+            diseasereason = diseaseReason,
+            category = categoryText  // 선택된 카테고리
         )
 
-        // TODO: 데이터베이스에 저장하는 로직 구현
-        // 예: RecipeRepository.insertRecipe(recipeData)
+        // 🔍 디버깅: 요청 데이터 로깅
+        Log.d("AddRecipe", "=== 레시피 등록 요청 ===")
+        Log.d("AddRecipe", "name: ${request.name}")
+        Log.d("AddRecipe", "summary: ${request.summary}")
+        Log.d("AddRecipe", "ingredients: ${request.ingredients}")
+        Log.d("AddRecipe", "instructions: ${request.instructions}")
+        Log.d("AddRecipe", "timetaken: ${request.timetaken}")
+        Log.d("AddRecipe", "difficultylevel: ${request.difficultylevel}")
+        Log.d("AddRecipe", "allergies: ${request.allergies}")
+        Log.d("AddRecipe", "disease: ${request.disease}")
+        Log.d("AddRecipe", "diseasereason: ${request.diseasereason}")
+        Log.d("AddRecipe", "category: ${request.category}")
+        Log.d("AddRecipe", "selectedImageUri: $selectedImageUri")
+        Log.d("AddRecipe", "========================")
 
-        // 임시로 로그 출력
-        println("레시피 등록 데이터: $recipeData")
+        // API 호출
+        RetrofitClient.recipeApiService.createRecipe(request).enqueue(object : Callback<RecipeCreateResponse> {
+            override fun onResponse(
+                call: Call<RecipeCreateResponse>,
+                response: Response<RecipeCreateResponse>
+            ) {
+                // 버튼 다시 활성화
+                btnRegisterRecipe.isEnabled = true
+                btnRegisterRecipe.text = "레시피 등록"
 
-        // 성공 메시지 표시
-        Toast.makeText(this, "레시피가 성공적으로 등록되었습니다!", Toast.LENGTH_LONG).show()
+                // 🔍 디버깅: 응답 상태 로깅
+                Log.d("AddRecipe", "=== 서버 응답 ===")
+                Log.d("AddRecipe", "HTTP 코드: ${response.code()}")
+                Log.d("AddRecipe", "응답 성공여부: ${response.isSuccessful}")
+                Log.d("AddRecipe", "응답 메시지: ${response.message()}")
 
-        // 폼 초기화 또는 액티비티 종료
-        clearForm()
-        // 또는 finish()
+                if (response.isSuccessful) {
+                    val result = response.body()
+                    Log.d("AddRecipe", "응답 body: $result")
+                    Log.d("AddRecipe", "result.success: ${result?.success}")
+                    Log.d("AddRecipe", "result.message: ${result?.message}")
+                    Log.d("AddRecipe", "result.recipeId: ${result?.recipeId}")
+
+                    if (result?.success == true) {
+                        // 성공 처리
+                        Toast.makeText(
+                            this@AddRecipeActivity,
+                            "레시피가 성공적으로 등록되었습니다! (ID: ${result.recipeId})",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        Log.d("AddRecipe", "✅ 레시피 등록 성공: ID = ${result.recipeId}")
+
+                        // 폼 초기화
+                        clearForm()
+                    } else {
+                        // 서버에서 실패 응답
+                        Log.e("AddRecipe", "❌ 서버에서 실패 응답")
+                        Toast.makeText(
+                            this@AddRecipeActivity,
+                            "레시피 등록 실패: ${result?.message ?: "알 수 없는 오류"}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                } else {
+                    // HTTP 오류
+                    Log.e("AddRecipe", "❌ HTTP 오류: ${response.code()}")
+
+                    // 응답 본문도 확인
+                    try {
+                        val errorBody = response.errorBody()?.string()
+                        Log.e("AddRecipe", "에러 응답 본문: $errorBody")
+                    } catch (e: Exception) {
+                        Log.e("AddRecipe", "에러 응답 본문 읽기 실패: $e")
+                    }
+
+                    Toast.makeText(
+                        this@AddRecipeActivity,
+                        "서버 오류가 발생했습니다. (코드: ${response.code()})",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                Log.d("AddRecipe", "==================")
+            }
+
+            override fun onFailure(call: Call<RecipeCreateResponse>, t: Throwable) {
+                // 버튼 다시 활성화
+                btnRegisterRecipe.isEnabled = true
+                btnRegisterRecipe.text = "레시피 등록"
+
+                // 🔍 디버깅: 네트워크 오류 상세 로깅
+                Log.e("AddRecipe", "❌ 네트워크 오류 발생", t)
+                Log.e("AddRecipe", "오류 메시지: ${t.message}")
+                Log.e("AddRecipe", "오류 타입: ${t.javaClass.simpleName}")
+
+                // 네트워크 오류 처리
+                Toast.makeText(
+                    this@AddRecipeActivity,
+                    "네트워크 오류: ${t.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        })
     }
 
     private fun clearForm() {
         editRecipeName.text.clear()
-        editRecipeDescription.text.clear()
+        spinnerCategory.setSelection(0)
+        editFoodSummary.text.clear()
         editIngredients.text.clear()
+        editRecipeInstructions.text.clear()
         editCookingTime.text.clear()
         spinnerDifficulty.setSelection(0)
+
+        // 선택된 이미지 제거
+        removeSelectedImage()
 
         // 모든 체크박스 해제
         for (i in 0 until allergyCheckboxGrid.childCount) {
@@ -454,12 +856,15 @@ class AddRecipeActivity : AppCompatActivity() {
 
     private fun hideAllErrors() {
         errorRecipeName.visibility = View.GONE
-        errorRecipeDescription.visibility = View.GONE
+        errorCategory.visibility = View.GONE
+        errorFoodSummary.visibility = View.GONE
         errorIngredients.visibility = View.GONE
+        errorRecipeInstructions.visibility = View.GONE
         errorCookingTime.visibility = View.GONE
         errorDifficulty.visibility = View.GONE
         errorAllergies.visibility = View.GONE
         errorDiseases.visibility = View.GONE
+        errorPhoto.visibility = View.GONE
     }
 
     private fun setEditTextError(editText: EditText) {
@@ -479,15 +884,4 @@ class AddRecipeActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-
-    // 데이터 클래스
-    data class RecipeData(
-        val name: String,
-        val description: String,
-        val ingredients: String,
-        val cookingTime: Int,
-        val difficulty: Int,
-        val allergies: List<String>,
-        val diseases: List<String>
-    )
 }

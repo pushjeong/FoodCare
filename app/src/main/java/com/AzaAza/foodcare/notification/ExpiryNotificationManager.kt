@@ -4,14 +4,11 @@ import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
-import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
@@ -28,7 +25,6 @@ import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.random.Random
-import android.Manifest
 
 class ExpiryNotificationManager {
 
@@ -36,27 +32,33 @@ class ExpiryNotificationManager {
         private const val CHANNEL_ID = "expiry_notification_channel"
         private const val NOTIFICATION_ID = 1001
         private const val TAG = "ExpiryNotification"
-       // private const val INVITE_CHANNEL_ID = "invite_notification_channel"
 
-        private val notificationTexts = listOf(
-            // 기본형 (직관적이고 명확한 표현)
+        // 새로 추가할 문구 리스트들
+        private val overdueTexts = listOf(
+            "🚨 [식자재명]의 소비기한이 지나버렸어요! 바로 확인해주세요.",
+            "⚰️ [식자재명]이(가) 냉장고에서 잠들었어요... 이제 보내줄 시간이에요.",
+            "📦 [식자재명], 소비기한이 [지난 일수]일 지났습니다. 폐기 여부를 확인해주세요.",
+            "🥶 [식자재명]이(가) 꽤 오래된 것 같아요. 다시 사용할 수 있을지 꼭 점검해보세요!",
+            "🗑️ [식자재명]의 소비기한이 지났어요. 정리를 고려해보시는 건 어떨까요?",
+            "👃 [식자재명]... 혹시 냄새가 이상하진 않나요? 소비기한이 지났습니다!",
+            "⛔ [식자재명]의 소비기한 초과! 건강을 위해 섭취 전 꼭 확인해주세요.",
+            "😵 [식자재명]이(가) 냉장고에서 구조 요청을 보내고 있어요. 소비기한 확인!",
+            "🧊 [식자재명], 시간이 멈춘 줄 알았지만... 이미 소비기한이 지났어요!"
+        )
+
+        private val nearExpiryTexts = listOf(
             "⚠️ [식자재명]의 소비기한이 곧 도래합니다. 신속히 사용해주세요!",
             "⏰ [식자재명]의 소비기한이 [남은 일수]일 남았습니다. 빠른 소비를 권장합니다.",
-            "📅 [식자재명]의 소비기한이 오늘입니다. 즉시 사용하시기 바랍니다.",
-
-            // 친근하고 유쾌한 표현
             "🍽️ [식자재명], 이제 곧 작별 인사를 할 시간이에요. 오늘의 요리에 활용해보세요!",
-            "👀 [식자재명]이(가) 냉장고에서 주목을 기다리고 있어요. 소비기한이 임박했답니다!",
-            "🥦 [식자재명]이(가) 신선함을 유지하고 있어요. 소비기한 전에 맛있게 즐겨보세요!",
-
-            // 요리 제안 포함
             "👩‍🍳 [식자재명]의 소비기한이 임박했습니다. 오늘은 맛있는 요리를 만들어보는 건 어떨까요?",
             "🍳 [식자재명]을(를) 활용한 맛있는 요리로 오늘의 식사를 준비해보세요. 소비기한이 가까워지고 있어요!"
         )
 
+        private const val todayText = "📅 [식자재명]의 소비기한이 오늘입니다. 즉시 사용하시기 바랍니다."
+
+
         // 알림 채널 생성 함수
         fun createNotificationChannel(context: Context) {
-            // Android 8.0 (Oreo) 이상에서는 채널 생성이 필요합니다
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val name = "식자재 소비기한 알림"
                 val descriptionText = "식자재의 소비기한이 임박했을 때 알림을 표시합니다"
@@ -66,9 +68,9 @@ class ExpiryNotificationManager {
                     enableLights(true)
                     lightColor = Color.RED
                     enableVibration(true)
+                    setShowBadge(true)
                 }
 
-                // 시스템에 채널 등록
                 val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 notificationManager.createNotificationChannel(channel)
 
@@ -87,7 +89,6 @@ class ExpiryNotificationManager {
                     context.startActivity(intent)
                 } catch (e: Exception) {
                     Log.e(TAG, "배터리 최적화 예외 설정 화면 열기 실패", e)
-                    // 일반 배터리 사용량 화면으로 대체
                     try {
                         val settingsIntent = Intent(Settings.ACTION_BATTERY_SAVER_SETTINGS)
                         context.startActivity(settingsIntent)
@@ -99,21 +100,32 @@ class ExpiryNotificationManager {
             }
         }
 
-        // 알림 일정 예약 함수
+        // 알림 일정 예약 함수 (개선됨)
         fun scheduleNotifications(context: Context) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-            // 알림 시간 설정 (오전 7시, 오전 11시, 오후 3시 20분, 오후 5시)
+            // 정확한 알람 권한 확인 (Android 12 이상)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (!alarmManager.canScheduleExactAlarms()) {
+                    Log.w(TAG, "정확한 알람 권한이 없습니다.")
+                    requestExactAlarmPermission(context)
+                    return
+                }
+            }
+
+            // 알림 시간 설정 (5:29 PM 포함)
             val notificationTimes = listOf(
-                Pair(7, 0),    // 오전 7시 00분
-                Pair(8, 0),    // 오전 8시 00분
-                Pair(11, 0),   // 오전 11시 00분
-                Pair(17, 0),  // 오후 4시 00분
-                Pair(18, 0)    // 오후 5시 00분
+                Pair(7, 0),    // 오전 7시
+                Pair(8, 0),    // 오전 8시
+                Pair(11, 0),   // 오전 11시
+                Pair(18, 0),   // 오후 6시
+                Pair(19, 0)    // 오후 7시
             )
 
-            // 현재 시간
-            val now = System.currentTimeMillis()
+            // 기존 알람 취소
+            cancelAllAlarms(context)
+
+            Log.d(TAG, "알림 예약을 시작합니다...")
 
             notificationTimes.forEachIndexed { index, (hour, minute) ->
                 val intent = Intent(context, ExpiryNotificationReceiver::class.java)
@@ -124,6 +136,9 @@ class ExpiryNotificationManager {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
 
+                // 현재 시간
+                val now = System.currentTimeMillis()
+
                 // 지정된 시간으로 Calendar 설정
                 val calendar = Calendar.getInstance().apply {
                     set(Calendar.HOUR_OF_DAY, hour)
@@ -132,108 +147,140 @@ class ExpiryNotificationManager {
                     set(Calendar.MILLISECOND, 0)
 
                     // 이미 지난 시간이면 다음 날로 설정
-                    if (timeInMillis < now) {
+                    if (timeInMillis <= now) {
                         add(Calendar.DAY_OF_YEAR, 1)
                     }
                 }
 
-                // Android M(마시멜로) 이상에서는 Doze 모드를 고려한 알림 설정
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    // 정확한 알람 권한 확인 (Android S 이상)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        if (alarmManager.canScheduleExactAlarms()) {
-                            alarmManager.setExactAndAllowWhileIdle(
-                                AlarmManager.RTC_WAKEUP,
-                                calendar.timeInMillis,
-                                pendingIntent
-                            )
-                            // 다음 날 같은 시간에도 알림이 울리도록 별도 설정 필요
-                            setNextDayAlarm(context, index, hour, minute)
-                        } else {
-                            Log.w(TAG, "정확한 알람 권한이 없습니다. 설정에서 권한을 허용해 주세요.")
-                            // 사용자에게 권한 설정 화면으로 이동 안내
-
-                            // 정확한 알람 권한 설정 화면으로 이동
-                            try {
-                                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-                                intent.data = Uri.parse("package:${context.packageName}")
-                                context.startActivity(intent)
-                            } catch (e: Exception) {
-                                Log.e(TAG, "정확한 알람 권한 설정 화면 열기 실패", e)
-                            }
-                        }
-                    } else {
-                        // Android S 미만에서는 권한 확인 없이 설정 가능
+                try {
+                    // Android M 이상에서는 doze 모드 대응
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         alarmManager.setExactAndAllowWhileIdle(
                             AlarmManager.RTC_WAKEUP,
                             calendar.timeInMillis,
                             pendingIntent
                         )
-                        // 다음 날 같은 시간에도 알림이 울리도록 별도 설정 필요
-                        setNextDayAlarm(context, index, hour, minute)
-                    }
-                } else {
-                    // 안드로이드 M 미만에서는 setRepeating 사용
-                    alarmManager.setRepeating(
-                        AlarmManager.RTC_WAKEUP,
-                        calendar.timeInMillis,
-                        AlarmManager.INTERVAL_DAY,
-                        pendingIntent
-                    )
-                }
 
-                Log.d(TAG, "알림이 예약되었습니다: ${hour}시 ${minute}분, 다음 알림 시간: ${calendar.time}")
+                        // 다음 날부터 반복을 위한 추가 알람 설정
+                        scheduleRepeatingAlarm(context, alarmManager, hour, minute, index + 100)
+
+                    } else {
+                        alarmManager.setRepeating(
+                            AlarmManager.RTC_WAKEUP,
+                            calendar.timeInMillis,
+                            AlarmManager.INTERVAL_DAY,
+                            pendingIntent
+                        )
+                    }
+
+                    Log.d(TAG, "알림이 예약되었습니다: ${hour}시 ${minute}분, 다음 알림: ${calendar.time}")
+                } catch (e: Exception) {
+                    Log.e(TAG, "알림 예약 실패: ${hour}시 ${minute}분", e)
+                }
             }
+
+            Log.d(TAG, "모든 알림 예약이 완료되었습니다.")
         }
 
-        // 매일 알림이 울리도록 다음 날 알림도 예약
-        private fun setNextDayAlarm(context: Context, requestCode: Int, hour: Int, minute: Int) {
-            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        // 반복 알람을 위한 별도 함수
+        private fun scheduleRepeatingAlarm(context: Context, alarmManager: AlarmManager, hour: Int, minute: Int, requestCode: Int) {
             val intent = Intent(context, ExpiryNotificationReceiver::class.java)
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
-                requestCode + 100, // 기존 requestCode와 겹치지 않도록 100 추가
+                requestCode,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            // 다음 날 같은 시간으로 설정
-            val calendar = Calendar.getInstance().apply {
+            // 내일부터 시작하는 반복 알람
+            val tomorrowCalendar = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_YEAR, 1)
                 set(Calendar.HOUR_OF_DAY, hour)
                 set(Calendar.MINUTE, minute)
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
-                add(Calendar.DAY_OF_YEAR, 1) // 다음 날
             }
 
-            // 정확한 알람 설정
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                // 매일 같은 시간에 반복 실행을 위한 체인 방식
                 alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
-                    calendar.timeInMillis,
+                    tomorrowCalendar.timeInMillis,
                     pendingIntent
                 )
-            } else {
-                alarmManager.setExact(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.timeInMillis,
-                    pendingIntent
+            }
+        }
+
+
+        // 기존 알람 취소
+        private fun cancelAllAlarms(context: Context) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+            // 모든 알람 ID 취소 (0-4, 100-104, 9999)
+            for (i in 0 until 5) {
+                val intent = Intent(context, ExpiryNotificationReceiver::class.java)
+
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context, i, intent, PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
                 )
+                val repeatingPendingIntent = PendingIntent.getBroadcast(
+                    context, i + 100, intent, PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+                )
+
+                pendingIntent?.let {
+                    alarmManager.cancel(it)
+                    it.cancel()
+                }
+                repeatingPendingIntent?.let {
+                    alarmManager.cancel(it)
+                    it.cancel()
+                }
+            }
+
+            // 테스트 알림도 취소
+            val testIntent = Intent(context, ExpiryNotificationReceiver::class.java)
+            val testPendingIntent = PendingIntent.getBroadcast(
+                context, 9999, testIntent, PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+            )
+            testPendingIntent?.let {
+                alarmManager.cancel(it)
+                it.cancel()
+            }
+
+            Log.d(TAG, "기존 알람들이 취소되었습니다.")
+        }
+
+        // 정확한 알람 권한 요청
+        private fun requestExactAlarmPermission(context: Context) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                try {
+                    val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                        data = Uri.parse("package:${context.packageName}")
+                    }
+                    context.startActivity(intent)
+                } catch (e: Exception) {
+                    Log.e(TAG, "정확한 알람 권한 설정 화면 열기 실패", e)
+                }
             }
         }
 
         // 즉시 소비기한 알림 표시 함수 (테스트용)
         fun showExpiryNotificationNow(context: Context) {
+            Log.d(TAG, "즉시 알림 테스트 실행")
             checkExpiringIngredients(context)
         }
 
-        // 소비기한 임박 식자재 확인 및 알림 표시 (public으로 변경)
+        // 소비기한 임박 식자재 확인 및 알림 표시
         fun checkExpiringIngredients(context: Context) {
+            Log.d(TAG, "소비기한 확인을 시작합니다...")
+
             // 서버에서 식자재 데이터 가져오기
             RetrofitClient.ingredientApiService.getIngredients().enqueue(object : Callback<List<IngredientDto>> {
                 override fun onResponse(call: Call<List<IngredientDto>>, response: Response<List<IngredientDto>>) {
                     if (response.isSuccessful) {
                         val ingredients = response.body()
+                        Log.d(TAG, "서버에서 ${ingredients?.size ?: 0}개의 식자재 데이터를 받았습니다.")
+
                         if (ingredients != null && ingredients.isNotEmpty()) {
                             processIngredients(context, ingredients)
                         } else {
@@ -267,7 +314,7 @@ class ExpiryNotificationManager {
                 try {
                     val expiryDate = apiDateFormat.parse(ingredient.expiryDate) ?: return@filter false
                     val diffDays = ((expiryDate.time - today.time) / (1000 * 60 * 60 * 24)).toInt()
-                    diffDays in 0..3 // 오늘 포함 3일 이내
+                    diffDays <= 3 // ✅ 소비기한이 '지났거나 3일 이내'까지 모두 포함
                 } catch (e: Exception) {
                     Log.e(TAG, "날짜 파싱 오류", e)
                     false
@@ -281,6 +328,8 @@ class ExpiryNotificationManager {
                 }
             }
 
+            Log.d(TAG, "소비기한이 임박한 식자재: ${nearExpiryIngredients.size}개")
+
             if (nearExpiryIngredients.isNotEmpty()) {
                 // 가장 임박한 식자재 또는 여러 식자재에 대한 알림 표시
                 showNotification(context, nearExpiryIngredients)
@@ -289,9 +338,11 @@ class ExpiryNotificationManager {
             }
         }
 
-        // 알림 표시 함수
+        // 알림 표시 함수 (개선됨)
         private fun showNotification(context: Context, nearExpiryIngredients: List<IngredientDto>) {
-            // 알림을 클릭했을 때 실행될 Intent 설정 (FoodManagementActivity로 이동)
+            Log.d(TAG, "알림을 표시합니다: ${nearExpiryIngredients.size}개 식자재")
+
+            // 알림을 클릭했을 때 실행될 Intent 설정
             val intent = Intent(context, FoodManagementActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
@@ -318,22 +369,22 @@ class ExpiryNotificationManager {
             val expiryDate = apiDateFormat.parse(firstIngredient.expiryDate) ?: today
             val diffDays = ((expiryDate.time - today.time) / (1000 * 60 * 60 * 24)).toInt()
 
-            // 랜덤 알림 텍스트 선택 (0일인 경우 특정 문구 제외)
-            val availableTexts = if (diffDays == 0) {
-                // 남은 일수가 0일인 경우 "[남은 일수]일 남았습니다" 형태의 문구는 제외
-                notificationTexts.filterNot { it.contains("[남은 일수]일 남았습니다") }
-            } else {
-                notificationTexts
+            val notificationText = when {
+                diffDays < 0 -> {
+                    overdueTexts.random()
+                        .replace("[식자재명]", firstIngredient.name)
+                        .replace("[지난 일수]", (-diffDays).toString())
+                }
+                diffDays == 0 -> {
+                    todayText.replace("[식자재명]", firstIngredient.name)
+                }
+                else -> {
+                    nearExpiryTexts.random()
+                        .replace("[식자재명]", firstIngredient.name)
+                        .replace("[남은 일수]", diffDays.toString())
+                }
             }
 
-            val randomTextIndex = Random.nextInt(availableTexts.size)
-            var notificationText = availableTexts[randomTextIndex]
-
-            // 알림 텍스트 가공
-            notificationText = notificationText.replace("[식자재명]", firstIngredient.name)
-            if (notificationText.contains("[남은 일수]")) {
-                notificationText = notificationText.replace("[남은 일수]", diffDays.toString())
-            }
 
             // 여러 식자재가 임박한 경우 알림 제목 조정
             val notificationTitle = if (nearExpiryIngredients.size > 1) {
@@ -342,22 +393,25 @@ class ExpiryNotificationManager {
                 "${firstIngredient.name}의 소비기한이 임박했습니다"
             }
 
-            // 알림 빌더 설정
+            // 알림 빌더 설정 (중요도 최대)
             val builder = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.bell)
                 .setContentTitle(notificationTitle)
                 .setContentText(notificationText)
                 .setColor(ContextCompat.getColor(context, R.color.your_background_color))
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_MAX) // 최대 우선순위
+                .setDefaults(NotificationCompat.DEFAULT_ALL) // 소리, 진동, LED 모두 활성화
                 .setContentIntent(pendingIntent)
-                .setAutoCancel(true) // 알림 클릭 시 자동 제거
+                .setAutoCancel(true)
+                .setOngoing(false)
+                .setShowWhen(true)
+                .setWhen(System.currentTimeMillis())
 
             // 여러 식자재가 있는 경우 확장 스타일 적용
             if (nearExpiryIngredients.size > 1) {
                 val inboxStyle = NotificationCompat.InboxStyle()
                     .setBigContentTitle("${nearExpiryIngredients.size}개 식자재의 소비기한이 임박했습니다")
 
-                // 최대 5개 식자재만 표시
                 nearExpiryIngredients.take(5).forEach { ingredient ->
                     try {
                         val expDate = apiDateFormat.parse(ingredient.expiryDate) ?: today
@@ -375,66 +429,11 @@ class ExpiryNotificationManager {
             with(NotificationManagerCompat.from(context)) {
                 try {
                     notify(NOTIFICATION_ID, builder.build())
-                    Log.d(TAG, "알림이 표시되었습니다: $notificationTitle")
+                    Log.d(TAG, "알림이 성공적으로 표시되었습니다: $notificationTitle")
                 } catch (e: SecurityException) {
                     Log.e(TAG, "알림 권한이 없습니다", e)
                 }
             }
-        }
-
-        /*
-        fun showInviteNotification(context: Context, inviterName: String) {
-            // 1. 채널 생성(최초 1회)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channelName = "구성원 초대 알림"
-                val descriptionText = "다른 사용자가 나를 구성원으로 초대했을 때 알림"
-                val importance = NotificationManager.IMPORTANCE_HIGH
-                val channel = NotificationChannel(INVITE_CHANNEL_ID, channelName, importance)
-                channel.description = descriptionText
-                val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                notificationManager.createNotificationChannel(channel)
-            }
-
-            // 2. 알림 빌드
-            val builder = NotificationCompat.Builder(context, INVITE_CHANNEL_ID)
-                .setSmallIcon(R.drawable.bell)
-                .setContentTitle("구성원 초대 알림")
-                .setContentText("$inviterName 님이 당신을 구성원으로 추가하셨습니다") // ⭐ 변수와 한글 띄어쓰기!
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
-
-            // 3. 권한 체크 후 알림 표시
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
-                == PackageManager.PERMISSION_GRANTED
-            ) {
-                with(NotificationManagerCompat.from(context)) {
-                    notify(Random.nextInt(), builder.build())
-                }
-            } else {
-                Log.e("Notification", "알림 권한이 없어 알림을 표시하지 못함")
-            }
-        }
-
-*/
-
-
-    }
-
-
-
-
-}
-
-// BroadcastReceiver - 알림 시간에 자동으로 호출됨
-class ExpiryNotificationReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        // 소비기한 알림 확인 및 표시
-        ExpiryNotificationManager.checkExpiringIngredients(context)
-
-        // 테스트 알림 로그
-        if (intent.getBooleanExtra("ONE_TIME_TEST", false)) {
-            Log.d("ExpiryNotification", "일회성 테스트 알림이 실행되었습니다")
         }
     }
 }

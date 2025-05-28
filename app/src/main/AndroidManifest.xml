@@ -97,14 +97,13 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- 알림 관련 BroadcastReceiver 추가 -->
         <receiver
             android:name=".notification.ExpiryNotificationReceiver"
-            android:exported="false" />
+            android:exported="true" />
 
-        <receiver
-            android:name=".notification.BootCompletedReceiver"
-            android:exported="false">
+        <!-- 부팅 후 알림 재등록 리시버 -->
+        <receiver android:name=".notification.BootCompletedReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>

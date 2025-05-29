@@ -23,6 +23,10 @@ import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.api.RetrofitClient
 import com.AzaAza.foodcare.models.RecipeCreateRequest
 import com.AzaAza.foodcare.models.RecipeCreateResponse
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -730,6 +734,21 @@ class AddRecipeActivity : AppCompatActivity() {
         Log.d("AddRecipe", "selectedImageUri: $selectedImageUri")
         Log.d("AddRecipe", "========================")
 
+        // (1) 사진이 없는 경우: 기존 방식 그대로
+        if (selectedImageUri == null || currentPhotoPath.isEmpty()) {
+            val request = RecipeCreateRequest(
+                name = editRecipeName.text.toString().trim(),
+                summary = editFoodSummary.text.toString().trim(),
+                ingredients = editIngredients.text.toString().trim(),
+                instructions = editRecipeInstructions.text.toString().trim(),
+                timetaken = "${editCookingTime.text}분",
+                difficultylevel = difficultyLevel,
+                allergies = allergiesString,
+                disease = diseaseString,
+                diseasereason = diseaseReason,
+                category = categoryText
+            )
+
         // API 호출
         RetrofitClient.recipeApiService.createRecipe(request).enqueue(object : Callback<RecipeCreateResponse> {
             override fun onResponse(
@@ -813,6 +832,75 @@ class AddRecipeActivity : AppCompatActivity() {
                 ).show()
             }
         })
+        return
+    }
+        // (2) 사진이 있는 경우: 멀티파트 방식 추가!
+        val namePart = editRecipeName.text.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+        val summaryPart = editFoodSummary.text.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+        val ingredientsPart = editIngredients.text.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+        val instructionsPart = editRecipeInstructions.text.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+        val timetakenPart = ("${editCookingTime.text}분").toRequestBody("text/plain".toMediaTypeOrNull())
+        val difficultylevelPart = difficultyLevel.toRequestBody("text/plain".toMediaTypeOrNull())
+        val allergiesPart = allergiesString.toRequestBody("text/plain".toMediaTypeOrNull())
+        val diseasePart = diseaseString.toRequestBody("text/plain".toMediaTypeOrNull())
+        val diseasereasonPart = diseaseReason.toRequestBody("text/plain".toMediaTypeOrNull())
+        val categoryPart = categoryText.toRequestBody("text/plain".toMediaTypeOrNull())
+
+        var imagePart: MultipartBody.Part? = null
+        selectedImageUri?.let { uri ->
+            val file = File(currentPhotoPath)
+            val reqFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+            imagePart = MultipartBody.Part.createFormData("image", file.name, reqFile)
+        }
+
+        RetrofitClient.recipeApiService.addRecipeWithImage(
+            namePart, summaryPart, ingredientsPart, instructionsPart, timetakenPart,
+            difficultylevelPart, allergiesPart, diseasePart, diseasereasonPart, categoryPart, imagePart
+        ).enqueue(object : Callback<RecipeCreateResponse> {
+            override fun onResponse(
+                call: Call<RecipeCreateResponse>,
+                response: Response<RecipeCreateResponse>
+            ) {
+                btnRegisterRecipe.isEnabled = true
+                btnRegisterRecipe.text = "레시피 등록"
+
+                if (response.isSuccessful) {
+                    val result = response.body()
+                    if (result?.success == true) {
+                        Toast.makeText(
+                            this@AddRecipeActivity,
+                            "레시피가 성공적으로 등록되었습니다! (ID: ${result.recipeId})",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        // 폼 초기화 등 후처리
+                        clearForm()
+                    } else {
+                        Toast.makeText(
+                            this@AddRecipeActivity,
+                            "레시피 등록 실패: ${result?.message ?: "알 수 없는 오류"}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                } else {
+                    Toast.makeText(
+                        this@AddRecipeActivity,
+                        "서버 오류가 발생했습니다. (코드: ${response.code()})",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+
+            override fun onFailure(call: Call<RecipeCreateResponse>, t: Throwable) {
+                btnRegisterRecipe.isEnabled = true
+                btnRegisterRecipe.text = "레시피 등록"
+                Toast.makeText(
+                    this@AddRecipeActivity,
+                    "네트워크 오류: ${t.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        })
+
     }
 
     private fun clearForm() {

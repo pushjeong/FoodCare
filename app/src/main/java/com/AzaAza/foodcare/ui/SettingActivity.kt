@@ -22,14 +22,16 @@ class SettingActivity : AppCompatActivity() {
 
         // 로그아웃
         findViewById<View>(R.id.logoutBar).setOnClickListener {
-            val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-            prefs.edit().clear().apply()
-            val intent = Intent(this, LoginActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
-            startActivity(intent)
-            finish()
+            AlertDialog.Builder(this)
+                .setTitle("로그아웃")
+                .setMessage("로그아웃 하시겠습니까?")
+                .setPositiveButton("예") { _, _ ->
+                    performLogout()  // 이미 분리된 함수 있음!
+                }
+                .setNegativeButton("아니오", null)
+                .show()
         }
+
 
         // 프로필 설정
         findViewById<View>(R.id.profileSettingBar).setOnClickListener {

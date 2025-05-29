@@ -78,7 +78,7 @@ data class RecipeDto(
             "양장피" -> R.drawable.dish_img_sheepskin
             "오리탕" -> R.drawable.dish_img_duck_soup
 
-            "LA양념갈비" -> R.drawable.dish_img_la_ribs
+            "LA 양념갈비" -> R.drawable.dish_img_la_ribs
             "감바스" -> R.drawable.dish_img_gambas
             "계란말이" -> R.drawable.dish_img_egg_rolled
             "계란볶음밥" -> R.drawable.dish_img_egg_fried_rice

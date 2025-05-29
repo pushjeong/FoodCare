@@ -30,6 +30,7 @@ import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.api.RetrofitClient
 import com.AzaAza.foodcare.models.IngredientDto
 import com.AzaAza.foodcare.models.IngredientResponse
+import com.AzaAza.foodcare.data.UserSession
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import okhttp3.MultipartBody
 import retrofit2.Call
@@ -73,6 +74,9 @@ class FoodManagementActivity : AppCompatActivity() {
     private val EXPIRY_ALERT_PREFIX = "expiry_alert_"
     private val LAST_ALERT_DATE = "last_alert_date"
 
+    // 현재 로그인한 사용자 ID
+    private var currentUserId: Int = -1
+
     data class Ingredient(
         val name: String,
         val location: String,
@@ -90,6 +94,16 @@ class FoodManagementActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_food_management)
+
+        // 현재 사용자 ID 가져오기
+        currentUserId = UserSession.getUserId(this)
+
+        // 로그인 상태 확인
+        if (currentUserId == -1 || !UserSession.isLoggedIn(this)) {
+            Toast.makeText(this, "로그인이 필요합니다.", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
 
         // SharedPreferences 초기화
         sharedPreferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -120,145 +134,150 @@ class FoodManagementActivity : AppCompatActivity() {
         backButton.setOnClickListener { onBackPressed() }
     }
 
-    // 서버에서 식자재 목록을 가져올 때 ID 매핑을 정확하게 처리
+    // 현재 사용자의 식자재만 서버에서 가져오기
     private fun fetchIngredientsFromServer() {
-        Log.d("FoodManagement", "서버에서 식자재 목록 가져오기 시작")
+        Log.d("FoodManagement", "사용자 $currentUserId 의 식자재 목록 가져오기 시작")
 
-        RetrofitClient.ingredientApiService.getIngredients().enqueue(object : Callback<List<IngredientDto>> {
-            override fun onResponse(call: Call<List<IngredientDto>>, response: Response<List<IngredientDto>>) {
-                if (response.isSuccessful) {
-                    val serverIngredients = response.body()
-                    Log.d("FoodManagement", "서버에서 ${serverIngredients?.size ?: 0}개 식자재 데이터 수신")
+        // 사용자별 식자재 조회 API 호출
+        RetrofitClient.ingredientApiService.getIngredients(currentUserId)
+            .enqueue(object : Callback<List<IngredientDto>> {
+                override fun onResponse(call: Call<List<IngredientDto>>, response: Response<List<IngredientDto>>) {
+                    if (response.isSuccessful) {
+                        val serverIngredients = response.body()
+                        Log.d("FoodManagement", "사용자 $currentUserId 의 ${serverIngredients?.size ?: 0}개 식자재 데이터 수신")
 
-                    if (serverIngredients != null) {
-                        ingredientsList.clear()
-                        ingredientIdMap.clear()
-                        container.removeAllViews()
-
-                        for (dto in serverIngredients) {
-                            try {
-                                val expiryDate = apiDateFormat.parse(dto.expiryDate) ?: Date()
-                                val purchaseDate = apiDateFormat.parse(dto.purchaseDate) ?: Date()
-
-                                val ingredient = Ingredient(
-                                    dto.name,
-                                    dto.location,
-                                    expiryDate,
-                                    purchaseDate,
-                                    null,
-                                    dto.imageUrl
-                                )
-
-                                ingredientIdMap[ingredient.getUniqueKey()] = dto.id
-                                ingredientsList.add(ingredient)
-
-                            } catch (e: Exception) {
-                                Log.e("FoodManagement", "데이터 파싱 오류", e)
-                            }
-                        }
-
-                        val today = Calendar.getInstance().apply {
-                            set(Calendar.HOUR_OF_DAY, 0)
-                            set(Calendar.MINUTE, 0)
-                            set(Calendar.SECOND, 0)
-                            set(Calendar.MILLISECOND, 0)
-                        }.time
-
-                        // 전체 리스트를 소비기한 기준으로 정렬 (오름차순)
-                        ingredientsList.sortBy { it.expiryDate }
-
-                        // 오늘 날짜 확인
-                        val todayStr = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(today)
-                        val lastAlertDate = sharedPreferences.getString(LAST_ALERT_DATE, "")
-
-                        // 소비기한이 지난 식재료 필터링
-                        val expiredIngredients = ingredientsList.filter {
-                            val calendar = Calendar.getInstance().apply {
-                                time = it.expiryDate
-                                set(Calendar.HOUR_OF_DAY, 0)
-                                set(Calendar.MINUTE, 0)
-                                set(Calendar.SECOND, 0)
-                                set(Calendar.MILLISECOND, 0)
-                            }
-                            calendar.time.before(today)
-                        }
-
-                        // 유효기간이 지나지 않은 식재료 필터링
-                        val validIngredients = ingredientsList.filter {
-                            val cal = Calendar.getInstance().apply {
-                                time = it.expiryDate
-                                set(Calendar.HOUR_OF_DAY, 0)
-                                set(Calendar.MINUTE, 0)
-                                set(Calendar.SECOND, 0)
-                                set(Calendar.MILLISECOND, 0)
-                            }
-                            !cal.time.before(today)
-                        }.toMutableList()
-
-                        // 마지막으로 알림을 표시한 날짜가 오늘이 아닐 경우에만 알림 표시
-                        if (lastAlertDate != todayStr) {
-                            // 유통기한 지난 항목 처리 (삭제/취소 분기)
-                            for (expired in expiredIngredients) {
-                                // 이 식자재에 대한 알림을 오늘 이미 보여줬는지 확인
-                                val uniqueKey = expired.getUniqueKey()
-
-                                android.app.AlertDialog.Builder(this@FoodManagementActivity)
-                                    .setTitle("식자재 자동 삭제")
-                                    .setMessage("${expired.name}의 소비기한이 지났습니다. 정말 삭제하시겠습니까?")
-                                    .setPositiveButton("삭제") { _, _ ->
-                                        val fakeCard = CardView(this@FoodManagementActivity)
-                                        deleteIngredient(expired, fakeCard)
-                                    }
-                                    .setNegativeButton("취소") { _, _ ->
-                                        // 취소한 항목도 표시 (전체 리스트에 추가)
-                                        // 만약 이미 삭제된 상태라면 다시 추가
-                                        if (!ingredientsList.contains(expired)) {
-                                            ingredientsList.add(expired)
-                                        }
-
-                                        // 소비기한 기준으로 전체 재정렬 (오름차순)
-                                        ingredientsList.sortBy { it.expiryDate }
-
-                                        // 컨테이너 초기화 후 모든 항목 다시 표시
-                                        container.removeAllViews()
-                                        ingredientsList.forEach { ingredient ->
-                                            addIngredientCard(ingredient)
-                                        }
-                                    }
-                                    .show()
-                            }
-
-                            // 알림을 표시한 날짜를 오늘로 저장
-                            sharedPreferences.edit().putString(LAST_ALERT_DATE, todayStr).apply()
-                        }
-
-                        // 모든 식자재 카드 표시 (만약 알림이 표시되지 않았을 경우)
-                        if (lastAlertDate == todayStr || expiredIngredients.isEmpty()) {
+                        if (serverIngredients != null) {
+                            ingredientsList.clear()
+                            ingredientIdMap.clear()
                             container.removeAllViews()
-                            ingredientsList.forEach { ingredient ->
-                                addIngredientCard(ingredient)
+
+                            // 서버에서 받은 데이터가 현재 사용자의 것인지 한번 더 확인 (보안)
+                            val userIngredients = serverIngredients.filter { it.userId == currentUserId }
+
+                            for (dto in userIngredients) {
+                                try {
+                                    val expiryDate = apiDateFormat.parse(dto.expiryDate) ?: Date()
+                                    val purchaseDate = apiDateFormat.parse(dto.purchaseDate) ?: Date()
+
+                                    val ingredient = Ingredient(
+                                        dto.name,
+                                        dto.location,
+                                        expiryDate,
+                                        purchaseDate,
+                                        null,
+                                        dto.imageUrl
+                                    )
+
+                                    ingredientIdMap[ingredient.getUniqueKey()] = dto.id
+                                    ingredientsList.add(ingredient)
+
+                                } catch (e: Exception) {
+                                    Log.e("FoodManagement", "데이터 파싱 오류", e)
+                                }
                             }
-                        } else {
-                            // 유효한 식자재만 먼저 표시 (알림이 표시되었을 경우 취소 처리 시 다시 전체가 그려짐)
-                            validIngredients.forEach {
-                                addIngredientCard(it)
+
+                            val today = Calendar.getInstance().apply {
+                                set(Calendar.HOUR_OF_DAY, 0)
+                                set(Calendar.MINUTE, 0)
+                                set(Calendar.SECOND, 0)
+                                set(Calendar.MILLISECOND, 0)
+                            }.time
+
+                            // 전체 리스트를 소비기한 기준으로 정렬 (오름차순)
+                            ingredientsList.sortBy { it.expiryDate }
+
+                            // 오늘 날짜 확인
+                            val todayStr = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(today)
+                            val lastAlertDate = sharedPreferences.getString(LAST_ALERT_DATE, "")
+
+                            // 소비기한이 지난 식재료 필터링
+                            val expiredIngredients = ingredientsList.filter {
+                                val calendar = Calendar.getInstance().apply {
+                                    time = it.expiryDate
+                                    set(Calendar.HOUR_OF_DAY, 0)
+                                    set(Calendar.MINUTE, 0)
+                                    set(Calendar.SECOND, 0)
+                                    set(Calendar.MILLISECOND, 0)
+                                }
+                                calendar.time.before(today)
                             }
+
+                            // 유효기간이 지나지 않은 식재료 필터링
+                            val validIngredients = ingredientsList.filter {
+                                val cal = Calendar.getInstance().apply {
+                                    time = it.expiryDate
+                                    set(Calendar.HOUR_OF_DAY, 0)
+                                    set(Calendar.MINUTE, 0)
+                                    set(Calendar.SECOND, 0)
+                                    set(Calendar.MILLISECOND, 0)
+                                }
+                                !cal.time.before(today)
+                            }.toMutableList()
+
+                            // 마지막으로 알림을 표시한 날짜가 오늘이 아닐 경우에만 알림 표시
+                            if (lastAlertDate != todayStr) {
+                                // 유통기한 지난 항목 처리 (삭제/취소 분기)
+                                for (expired in expiredIngredients) {
+                                    // 이 식자재에 대한 알림을 오늘 이미 보여줬는지 확인
+                                    val uniqueKey = expired.getUniqueKey()
+
+                                    android.app.AlertDialog.Builder(this@FoodManagementActivity)
+                                        .setTitle("식자재 자동 삭제")
+                                        .setMessage("${expired.name}의 소비기한이 지났습니다. 정말 삭제하시겠습니까?")
+                                        .setPositiveButton("삭제") { _, _ ->
+                                            val fakeCard = CardView(this@FoodManagementActivity)
+                                            deleteIngredient(expired, fakeCard)
+                                        }
+                                        .setNegativeButton("취소") { _, _ ->
+                                            // 취소한 항목도 표시 (전체 리스트에 추가)
+                                            // 만약 이미 삭제된 상태라면 다시 추가
+                                            if (!ingredientsList.contains(expired)) {
+                                                ingredientsList.add(expired)
+                                            }
+
+                                            // 소비기한 기준으로 전체 재정렬 (오름차순)
+                                            ingredientsList.sortBy { it.expiryDate }
+
+                                            // 컨테이너 초기화 후 모든 항목 다시 표시
+                                            container.removeAllViews()
+                                            ingredientsList.forEach { ingredient ->
+                                                addIngredientCard(ingredient)
+                                            }
+                                        }
+                                        .show()
+                                }
+
+                                // 알림을 표시한 날짜를 오늘로 저장
+                                sharedPreferences.edit().putString(LAST_ALERT_DATE, todayStr).apply()
+                            }
+
+                            // 모든 식자재 카드 표시 (만약 알림이 표시되지 않았을 경우)
+                            if (lastAlertDate == todayStr || expiredIngredients.isEmpty()) {
+                                container.removeAllViews()
+                                ingredientsList.forEach { ingredient ->
+                                    addIngredientCard(ingredient)
+                                }
+                            } else {
+                                // 유효한 식자재만 먼저 표시 (알림이 표시되었을 경우 취소 처리 시 다시 전체가 그려짐)
+                                validIngredients.forEach {
+                                    addIngredientCard(it)
+                                }
+                            }
+
+                            showToast("데이터 로드 완료 (${ingredientsList.size}개 표시됨)")
                         }
-
-                        showToast("데이터 로드 완료 (${ingredientsList.size}개 표시됨)")
+                    } else {
+                        val errorMsg = response.errorBody()?.string() ?: "알 수 없는 오류"
+                        Log.e("FoodManagement", "서버 응답 오류: ${response.code()}, $errorMsg")
+                        showToast("서버에서 데이터를 불러오는데 실패했습니다.")
                     }
-                } else {
-                    val errorMsg = response.errorBody()?.string() ?: "알 수 없는 오류"
-                    Log.e("FoodManagement", "서버 응답 오류: ${response.code()}, $errorMsg")
-                    showToast("서버에서 데이터를 불러오는데 실패했습니다.")
                 }
-            }
 
-            override fun onFailure(call: Call<List<IngredientDto>>, t: Throwable) {
-                Log.e("FoodManagement", "서버 연결 실패", t)
-                showToast("서버 연결에 실패했습니다.")
-            }
-        })
+                override fun onFailure(call: Call<List<IngredientDto>>, t: Throwable) {
+                    Log.e("FoodManagement", "서버 연결 실패", t)
+                    showToast("서버 연결에 실패했습니다.")
+                }
+            })
     }
 
 
@@ -528,6 +547,7 @@ class FoodManagementActivity : AppCompatActivity() {
         val locationPart = ingredient.location.toRequestBody("text/plain".toMediaTypeOrNull())
         val expiryDatePart = apiDateFormat.format(ingredient.expiryDate).toRequestBody("text/plain".toMediaTypeOrNull())
         val purchaseDatePart = apiDateFormat.format(ingredient.purchaseDate).toRequestBody("text/plain".toMediaTypeOrNull())
+        val userIdPart = currentUserId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
 
         var imagePart: MultipartBody.Part? = null
 
@@ -538,7 +558,7 @@ class FoodManagementActivity : AppCompatActivity() {
         }
 
         RetrofitClient.ingredientApiService.addIngredient(
-            namePart, locationPart, expiryDatePart, purchaseDatePart, imagePart
+            namePart, locationPart, expiryDatePart, purchaseDatePart, userIdPart, imagePart
         ).enqueue(object : Callback<IngredientResponse> {
             override fun onResponse(call: Call<IngredientResponse>, response: Response<IngredientResponse>) {
                 if (response.isSuccessful) {
@@ -584,10 +604,10 @@ class FoodManagementActivity : AppCompatActivity() {
             show()
         }
 
-        // 서버에 삭제 요청
-        Log.d("FoodManagement", "식자재 삭제 요청 - ID: $ingredientId, 이름: ${ingredient.name}, 이미지: ${ingredient.imageUrl}")
+        // 서버에 삭제 요청 (현재 사용자 ID와 함께)
+        Log.d("FoodManagement", "식자재 삭제 요청 - ID: $ingredientId, 사용자: $currentUserId, 이름: ${ingredient.name}")
 
-        RetrofitClient.ingredientApiService.deleteIngredient(ingredientId)
+        RetrofitClient.ingredientApiService.deleteIngredient(ingredientId, currentUserId)
             .enqueue(object : Callback<IngredientResponse> {
                 override fun onResponse(call: Call<IngredientResponse>, response: Response<IngredientResponse>) {
                     progressDialog.dismiss()
@@ -599,8 +619,12 @@ class FoodManagementActivity : AppCompatActivity() {
                         showToast("${ingredient.name}이(가) 삭제되었습니다.")
                     } else {
                         val errorBody = response.errorBody()?.string() ?: "알 수 없는 오류"
+                        when (response.code()) {
+                            403 -> showToast("본인의 식자재만 삭제할 수 있습니다.")
+                            404 -> showToast("해당 식자재를 찾을 수 없습니다.")
+                            else -> showToast("삭제 실패: ${response.code()}")
+                        }
                         Log.e("FoodManagement", "삭제 실패 - 코드: ${response.code()}, 응답: $errorBody")
-                        showToast("삭제 실패: ${response.code()}")
                     }
                 }
 

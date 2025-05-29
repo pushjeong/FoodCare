@@ -22,6 +22,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
+import com.AzaAza.foodcare.data.UserSession
 
 class ExpiryNotificationActivity : AppCompatActivity() {
 
@@ -53,25 +54,37 @@ class ExpiryNotificationActivity : AppCompatActivity() {
     }
 
     private fun fetchIngredientsFromServer() {
-        RetrofitClient.ingredientApiService.getIngredients().enqueue(object : Callback<List<IngredientDto>> {
-            override fun onResponse(call: Call<List<IngredientDto>>, response: Response<List<IngredientDto>>) {
-                if (response.isSuccessful) {
-                    val ingredients = response.body()
-                    if (ingredients != null) {
-                        processIngredients(ingredients)
-                    } else {
-                        showToast("데이터를 불러오는데 실패했습니다: 빈 응답")
-                    }
-                } else {
-                    showToast("데이터를 불러오는데 실패했습니다: ${response.code()}")
-                }
-            }
+        // 현재 사용자 ID 가져오기
+        val currentUserId = UserSession.getUserId(this)
+        if (currentUserId == -1) {
+            showToast("로그인이 필요합니다.")
+            finish()
+            return
+        }
 
-            override fun onFailure(call: Call<List<IngredientDto>>, t: Throwable) {
-                showToast("서버 연결에 실패했습니다: ${t.message}")
-                Log.e("ExpiryNotification", "서버 연결 실패", t)
-            }
-        })
+        // 현재 사용자의 식자재만 조회
+        RetrofitClient.ingredientApiService.getIngredients(currentUserId)
+            .enqueue(object : Callback<List<IngredientDto>> {
+                override fun onResponse(call: Call<List<IngredientDto>>, response: Response<List<IngredientDto>>) {
+                    if (response.isSuccessful) {
+                        val ingredients = response.body()
+                        if (ingredients != null) {
+                            // 한번 더 사용자 필터링 (보안상)
+                            val userIngredients = ingredients.filter { it.userId == currentUserId }
+                            processIngredients(userIngredients)
+                        } else {
+                            showToast("데이터를 불러오는데 실패했습니다: 빈 응답")
+                        }
+                    } else {
+                        showToast("데이터를 불러오는데 실패했습니다: ${response.code()}")
+                    }
+                }
+
+                override fun onFailure(call: Call<List<IngredientDto>>, t: Throwable) {
+                    showToast("서버 연결에 실패했습니다: ${t.message}")
+                    Log.e("ExpiryNotification", "서버 연결 실패", t)
+                }
+            })
     }
 
     private fun processIngredients(ingredientDtos: List<IngredientDto>) {

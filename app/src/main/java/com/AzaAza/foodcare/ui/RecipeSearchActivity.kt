@@ -19,6 +19,7 @@ import com.AzaAza.foodcare.helper.RecipeSearchHelper
 import com.AzaAza.foodcare.models.IngredientDto
 import com.AzaAza.foodcare.models.Recipe
 import com.AzaAza.foodcare.models.RecipeDto
+import com.AzaAza.foodcare.data.UserSession
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -33,9 +34,22 @@ class RecipeSearchActivity : AppCompatActivity() {
     private var userIngredients = listOf<String>()
     private var selectedIngredient: String? = null
 
+    // 현재 로그인한 사용자 ID
+    private var currentUserId: Int = -1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_recipe_search)
+
+        // 현재 사용자 ID 가져오기
+        currentUserId = UserSession.getUserId(this)
+
+        // 로그인 상태 확인
+        if (currentUserId == -1 || !UserSession.isLoggedIn(this)) {
+            Toast.makeText(this, "로그인이 필요합니다.", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
 
         // 선택된 식자재가 있는지 확인
         selectedIngredient = intent.getStringExtra("SELECTED_INGREDIENT")
@@ -78,48 +92,60 @@ class RecipeSearchActivity : AppCompatActivity() {
         fetchUserIngredients()
     }
 
+    /**
+     * 현재 사용자의 식자재 목록만 가져오기
+     */
     private fun fetchUserIngredients() {
         progressBar.visibility = View.VISIBLE
 
-        RetrofitClient.ingredientApiService.getIngredients().enqueue(object : Callback<List<IngredientDto>> {
-            override fun onResponse(
-                call: Call<List<IngredientDto>>,
-                response: Response<List<IngredientDto>>
-            ) {
-                progressBar.visibility = View.GONE
+        // 현재 사용자의 식자재만 조회
+        RetrofitClient.ingredientApiService.getIngredients(currentUserId)
+            .enqueue(object : Callback<List<IngredientDto>> {
+                override fun onResponse(
+                    call: Call<List<IngredientDto>>,
+                    response: Response<List<IngredientDto>>
+                ) {
+                    progressBar.visibility = View.GONE
 
-                if (response.isSuccessful) {
-                    val ingredients = response.body()
-                    if (ingredients != null) {
-                        userIngredients = ingredients.map { it.name }
-                        fetchRecipesFromServer()
+                    if (response.isSuccessful) {
+                        val ingredients = response.body()
+                        if (ingredients != null) {
+                            // 한번 더 사용자 필터링 (보안상)
+                            val userIngredientsData = ingredients.filter { it.userId == currentUserId }
+                            userIngredients = userIngredientsData.map { it.name }
+
+                            // 사용자의 식자재 목록을 가져온 후 레시피 데이터 가져오기
+                            fetchRecipesFromServer()
+                        } else {
+                            Toast.makeText(
+                                this@RecipeSearchActivity,
+                                "재료 목록을 불러오는데 실패했습니다: 빈 응답",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     } else {
                         Toast.makeText(
                             this@RecipeSearchActivity,
-                            "재료 목록을 불러오는데 실패했습니다: 빈 응답",
+                            "재료 목록을 불러오는데 실패했습니다: ${response.code()}",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
-                } else {
+                }
+
+                override fun onFailure(call: Call<List<IngredientDto>>, t: Throwable) {
+                    progressBar.visibility = View.GONE
                     Toast.makeText(
                         this@RecipeSearchActivity,
-                        "재료 목록을 불러오는데 실패했습니다: ${response.code()}",
-                        Toast.LENGTH_SHORT
+                        "서버 연결에 실패했습니다: ${t.message}",
+                        Toast.LENGTH_LONG
                     ).show()
                 }
-            }
-
-            override fun onFailure(call: Call<List<IngredientDto>>, t: Throwable) {
-                progressBar.visibility = View.GONE
-                Toast.makeText(
-                    this@RecipeSearchActivity,
-                    "서버 연결에 실패했습니다: ${t.message}",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        })
+            })
     }
 
+    /**
+     * 서버에서 레시피 데이터 가져오기
+     */
     private fun fetchRecipesFromServer() {
         progressBar.visibility = View.VISIBLE
 
@@ -137,19 +163,35 @@ class RecipeSearchActivity : AppCompatActivity() {
                         allRecipes = recipeDtos.map { it.toRecipe(userIngredients) }
                             .sortedByDescending { it.matchedCount }
 
+                        // RecipeAdapter에 사용자 식자재 정보 전달
+                        recipeAdapter = RecipeAdapter(allRecipes, userIngredients)
+                        recipeRecyclerView.adapter = recipeAdapter
+
                         // 선택된 식자재로 초기 필터링 수행
                         if (!selectedIngredient.isNullOrEmpty()) {
                             filterRecipes(selectedIngredient!!)
                         } else {
-                            recipeAdapter = RecipeAdapter(allRecipes, userIngredients)
-                            recipeRecyclerView.adapter = recipeAdapter
+                            // 선택된 식자재가 없으면 전체 레시피 표시 (매칭 순으로 정렬됨)
+                            recipeAdapter.updateList(allRecipes)
                         }
 
-                        Toast.makeText(
-                            this@RecipeSearchActivity,
-                            "${allRecipes.size}개의 레시피를 가져왔습니다.",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        // 성공 메시지 표시
+                        val matchedRecipesCount = allRecipes.count { it.matchedCount > 0 }
+                        val totalRecipesCount = allRecipes.size
+
+                        if (userIngredients.isNotEmpty()) {
+                            Toast.makeText(
+                                this@RecipeSearchActivity,
+                                "총 ${totalRecipesCount}개 레시피 중 ${matchedRecipesCount}개가 보유 재료와 일치합니다.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            Toast.makeText(
+                                this@RecipeSearchActivity,
+                                "${totalRecipesCount}개의 레시피를 가져왔습니다. 식자재를 등록하시면 맞춤 추천을 받을 수 있습니다.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     } else {
                         Toast.makeText(
                             this@RecipeSearchActivity,
@@ -177,39 +219,87 @@ class RecipeSearchActivity : AppCompatActivity() {
         })
     }
 
+    /**
+     * 레시피 필터링 및 검색 기능
+     */
     private fun filterRecipes(query: String) {
         if (query.isEmpty() && selectedIngredient.isNullOrEmpty()) {
+            // 검색어와 선택된 식자재가 모두 없으면 전체 레시피 표시 (매칭 순으로 정렬)
             recipeAdapter.updateList(allRecipes)
+            selectedIngredientLabel.visibility = View.GONE
             return
         }
 
         val queryToUse = if (query.isNotEmpty()) query else selectedIngredient ?: ""
 
-        // 검색어 기준으로 필터링
+        // 1. 레시피 이름으로 검색
         val nameFiltered = RecipeSearchHelper.filter(queryToUse, allRecipes)
 
-        // 검색어와 일치하는 식자재를 포함하는 레시피도 추가
+        // 2. 재료명으로 검색
         val ingredientFiltered = allRecipes.filter { recipe ->
             recipe.ingredients.any { ingredient ->
                 ingredient.contains(queryToUse, ignoreCase = true)
             }
         }
 
-        // 두 결과 합치기 (중복 제거)
-        val filteredList = (nameFiltered + ingredientFiltered).distinct()
-            .sortedByDescending { it.matchedCount }
+        // 3. 카테고리로 검색
+        val categoryFiltered = allRecipes.filter { recipe ->
+            recipe.category?.contains(queryToUse, ignoreCase = true) == true
+        }
 
-        recipeAdapter.updateList(filteredList)
+        // 4. 난이도로 검색
+        val difficultyFiltered = allRecipes.filter { recipe ->
+            recipe.difficulty?.contains(queryToUse, ignoreCase = true) == true
+        }
+
+        // 5. 소요시간으로 검색
+        val timeFiltered = allRecipes.filter { recipe ->
+            recipe.timeTaken?.contains(queryToUse, ignoreCase = true) == true
+        }
+
+        // 모든 검색 결과 합치기 (중복 제거)
+        val allFilteredResults = (nameFiltered + ingredientFiltered + categoryFiltered + difficultyFiltered + timeFiltered).distinct()
+
+        // 매칭된 재료 개수와 관련성에 따라 정렬
+        val sortedResults = allFilteredResults.sortedWith(compareByDescending<Recipe> { recipe ->
+            // 1순위: 보유 재료와의 매칭 개수
+            recipe.matchedCount
+        }.thenByDescending { recipe ->
+            // 2순위: 검색어와 레시피 이름의 관련성
+            when {
+                recipe.name.equals(queryToUse, ignoreCase = true) -> 100 // 완전 일치
+                recipe.name.contains(queryToUse, ignoreCase = true) -> 50 // 부분 일치
+                else -> 0
+            }
+        }.thenByDescending { recipe ->
+            // 3순위: 검색어와 재료의 관련성
+            recipe.ingredients.count { ingredient ->
+                ingredient.contains(queryToUse, ignoreCase = true)
+            }
+        })
+
+        recipeAdapter.updateList(sortedResults)
 
         // 선택된 식자재 표시 라벨 업데이트
-        if (query.isEmpty() && !selectedIngredient.isNullOrEmpty()) {
-            selectedIngredientLabel.text = "선택된 식자재: $selectedIngredient"
-            selectedIngredientLabel.visibility = View.VISIBLE
-        } else if (query.isNotEmpty()) {
-            selectedIngredientLabel.text = "검색: $query"
-            selectedIngredientLabel.visibility = View.VISIBLE
-        } else {
-            selectedIngredientLabel.visibility = View.GONE
+        updateSelectedIngredientLabel(query, queryToUse, sortedResults.size)
+    }
+
+    /**
+     * 선택된 식자재/검색어 라벨 업데이트
+     */
+    private fun updateSelectedIngredientLabel(query: String, queryToUse: String, resultCount: Int) {
+        when {
+            query.isNotEmpty() -> {
+                selectedIngredientLabel.text = "검색: '$query' (${resultCount}개 결과)"
+                selectedIngredientLabel.visibility = View.VISIBLE
+            }
+            !selectedIngredient.isNullOrEmpty() -> {
+                selectedIngredientLabel.text = "선택된 식자재: '$selectedIngredient' (${resultCount}개 결과)"
+                selectedIngredientLabel.visibility = View.VISIBLE
+            }
+            else -> {
+                selectedIngredientLabel.visibility = View.GONE
+            }
         }
     }
 
@@ -220,6 +310,14 @@ class RecipeSearchActivity : AppCompatActivity() {
                 true
             }
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 액티비티가 다시 활성화될 때 사용자 식자재 목록을 새로고침
+        if (currentUserId != -1) {
+            fetchUserIngredients()
         }
     }
 }

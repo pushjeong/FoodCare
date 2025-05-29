@@ -42,6 +42,7 @@ import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
 import com.google.firebase.messaging.FirebaseMessaging
+import com.AzaAza.foodcare.data.UserSession
 
 class MainActivity : AppCompatActivity() {
 
@@ -184,7 +185,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             RetrofitClient.userApiService.getUserListAsSignUpRequest().enqueue(object : Callback<List<SignUpRequest>> {
 
-            override fun onResponse(
+                override fun onResponse(
                     call: Call<List<SignUpRequest>>,
                     response: Response<List<SignUpRequest>>
                 ) {
@@ -255,70 +256,81 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateNotificationBadge() {
-        // 뱃지 UI 요소
         val badgeImage: ImageView = findViewById(R.id.imageView4)
         val badgeText: TextView = findViewById(R.id.textView3)
 
-        // 서버에서 식자재 데이터를 가져와 소비기한이 임박한 항목 카운트
-        RetrofitClient.ingredientApiService.getIngredients().enqueue(object : Callback<List<IngredientDto>> {
-            override fun onResponse(call: Call<List<IngredientDto>>, response: Response<List<IngredientDto>>) {
-                if (response.isSuccessful) {
-                    val ingredients = response.body()
-                    if (ingredients != null) {
-                        // 오늘 날짜 설정
-                        val today = Calendar.getInstance().apply {
-                            set(Calendar.HOUR_OF_DAY, 0)
-                            set(Calendar.MINUTE, 0)
-                            set(Calendar.SECOND, 0)
-                            set(Calendar.MILLISECOND, 0)
-                        }.time
+        // 현재 사용자 ID 가져오기
+        val currentUserId = UserSession.getUserId(this)
+        if (currentUserId == -1) {
+            // 로그인되지 않은 상태
+            badgeImage.visibility = View.GONE
+            badgeText.visibility = View.GONE
+            return
+        }
 
-                        val apiDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        // 현재 사용자의 식자재 데이터만 가져와서 소비기한이 임박한 항목 카운트
+        RetrofitClient.ingredientApiService.getIngredients(currentUserId)
+            .enqueue(object : Callback<List<IngredientDto>> {
+                override fun onResponse(call: Call<List<IngredientDto>>, response: Response<List<IngredientDto>>) {
+                    if (response.isSuccessful) {
+                        val ingredients = response.body()
+                        if (ingredients != null) {
+                            // 한번 더 사용자 필터링 (보안상)
+                            val userIngredients = ingredients.filter { it.userId == currentUserId }
 
-                        // 1. 소비기한이 지난 항목
-                        val expiredCount = ingredients.count { ingredient ->
-                            try {
-                                val expiryDate = apiDateFormat.parse(ingredient.expiryDate) ?: return@count false
-                                expiryDate.before(today) // 소비기한이 오늘보다 이전이면 expired
-                            } catch (e: Exception) {
-                                false
+                            // 오늘 날짜 설정
+                            val today = Calendar.getInstance().apply {
+                                set(Calendar.HOUR_OF_DAY, 0)
+                                set(Calendar.MINUTE, 0)
+                                set(Calendar.SECOND, 0)
+                                set(Calendar.MILLISECOND, 0)
+                            }.time
+
+                            val apiDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
+                            // 1. 소비기한이 지난 항목
+                            val expiredCount = userIngredients.count { ingredient ->
+                                try {
+                                    val expiryDate = apiDateFormat.parse(ingredient.expiryDate) ?: return@count false
+                                    expiryDate.before(today)
+                                } catch (e: Exception) {
+                                    false
+                                }
                             }
-                        }
 
-                        // 2. 소비기한이 3일 이내인 항목 (오늘 포함)
-                        val nearExpiryCount = ingredients.count { ingredient ->
-                            try {
-                                val expiryDate = apiDateFormat.parse(ingredient.expiryDate) ?: return@count false
-                                val diffDays = ((expiryDate.time - today.time) / (1000 * 60 * 60 * 24)).toInt()
-                                diffDays in 0..3 && !expiryDate.before(today) // 0~3일 이내이고 소비기한이 지나지 않은 것
-                            } catch (e: Exception) {
-                                false
+                            // 2. 소비기한이 3일 이내인 항목 (오늘 포함)
+                            val nearExpiryCount = userIngredients.count { ingredient ->
+                                try {
+                                    val expiryDate = apiDateFormat.parse(ingredient.expiryDate) ?: return@count false
+                                    val diffDays = ((expiryDate.time - today.time) / (1000 * 60 * 60 * 24)).toInt()
+                                    diffDays in 0..3 && !expiryDate.before(today)
+                                } catch (e: Exception) {
+                                    false
+                                }
                             }
-                        }
 
-                        // 총 알림 개수 (소비기한 지남 + 소비기한 3일 이내)
-                        val totalNotificationCount = expiredCount + nearExpiryCount
+                            // 총 알림 개수
+                            val totalNotificationCount = expiredCount + nearExpiryCount
 
-                        // 뱃지 표시 로직
-                        if (totalNotificationCount > 0) {
-                            badgeImage.visibility = View.VISIBLE
-                            badgeText.visibility = View.VISIBLE
-                            badgeText.text = totalNotificationCount.toString()
-                        } else {
-                            badgeImage.visibility = View.GONE
-                            badgeText.visibility = View.GONE
+                            // 뱃지 표시 로직
+                            if (totalNotificationCount > 0) {
+                                badgeImage.visibility = View.VISIBLE
+                                badgeText.visibility = View.VISIBLE
+                                badgeText.text = totalNotificationCount.toString()
+                            } else {
+                                badgeImage.visibility = View.GONE
+                                badgeText.visibility = View.GONE
+                            }
                         }
                     }
                 }
-            }
 
-            override fun onFailure(call: Call<List<IngredientDto>>, t: Throwable) {
-                Log.e("MainActivity", "서버 연결 실패", t)
-                // 연결 실패 시 뱃지 숨기기
-                badgeImage.visibility = View.GONE
-                badgeText.visibility = View.GONE
-            }
-        })
+                override fun onFailure(call: Call<List<IngredientDto>>, t: Throwable) {
+                    Log.e("MainActivity", "서버 연결 실패", t)
+                    badgeImage.visibility = View.GONE
+                    badgeText.visibility = View.GONE
+                }
+            })
     }
 
     // ✅ 액티비티 재개 시 데이터와 뱃지 업데이트

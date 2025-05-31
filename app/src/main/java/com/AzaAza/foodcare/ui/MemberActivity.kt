@@ -101,15 +101,30 @@ class MemberActivity : AppCompatActivity() {
                     val uniqueMembers = members.distinctBy { it.id }
 
                     // Adapter 세팅
-                    val adapter = MemberAdapter(uniqueMembers) { member ->
-                        MemberProfileDialog(
-                            name = member.username,
-                            email = member.email,                    // ★ 반드시 member.email
-                            profileUrl = member.profile_image_url,
-                            isOwner = member.id == ownerId
-                        ).show(supportFragmentManager, "MemberProfileDialog")
-                    }
+                    // 관리 모드 여부 등은 MemberActivity 변수에서 세팅
+                    val adapter = MemberAdapter(
+                        uniqueMembers,
+                        onMemberClick = { member ->
+                            MemberProfileDialog(
+                                name = member.username,
+                                email = member.email,
+                                profileUrl = member.profile_image_url,
+                                isOwner = member.is_owner
+                            ).show(supportFragmentManager, "MemberProfileDialog")
+                        },
+                        isManageMode = isManageMode,
+                        onKickClick = { member -> // '추방' 클릭 시
+                            confirmAndDeleteMember(member)
+                        },
+                        onLeaveClick = { member -> // '나가기' 클릭 시
+                            confirmAndLeaveGroup(member)
+                        },
+                        onCancelInviteClick = { member -> confirmAndCancelInvite(member) },
+                        ownerId = ownerId,
+                        myUserId = myUserId
+                    )
                     memberRecyclerView.adapter = adapter
+
 
 
                 }
@@ -117,7 +132,10 @@ class MemberActivity : AppCompatActivity() {
             })
 
     }
-   private fun createMyOwnGroup() {
+
+
+
+    private fun createMyOwnGroup() {
         RetrofitClient.userApiService.createMyGroup(myUserId)
             .enqueue(object : Callback<InviteResponse> {
                 override fun onResponse(call: Call<InviteResponse>, response: Response<InviteResponse>) {
@@ -176,13 +194,23 @@ class MemberActivity : AppCompatActivity() {
             .setTitle("그룹 나가기")
             .setMessage("정말로 그룹에서 나가시겠습니까?")
             .setPositiveButton("나가기") { _, _ ->
-                RetrofitClient.userApiService.deleteMember(ownerId, myUserId)  // <-- 여기서 ownerId/myUserId 올바른지 확인!
+                RetrofitClient.userApiService.deleteMember(ownerId, myUserId)
                     .enqueue(object : Callback<InviteResponse> {
                         override fun onResponse(call: Call<InviteResponse>, response: Response<InviteResponse>) {
-                            // 성공/실패 처리
-                            val res = response.body()
-                            Toast.makeText(this@MemberActivity, res?.message ?: "오류", Toast.LENGTH_SHORT).show()
-                            refreshMemberList()
+                            // 성공 시 내 OWNER_ID를 본인 userId로 덮어쓰기
+                            if (response.isSuccessful) {
+                                val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                                prefs.edit().putInt("OWNER_ID", myUserId).apply()
+                                Toast.makeText(this@MemberActivity, "그룹에서 나갔습니다.", Toast.LENGTH_SHORT).show()
+                                // 메인화면으로 이동
+                                val intent = Intent(this@MemberActivity, MainActivity::class.java)
+                                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                                startActivity(intent)
+                                finish()
+                            }
+                            else {
+                                Toast.makeText(this@MemberActivity, "나가기 실패", Toast.LENGTH_SHORT).show()
+                            }
                         }
                         override fun onFailure(call: Call<InviteResponse>, t: Throwable) {
                             Toast.makeText(this@MemberActivity, "네트워크 오류", Toast.LENGTH_SHORT).show()
@@ -215,6 +243,7 @@ class MemberActivity : AppCompatActivity() {
                         if (member.id == myUserId) {
                             val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
                             prefs.edit().putInt("OWNER_ID", myUserId).apply()
+
                             // finish()나 MainActivity 이동 없이 바로
                             refreshMemberList()
                             return

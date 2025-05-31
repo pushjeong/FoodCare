@@ -88,20 +88,25 @@ class MainActivity : AppCompatActivity() {
         bannerPager = findViewById(R.id.bannerPager)
 
         val banners = listOf(
-            R.drawable.one_banner,
+            R.drawable.six_banner,
             R.drawable.two_banner,
             R.drawable.three_banner,
             R.drawable.four_banner,
-            R.drawable.five_banner
+            R.drawable.five_banner,
+
+            R.drawable.seven_banner,
+            R.drawable.eight_banner
         )
 
         val adapter = BannerAdapter(banners) { position ->
             val targetActivity = when (position) {
-                0 -> ExpenseActivity::class.java
+                0 -> ExpenseAnalysisActivity::class.java
                 1 -> UserInfoShowActivity::class.java
                 2 -> MemberActivity::class.java
                 3 -> FoodManagementActivity::class.java
                 4 -> RecipeSearchActivity::class.java
+                5 -> ExpenseActivity::class.java
+                6 -> AddRecipeActivity::class.java
                 else -> null
             }
             targetActivity?.let { activityClass ->

@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.Editable
@@ -143,6 +144,7 @@ class AddRecipeActivity : AppCompatActivity() {
         "obesity" to "비만",
         "normal" to "일반 건강식"
     )
+    private val GALLERY_PERMISSION_CODE = 100
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -212,11 +214,12 @@ class AddRecipeActivity : AppCompatActivity() {
 
         // 갤러리 버튼 클릭
         btnGallery.setOnClickListener {
-            if (checkStoragePermission()) {
+           /* if (checkStoragePermission()) {
                 openGallery()
             } else {
                 requestStoragePermission()
-            }
+            }*/
+            checkAndRequestGalleryPermission()
         }
 
         // 사진 삭제 버튼 클릭
@@ -324,6 +327,25 @@ class AddRecipeActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun checkAndRequestGalleryPermission() {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            android.Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            android.Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+
+        if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(permission), GALLERY_PERMISSION_CODE)
+        } else {
+            pickImageFromGallery()
+        }
+    }
+    private fun pickImageFromGallery() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        intent.type = "image/*"
+        galleryLauncher.launch(intent)
     }
 
     private fun setupSpinner() {
@@ -972,4 +994,6 @@ class AddRecipeActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
+
+
 }

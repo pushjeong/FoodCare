@@ -14,7 +14,8 @@ data class RecipeDto(
     @SerializedName("allergies") val allergies: String?,
     @SerializedName("disease") val disease: String?,
     @SerializedName("diseasereason") val diseasereason: String?,
-    @SerializedName("category") val category: String?
+    @SerializedName("category") val category: String?,
+    @SerializedName("image_url") val imageUrl: String?
 ) {
     // RecipeDto를 Recipe 객체로 변환하는 함수
     fun toRecipe(userIngredients: List<String>): Recipe {
@@ -156,6 +157,7 @@ data class RecipeDto(
             description = instructions.take(50) + if (instructions.length > 50) "..." else "",
             instructions = instructions,          // 전체 순서 저장
             imageResId = imageRes,
+            imageUrl = imageUrl,
             ingredients = ingredientsList,
             matchedCount = matched.size,
             matchedIngredients = matched,

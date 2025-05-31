@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.models.Recipe
 import androidx.appcompat.app.AlertDialog
+import com.bumptech.glide.Glide
 
 class RecipeAdapter(
     private var recipes: List<Recipe>,
@@ -32,6 +33,25 @@ class RecipeAdapter(
         val recipe = recipes[position]
         holder.nameText.text = recipe.name
         holder.descriptionText.text = recipe.description
+
+
+        // 이미지 표시 우선순위: 서버 사진 > 기본 drawable
+        val baseUrl = "https://foodcare-69ae76eec1bf.herokuapp.com"
+        if (!recipe.imageUrl.isNullOrBlank()) {
+            Glide.with(holder.itemView.context)
+                .load(baseUrl + recipe.imageUrl)
+                .placeholder(recipe.imageResId) // 로딩 전엔 기존 이미지
+                .error(recipe.imageResId)       // 실패시에도 기존 이미지
+                .into(holder.imageView)
+        } else {
+            holder.imageView.setImageResource(recipe.imageResId)
+        }
+
+        holder.matchedCountText.text = if (recipe.matchedIngredients.isNotEmpty())
+            "일치 재료: ${recipe.matchedCount}개 (${recipe.matchedIngredients.joinToString(", ")})"
+        else
+            "일치하는 재료 없음"
+
         holder.imageView.setImageResource(recipe.imageResId)
         holder.matchedCountText.text = if (recipe.matchedIngredients.isNotEmpty())
             "일치 재료: ${recipe.matchedCount}개 (${recipe.matchedIngredients.joinToString(", ")})"
@@ -84,6 +104,8 @@ ${recipe.ingredients.joinToString(", ")}
                 .setPositiveButton("닫기", null)
                 .show()
         }
+
+
     }
 
     override fun getItemCount(): Int = recipes.size

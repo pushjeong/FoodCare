@@ -1,5 +1,6 @@
 package com.AzaAza.foodcare.ui
 
+import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -7,6 +8,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -25,11 +27,16 @@ import com.AzaAza.foodcare.models.AcceptInviteRequest
 import com.AzaAza.foodcare.models.InviteRequest
 import com.AzaAza.foodcare.models.InviteResponse
 import com.AzaAza.foodcare.models.MemberResponse
+import androidx.fragment.app.DialogFragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.AzaAza.foodcare.adapter.MemberAdapter
+import com.bumptech.glide.Glide
 
 
 class MemberActivity : AppCompatActivity() {
 
-    private lateinit var memberListContainer: LinearLayout
+    private lateinit var memberRecyclerView: RecyclerView
     private lateinit var btnAddMember: Button
     private lateinit var btnManageMember: Button
 
@@ -54,12 +61,16 @@ class MemberActivity : AppCompatActivity() {
             Toast.makeText(this, "유저 정보가 비정상입니다. 다시 로그인 해주세요.", Toast.LENGTH_LONG).show()
         }
 
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_member)
 
-        memberListContainer = findViewById(R.id.memberListContainer)
+        memberRecyclerView = findViewById(R.id.memberRecyclerView)
         btnAddMember = findViewById(R.id.btnAddMember)
         btnManageMember = findViewById(R.id.btnManageMember)
+
+        // RecyclerView 레이아웃 매니저 지정
+        memberRecyclerView.layoutManager = LinearLayoutManager(this)
 
         findViewById<ImageView>(R.id.backButton).setOnClickListener { onBackPressed() }
 
@@ -71,40 +82,42 @@ class MemberActivity : AppCompatActivity() {
             refreshMemberList()
         }
 
-
         refreshMemberList()
-
         checkPendingInviteAndShowDialog()
 
     }
-
     private fun refreshMemberList() {
         RetrofitClient.userApiService.getMembers(ownerId)
             .enqueue(object : Callback<List<MemberResponse>> {
                 override fun onResponse(call: Call<List<MemberResponse>>, response: Response<List<MemberResponse>>) {
+                    Log.d("PROFILE_RAW", "raw = ${response.raw()}")
+                    Log.d("PROFILE_JSON", "json = ${response.body()}")
+                    Log.d("PROFILE_BODY", response.errorBody()?.string() ?: "no error")
+
                     val members = response.body() ?: emptyList()
-                    memberListContainer.removeAllViews()
-
-                    // 🔥 멤버가 아예 없거나, 내 아이디가 없으면 내 집을 반드시 만든다
-                    val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-                    if (members.isEmpty() || members.none { it.id == myUserId }) {
-                        // ownerId도 반드시 내 아이디로 갱신!
-                        prefs.edit().putInt("OWNER_ID", myUserId).apply()
-                        createMyOwnGroup()
-                        return
+                    for (member in members) {
+                        Log.d("PROFILE_DEBUG", "member=${member.username}, email=${member.email}")
                     }
-
-                    // 중복 멤버 방지
                     val uniqueMembers = members.distinctBy { it.id }
-                    uniqueMembers.forEach { member ->
-                        addMemberView(member)
+
+                    // Adapter 세팅
+                    val adapter = MemberAdapter(uniqueMembers) { member ->
+                        MemberProfileDialog(
+                            name = member.username,
+                            email = member.email,                    // ★ 반드시 member.email
+                            profileUrl = member.profile_image_url,
+                            isOwner = member.id == ownerId
+                        ).show(supportFragmentManager, "MemberProfileDialog")
                     }
+                    memberRecyclerView.adapter = adapter
+
+
                 }
                 override fun onFailure(call: Call<List<MemberResponse>>, t: Throwable) {}
             })
-    }
 
-    private fun createMyOwnGroup() {
+    }
+   private fun createMyOwnGroup() {
         RetrofitClient.userApiService.createMyGroup(myUserId)
             .enqueue(object : Callback<InviteResponse> {
                 override fun onResponse(call: Call<InviteResponse>, response: Response<InviteResponse>) {
@@ -157,57 +170,7 @@ class MemberActivity : AppCompatActivity() {
 
     }
 
-    private fun addMemberView(member: MemberResponse) {
-        val inflater = LayoutInflater.from(this)
-        val memberView = inflater.inflate(R.layout.member_item, memberListContainer, false)
-        memberView.findViewById<TextView>(R.id.memberName).text = member.username
 
-        val roleText = when {
-            member.id == ownerId -> "대표"
-            member.status == "pending" -> if (member.id == myUserId) "나 - 초대받음" else "초대함"
-            member.id == myUserId -> "나 - 구성원"
-            else -> "구성원"
-        }
-
-
-
-        memberView.findViewById<TextView>(R.id.memberRole).text = roleText
-        val btnDelete = memberView.findViewById<Button>(R.id.btnDelete)
-        val btnCancelInvite = memberView.findViewById<Button>(R.id.btnCancelInvite)
-
-        // 관리 모드에서만 버튼 표시
-        if (isManageMode && !member.is_owner) {
-            if (member.status == "pending") {
-                btnCancelInvite.visibility = View.VISIBLE
-                btnDelete.visibility = View.GONE
-            } else {
-                btnCancelInvite.visibility = View.GONE
-                btnDelete.visibility = View.VISIBLE
-            }
-        } else {
-            btnDelete.visibility = View.GONE
-            btnCancelInvite.visibility = View.GONE
-        }
-
-        btnDelete.setOnClickListener {
-            confirmAndDeleteMember(member)
-        }
-        btnCancelInvite.setOnClickListener {
-            confirmAndCancelInvite(member)
-        }
-
-        memberListContainer.addView(memberView)
-
-        if (member.id == myUserId && !member.is_owner) {
-            // 내 row, 그리고 내가 방장이 아닐 때만 나가기 버튼
-            btnDelete.visibility = if (isManageMode) View.VISIBLE else View.GONE
-            btnDelete.text = "나가기"
-            btnDelete.setOnClickListener {
-                confirmAndLeaveGroup(member)
-            }
-        }
-
-    }
     private fun confirmAndLeaveGroup(member: MemberResponse) {
         AlertDialog.Builder(this)
             .setTitle("그룹 나가기")
@@ -373,6 +336,39 @@ class MemberActivity : AppCompatActivity() {
     }
 
 
+    class MemberProfileDialog(
+        private val name: String,
+        private val email: String,
+        private val profileUrl: String?,
+        private val isOwner: Boolean
+    ) : DialogFragment() {
+        override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+            val view = requireActivity().layoutInflater.inflate(R.layout.member_profile_dialog, null)
+            val profileImage = view.findViewById<ImageView>(R.id.profileImage)
+            val textName = view.findViewById<TextView>(R.id.textName)
+            val textEmail = view.findViewById<TextView>(R.id.textEmail)
+            val textRole = view.findViewById<TextView>(R.id.textRole)
+
+            textName.text = name
+            textEmail.text = email
+            textRole.text = if (isOwner) "대표" else "구성원"
+
+            if (!profileUrl.isNullOrBlank()) {
+                Glide.with(requireContext())
+                    .load("https://foodcare-69ae76eec1bf.herokuapp.com${profileUrl}")
+                    .circleCrop()
+                    .placeholder(R.drawable.ic_profile)
+                    .into(profileImage)
+            } else {
+                profileImage.setImageResource(R.drawable.ic_profile)
+            }
+
+            return AlertDialog.Builder(requireContext())
+                .setView(view)
+                .setPositiveButton("닫기", null)
+                .create()
+        }
+    }
 
 
 }

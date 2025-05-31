@@ -240,6 +240,7 @@ class ExpiryNotificationManager {
                     val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
                         data = Uri.parse("package:${context.packageName}")
                     }
+
                     context.startActivity(intent)
                 } catch (e: Exception) {
                     Log.e(TAG, "정확한 알람 권한 설정 화면 열기 실패", e)

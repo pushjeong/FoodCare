@@ -288,15 +288,15 @@
                         android:layout_width="64dp"
                         android:layout_height="64dp"
                         android:background="@android:color/transparent"
-                        android:contentDescription="!!미정"
+                        android:contentDescription="내 레시피 등록"
                         android:scaleType="fitCenter"
-                        android:src="@drawable/icon_butt_community" />
+                        android:src="@drawable/icon_butt_addrecipe" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="!!!미정"
+                        android:text="내 레시피 등록"
                         android:textAlignment="center" />
                 </LinearLayout>
 

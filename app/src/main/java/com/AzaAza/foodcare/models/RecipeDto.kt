@@ -57,14 +57,18 @@ data class RecipeDto(
             "닭볶음탕" -> R.drawable.dish_img_chicken_bokkeumtang
             "대구탕" -> R.drawable.dish_img_daegutang
             "감자탕" -> R.drawable.dish_img_gamjatang
-            "고르곤졸라피자" -> R.drawable.dish_img_gorgonzola_pizza
+            "고르곤졸라 피자" -> R.drawable.dish_img_gorgonzola_pizza
             "궁중떡볶이" -> R.drawable.dish_img_gungjung_tteokbokki
             "함박스테이크" -> R.drawable.dish_img_hamburger_steak
             "마라탕" -> R.drawable.dish_img_malatang
             "마파두부" -> R.drawable.dish_img_mapa_tofu
             "쌀국수" -> R.drawable.dish_img_pad_thai
             "봉골레파스타" -> R.drawable.dish_img_vongole_pasta
+            "포" -> R.drawable.dish_img_pho
             "나시 고랭" -> R.drawable.dish_img_nasi_goreng
+            "수정과" -> R.drawable.dish_img_sujenggua
+            "식혜" -> R.drawable.dish_img_sikhae
+            "약과" -> R.drawable.dish_img_yakgua
 
             "도토리묵" -> R.drawable.dish_img_acorn_jello
             "장어구이" -> R.drawable.dish_img_broiled_eels
@@ -82,7 +86,7 @@ data class RecipeDto(
             "LA 양념갈비" -> R.drawable.dish_img_la_ribs
             "감바스" -> R.drawable.dish_img_gambas
             "계란말이" -> R.drawable.dish_img_egg_rolled
-            "계란볶음밥" -> R.drawable.dish_img_egg_fried_rice
+            "달걀볶음밥" -> R.drawable.dish_img_egg_fried_rice
             "고등어구이" -> R.drawable.dish_img_grilled_mackerel
             "꽃게탕" -> R.drawable.dish_img_crab_soup
             "돈까스" -> R.drawable.dish_img_pork_cutlet
@@ -107,8 +111,8 @@ data class RecipeDto(
             "칼국수" -> R.drawable.dish_img_kalguksu
             "케이크" -> R.drawable.dish_img_cake
             "코다리찜" -> R.drawable.dish_img_kodarijjim
-            "콩나물불고기" -> R.drawable.dish_img_bean_sprout_bulgogi
-            "투움바파스타" -> R.drawable.dish_img_toowoomba_pasta
+            "콩나물 불고기" -> R.drawable.dish_img_bean_sprout_bulgogi
+            "투움바 파스타" -> R.drawable.dish_img_toowoomba_pasta
             "피넛버터 쿠키" -> R.drawable.dish_img_peanut_butter_cookies
 
 
@@ -144,7 +148,46 @@ data class RecipeDto(
             "엿" -> R.drawable.dish_img_yeot
             "유린기" -> R.drawable.dish_img_yurinji
             "짜사이무침" -> R.drawable.dish_img_zhacai_muchim
+            "건두부볶음" -> R.drawable.dish_img_stir_fried_dried_bean_curd
+            "꿔바로우" -> R.drawable.dish_img_guobaorou
+            "규동" -> R.drawable.dish_img_gyudong
+            "가라아게" -> R.drawable.dish_img_karaage
+            "가츠산도" -> R.drawable.dish_img_katsu_sandwich
+            "양꼬치" -> R.drawable.dish_img_lamb_skewers
+            "나가사키 짬뽕" -> R.drawable.dish_img_nagasaki_jjamppong
+            "리코타 샐러드" -> R.drawable.dish_img_ricotta_salad
+            "스팸무스비" -> R.drawable.dish_img_spam_musubi
+            "스키야키" -> R.drawable.dish_img_sukiyaki
+            "야키토리" -> R.drawable.dish_img_yakitori
 
+            "마라두부" -> R.drawable.dish_img_mala_tofu
+            "가츠동" -> R.drawable.dish_img_katsudon
+            "타코야끼" -> R.drawable.dish_img_takoyaki
+            "소바" -> R.drawable.dish_img_soba
+            "우동" -> R.drawable.dish_img_udon
+            "니쿠자가" -> R.drawable.dish_img_nikujaga
+            "명란오차즈케" -> R.drawable.dish_img_mentaiko_ochazuke
+
+            "연어 스테이크" -> R.drawable.dish_img_salmon_steak
+            "크림 머쉬룸 스프" -> R.drawable.dish_img_cream_mushroom_soup
+            "마카로니 앤 치즈" -> R.drawable.dish_img_macaroni_and_cheese
+            "치즈 버거" -> R.drawable.dish_img_cheese_burger
+            "라따뚜이" -> R.drawable.dish_img_ratatouille
+            "파에야" -> R.drawable.dish_img_paella
+            "프리타타" -> R.drawable.dish_img_pretata
+            "로스트 치킨" -> R.drawable.dish_img_roasted_chicken
+            "호떡" -> R.drawable.dish_img_hotteok
+            "팥빙수" -> R.drawable.dish_img_patbingsu
+            "떡" -> R.drawable.dish_img_rice_cake
+            "치즈케이크" -> R.drawable.dish_img_cheesecake
+            "붕어빵" -> R.drawable.dish_img_fish_shaped_bun
+           "파운드케이크" -> R.drawable.dish_img_poundcake
+            "마카롱" -> R.drawable.dish_img_macaron
+            "과일 타르트" -> R.drawable.dish_img_fruit_tart
+            "인절미" -> R.drawable.dish_img_injeolmi
+            "카스테라" -> R.drawable.dish_img_castella
+            "호두파이" -> R.drawable.dish_img_walnutpie
+            "푸딩" -> R.drawable.dish_img_pudding
 
 
 

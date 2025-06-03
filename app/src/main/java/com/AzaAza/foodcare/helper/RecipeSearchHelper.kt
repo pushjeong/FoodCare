@@ -19,13 +19,6 @@ object RecipeSearchHelper {
         }
     }
 
-    fun filterByIngredient(ingredientName: String, recipes: List<Recipe>): List<Recipe> {
-        return recipes.filter { recipe ->
-            recipe.ingredients.any { ingredient ->
-                ingredient.contains(ingredientName, ignoreCase = true)
-            }
-        }
-    }
 
     private fun normalize(str: String): String {
         return Normalizer.normalize(str.lowercase().replace(" ", ""), Normalizer.Form.NFKD)

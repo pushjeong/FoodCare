@@ -1,6 +1,5 @@
 package com.AzaAza.foodcare.data
-
-// com/AzaAza/foodcare/data/ShoppingList.kt
+/* 민은 이 클래스 쓰는 거 맞니?*/
 
 object ShoppingList {
     // 식재료명 → 보유 개수

@@ -3,7 +3,6 @@ package com.AzaAza.foodcare.ui
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-//import android.telecom.Call
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -12,15 +11,12 @@ import androidx.appcompat.app.AppCompatActivity
 import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.api.RetrofitClient
 import com.AzaAza.foodcare.api.UserInfoApiService
-import com.AzaAza.foodcare.models.HealthInfoRequest
 import com.AzaAza.foodcare.models.HealthInfoResponse
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Call
 import android.graphics.Color
 import android.util.TypedValue
-import android.widget.GridLayout
-import android.widget.LinearLayout
 import com.google.android.flexbox.FlexboxLayout
 
 class UserInfoShowActivity : AppCompatActivity() {
@@ -70,7 +66,6 @@ class UserInfoShowActivity : AppCompatActivity() {
             }
 
             startActivity(intent)
-            // finish()는 생략해도 됨
         }
 
 

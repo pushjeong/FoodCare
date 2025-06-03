@@ -115,8 +115,4 @@ ${recipe.ingredients.joinToString(", ")}
         notifyDataSetChanged()
     }
 
-    fun sortRecipesByMatchedIngredients() {
-        recipes = recipes.sortedByDescending { it.matchedCount }
-        notifyDataSetChanged()
-    }
 }

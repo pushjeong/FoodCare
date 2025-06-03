@@ -11,7 +11,6 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -76,7 +75,7 @@ class ExpiryNotificationManager {
                 Log.d(TAG, "알림 채널이 생성되었습니다")
             }
         }
-
+/* 미사용으로 삭제 됨
         // 배터리 최적화 예외 설정 화면으로 이동
         fun requestBatteryOptimizationExemption(context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -97,7 +96,7 @@ class ExpiryNotificationManager {
                     }
                 }
             }
-        }
+        }*/
 
         // 알림 일정 예약 함수 (개선됨)
         fun scheduleNotifications(context: Context) {
@@ -247,10 +246,11 @@ class ExpiryNotificationManager {
             }
         }
 
+        /* 미사용으로 삭제 됨
         fun showExpiryNotificationNow(context: Context) {
             Log.d(TAG, "즉시 알림 테스트 실행")
             checkExpiringIngredients(context)
-        }
+        }*/
 
         // 현재 로그인한 사용자의 소비기한 임박 식자재 확인 및 알림 표시
         fun checkExpiringIngredients(context: Context) {

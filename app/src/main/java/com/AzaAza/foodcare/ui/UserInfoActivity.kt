@@ -1,24 +1,14 @@
 package com.AzaAza.foodcare.ui
 
-import android.content.Intent
-import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
-import android.util.TypedValue
-import android.view.MenuItem
-import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.CheckBox
 import android.widget.EditText
-import android.widget.GridLayout
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.api.RetrofitClient
@@ -52,12 +42,6 @@ class UserInfoActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_info)
 
-
-        val maxHeightPx = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            300f,
-            resources.displayMetrics
-        ).toInt()
         val spinnerAllergen = findViewById<AppCompatSpinner>(R.id.spinnerAllergen)
         val spinnerDisease = findViewById<AppCompatSpinner>(R.id.spinnerDisease)
 

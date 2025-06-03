@@ -1,4 +1,3 @@
-// models/VerificationModels.kt
 package com.AzaAza.foodcare.models
 
 data class VerificationRequestDto(

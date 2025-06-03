@@ -69,20 +69,17 @@ data class RecipeDto(
             "수정과" -> R.drawable.dish_img_sujenggua
             "식혜" -> R.drawable.dish_img_sikhae
             "약과" -> R.drawable.dish_img_yakgua
-
             "도토리묵" -> R.drawable.dish_img_acorn_jello
             "장어구이" -> R.drawable.dish_img_broiled_eels
             "관자버터구이" -> R.drawable.dish_img_grilled_tube_butter
             "마라샹궈" -> R.drawable.dish_img_malaxianguo
             "오코노미야끼" -> R.drawable.dish_img_okonomiyakki
-
             "고추잡채" -> R.drawable.dish_img_red_pepper_japchae
             "곱도리탕" -> R.drawable.dish_img_gopdoritang
             "동그랑땡" -> R.drawable.dish_img_donggeurangddang
             "부추전" -> R.drawable.dish_img_buchujeon
             "양장피" -> R.drawable.dish_img_sheepskin
             "오리탕" -> R.drawable.dish_img_duck_soup
-
             "LA 양념갈비" -> R.drawable.dish_img_la_ribs
             "감바스" -> R.drawable.dish_img_gambas
             "계란말이" -> R.drawable.dish_img_egg_rolled
@@ -114,8 +111,6 @@ data class RecipeDto(
             "콩나물 불고기" -> R.drawable.dish_img_bean_sprout_bulgogi
             "투움바 파스타" -> R.drawable.dish_img_toowoomba_pasta
             "피넛버터 쿠키" -> R.drawable.dish_img_peanut_butter_cookies
-
-
             "제육볶음" -> R.drawable.dish_img_jeyuk_bokkeum
             "마제소바" -> R.drawable.dish_img_mazesoba
             "시래기국" -> R.drawable.dish_img_siraegikuk
@@ -129,7 +124,6 @@ data class RecipeDto(
             "아도보" -> R.drawable.dish_img_adobo
             "팔보채" -> R.drawable.dish_img_eight_bodied_vegetables
             "깐풍기" -> R.drawable.dish_img_deep_fried_chickeninhot_pepper_sauce
-
             "비리야니" -> R.drawable.dish_img_biryani
             "까르보나라" -> R.drawable.dish_img_carbonara
             "치킨 커리" -> R.drawable.dish_img_chicken_curry
@@ -159,7 +153,6 @@ data class RecipeDto(
             "스팸무스비" -> R.drawable.dish_img_spam_musubi
             "스키야키" -> R.drawable.dish_img_sukiyaki
             "야키토리" -> R.drawable.dish_img_yakitori
-
             "마라두부" -> R.drawable.dish_img_mala_tofu
             "가츠동" -> R.drawable.dish_img_katsudon
             "타코야끼" -> R.drawable.dish_img_takoyaki
@@ -167,7 +160,6 @@ data class RecipeDto(
             "우동" -> R.drawable.dish_img_udon
             "니쿠자가" -> R.drawable.dish_img_nikujaga
             "명란오차즈케" -> R.drawable.dish_img_mentaiko_ochazuke
-
             "연어 스테이크" -> R.drawable.dish_img_salmon_steak
             "크림 머쉬룸 스프" -> R.drawable.dish_img_cream_mushroom_soup
             "마카로니 앤 치즈" -> R.drawable.dish_img_macaroni_and_cheese
@@ -189,9 +181,7 @@ data class RecipeDto(
             "호두파이" -> R.drawable.dish_img_walnutpie
             "푸딩" -> R.drawable.dish_img_pudding
 
-
-
-            else -> R.drawable.bell  // 기본 이미지
+            else -> R.drawable.no_img  // 기본 이미지
         }
 
         return Recipe(

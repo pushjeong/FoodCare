@@ -19,9 +19,10 @@ interface ExpenseApiService {
     @DELETE("expenses/{expense_id}")
     suspend fun deleteExpense(@Path("expense_id") expenseId: Int): Response<Void>
 
+    /*  미사용으로 삭제 됨
     @GET("expenses/category/{category_id}")
     suspend fun getExpensesByCategory(@Path("category_id") categoryId: Int): List<ExpenseDto>
-
+    */
     @GET("expenses/summary/monthly")
     suspend fun getMonthlySummary(
         @Query("year") year: Int? = null,

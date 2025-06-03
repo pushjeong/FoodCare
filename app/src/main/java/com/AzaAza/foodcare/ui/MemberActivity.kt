@@ -6,19 +6,14 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.MenuItem
-import android.view.View
-import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.api.RetrofitClient
-import com.AzaAza.foodcare.models.SignUpRequest
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -43,7 +38,7 @@ class MemberActivity : AppCompatActivity() {
     // 관리모드 여부
     private var isManageMode = false
 
-    // 내 user id (대표 id), 실제론 SharedPreferences 등에서 불러오기!
+    // 내 user id (대표 id), 실제론 SharedPreferences 등에서 불러오기
     private val ownerId: Int by lazy {
         val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         prefs.getInt("OWNER_ID", getMyUserIdFromPrefs())
@@ -134,7 +129,7 @@ class MemberActivity : AppCompatActivity() {
     }
 
 
-
+/*미사용으로 삭제
     private fun createMyOwnGroup() {
         RetrofitClient.userApiService.createMyGroup(myUserId)
             .enqueue(object : Callback<InviteResponse> {
@@ -149,7 +144,7 @@ class MemberActivity : AppCompatActivity() {
                     Toast.makeText(this@MemberActivity, "내 집 생성 실패!", Toast.LENGTH_SHORT).show()
                 }
             })
-    }
+    }*/
 
     private fun showAddMemberDialog() {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit_text, null)
@@ -244,11 +239,9 @@ class MemberActivity : AppCompatActivity() {
                             val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
                             prefs.edit().putInt("OWNER_ID", myUserId).apply()
 
-                            // finish()나 MainActivity 이동 없이 바로
                             refreshMemberList()
                             return
                         }
-
 
                         // 즉시 최신 멤버리스트로 갱신
                         refreshMemberList()
@@ -348,7 +341,7 @@ class MemberActivity : AppCompatActivity() {
                     // MainActivity로 이동 + 구성원 화면을 자동으로 열기
                     val intent = Intent(this@MemberActivity, MainActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                    // 구성원 화면으로 바로 이동하고 싶으면 아래처럼
+                    // 구성원 화면으로 바로 이동
                     intent.putExtra("goToMember", true)
                     startActivity(intent)
                     finish()

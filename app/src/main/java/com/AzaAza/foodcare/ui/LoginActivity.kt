@@ -12,7 +12,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.models.LoginRequest
-import com.AzaAza.foodcare.models.UserResponse
 import com.AzaAza.foodcare.api.RetrofitClient
 import com.AzaAza.foodcare.models.LoginResponse
 import com.AzaAza.foodcare.models.UpdateFcmTokenRequest
@@ -63,7 +62,7 @@ class LoginActivity : AppCompatActivity() {
                             .putInt("USER_ID", body.id ?: 0)
                             .apply()
 
-                        // 👇 로그인 직후 FCM 토큰 강제 전송
+                        // 로그인 직후 FCM 토큰 강제 전송
                         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
                             if (task.isSuccessful) {
                                 val token = task.result

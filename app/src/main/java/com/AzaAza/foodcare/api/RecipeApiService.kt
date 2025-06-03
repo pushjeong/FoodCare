@@ -18,9 +18,6 @@ interface RecipeApiService {
     @GET("/recipes")
     fun getRecipes(): Call<List<RecipeDto>>
 
-    @GET("/recipes/{id}")
-    fun getRecipeById(@Path("id") id: Int): Call<RecipeDto>
-
     // 새로운 레시피 등록 - POST 메서드 추가
     @POST("/recipes")
     fun createRecipe(@Body request: RecipeCreateRequest): Call<RecipeCreateResponse>

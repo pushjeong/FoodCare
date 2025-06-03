@@ -1,10 +1,7 @@
 package com.AzaAza.foodcare.ui
 
 import android.app.DatePickerDialog
-import android.app.TimePickerDialog
-import android.content.Context
 import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -93,7 +90,10 @@ class ExpenseActivity : AppCompatActivity() {
     private var isSharedMode: Boolean = false
 
     // 현재 대화상자의 어댑터를 추적하기 위한 변수 추가
+    /* 미사용으로 삭제 됨
     private var currentExpenseListAdapter: ExpenseListAdapter? =null
+    */
+
     private var currentGroupAdapter: ExpenseGroupAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -298,7 +298,8 @@ class ExpenseActivity : AppCompatActivity() {
         monthPicker.value = selectedMonth
 
         // 연도 설정 (앱 시작 연도부터 현재 연도까지)
-        val appStartYear = 2023 // 앱 시작 연도를 적절히 설정하세요
+
+        val appStartYear = 2024
         yearPicker.minValue = appStartYear
         yearPicker.maxValue = currentYear
         yearPicker.value = selectedYear
@@ -348,8 +349,6 @@ class ExpenseActivity : AppCompatActivity() {
                     )
                     categories.add(etcCategory)
 
-                    // 서버에 '기타' 카테고리 추가 요청을 보낼 수도 있음
-                    // 이 예제에서는 생략
                 }
 
                 withContext(Dispatchers.Main) {
@@ -843,10 +842,10 @@ class ExpenseActivity : AppCompatActivity() {
                         // 삭제된 항목 expenseId 기반으로 제거
                         expenses.removeAll { it.id == expenseId }
 
-                        // ✅ 현재 상세 다이얼로그 어댑터에 삭제 반영
+                        // 현재 상세 다이얼로그 어댑터에 삭제 반영
                         currentGroupAdapter?.removeExpense(expenseId)
 
-                        // ✅ 상단 카드(카테고리 금액 등) 갱신
+                        // 상단 카드(카테고리 금액 등) 갱신
                         loadMonthlyData()
 
                         Toast.makeText(this@ExpenseActivity, "지출 항목이 삭제되었습니다", Toast.LENGTH_SHORT).show()
@@ -875,65 +874,64 @@ class ExpenseActivity : AppCompatActivity() {
         }
     }
 
-    // 지출 내역 목록용 어댑터 클래스 수정
-    inner class ExpenseListAdapter(
-        private val context: Context,
-        private val expenses: MutableList<ExpenseDto> // List에서 MutableList로 변경
-    ) : BaseAdapter() {
 
-        // 새로운 메서드 추가: 지출 항목 제거
-        fun removeExpense(expenseId: Int) {
-            val position = expenses.indexOfFirst { it.id == expenseId }
-            if (position != -1) {
-                expenses.removeAt(position)
-                notifyDataSetChanged()
-            }
-        }
-        override fun getCount(): Int = expenses.size
+/* 미사용으로 삭제 됨
+// 지출 내역 목록용 어댑터 클래스 수정
+inner class ExpenseListAdapter(
+    private val context: Context,
+    private val expenses: MutableList<ExpenseDto> // List에서 MutableList로 변경
+) : BaseAdapter() {
 
-        override fun getItem(position: Int): Any = expenses[position]
-
-        override fun getItemId(position: Int): Long = position.toLong()
-
-        override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-            val view = convertView ?: LayoutInflater.from(context)
-                .inflate(R.layout.item_expense, parent, false)
-
-            val expense = expenses[position]
-
-            val productNameText: TextView = view.findViewById(R.id.productNameText)
-            val amountText: TextView = view.findViewById(R.id.amountText)
-            val dateTimeText: TextView = view.findViewById(R.id.dateTimeText)
-            val memoText: TextView = view.findViewById(R.id.memoText)
-
-            productNameText.text = expense.productName
-
-            // 금액 포맷팅
-            val formatter = NumberFormat.getInstance(Locale.KOREA)
-            amountText.text = "${formatter.format(expense.amount.toInt())}원"
-
-            // 날짜만 표시하도록 변경 (시간 제거)
-            // dateTimeText.text = expense.dateTime // 이전 코드
-
-            // 날짜 부분만 추출해서 표시
-            val dateOnly = expense.dateTime.split(" ")[0] // "yyyy-MM-dd HH:mm"에서 "yyyy-MM-dd" 추출
-            dateTimeText.text = dateOnly
-
-            // 메모가 있는 경우에만 표시
-            if (!expense.memo.isNullOrEmpty()) {
-                memoText.visibility = View.VISIBLE
-                memoText.text = expense.memo
-            } else {
-                memoText.visibility = View.GONE
-            }
-
-            // 아이템 롱클릭 리스너 추가
-            view.setOnLongClickListener {
-                showDeleteConfirmDialog(expense)
-                true
-            }
-
-            return view
+    // 새로운 메서드 추가: 지출 항목 제거
+    fun removeExpense(expenseId: Int) {
+        val position = expenses.indexOfFirst { it.id == expenseId }
+        if (position != -1) {
+            expenses.removeAt(position)
+            notifyDataSetChanged()
         }
     }
+    override fun getCount(): Int = expenses.size
+
+    override fun getItem(position: Int): Any = expenses[position]
+
+    override fun getItemId(position: Int): Long = position.toLong()
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+        val view = convertView ?: LayoutInflater.from(context)
+            .inflate(R.layout.item_expense, parent, false)
+
+        val expense = expenses[position]
+
+        val productNameText: TextView = view.findViewById(R.id.productNameText)
+        val amountText: TextView = view.findViewById(R.id.amountText)
+        val dateTimeText: TextView = view.findViewById(R.id.dateTimeText)
+        val memoText: TextView = view.findViewById(R.id.memoText)
+
+        productNameText.text = expense.productName
+
+        // 금액 포맷팅
+        val formatter = NumberFormat.getInstance(Locale.KOREA)
+        amountText.text = "${formatter.format(expense.amount.toInt())}원"
+
+        // 날짜 부분만 추출해서 표시
+        val dateOnly = expense.dateTime.split(" ")[0] // "yyyy-MM-dd HH:mm"에서 "yyyy-MM-dd" 추출
+        dateTimeText.text = dateOnly
+
+        // 메모가 있는 경우에만 표시
+        if (!expense.memo.isNullOrEmpty()) {
+            memoText.visibility = View.VISIBLE
+            memoText.text = expense.memo
+        } else {
+            memoText.visibility = View.GONE
+        }
+
+        // 아이템 롱클릭 리스너 추가
+        view.setOnLongClickListener {
+            showDeleteConfirmDialog(expense)
+            true
+        }
+
+        return view
+    }
+}*/
 }

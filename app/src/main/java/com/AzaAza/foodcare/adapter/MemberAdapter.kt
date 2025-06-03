@@ -7,11 +7,9 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.models.MemberResponse
-import com.AzaAza.foodcare.ui.MemberActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 
@@ -59,7 +57,7 @@ class MemberAdapter(
         }
 
         holder.btnMemberAction.visibility = View.GONE
-        // ⭐️ 프로필 사진 세팅
+        // 프로필 사진 세팅
         if (!member.profile_image_url.isNullOrBlank()) {
             Glide.with(holder.itemView.context)
                 .load("https://foodcare-69ae76eec1bf.herokuapp.com" + member.profile_image_url)

@@ -26,7 +26,7 @@ class SettingActivity : AppCompatActivity() {
                 .setTitle("로그아웃")
                 .setMessage("로그아웃 하시겠습니까?")
                 .setPositiveButton("예") { _, _ ->
-                    performLogout()  // 이미 분리된 함수 있음!
+                    performLogout()  // 이미 분리된 함수 있음
                 }
                 .setNegativeButton("아니오", null)
                 .show()

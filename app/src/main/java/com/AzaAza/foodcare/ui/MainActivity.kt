@@ -73,18 +73,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // ✅ 상태 바 색상 변경 (Android 11 이상에서만 적용)
+        // 상태 바 색상 변경 (Android 11 이상에서만 적용)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.setDecorFitsSystemWindows(false) // Edge-to-edge 활성화
             window.statusBarColor = ContextCompat.getColor(this, R.color.your_background_color)
         }
 
-        // ✅ 상태 바 아이콘 색상 변경 (배경이 어두우면 false, 밝으면 true)
+        // 상태 바 아이콘 색상 변경 (배경이 어두우면 false, 밝으면 true)
         val insetsController = WindowInsetsControllerCompat(window, window.decorView)
         insetsController.isAppearanceLightStatusBars = false // false = 흰색 아이콘, true = 검은색 아이콘
 
 
-        // ✅ ViewPager2 설정
+        // ViewPager2 설정
         bannerPager = findViewById(R.id.bannerPager)
 
         val banners = listOf(
@@ -120,7 +120,7 @@ class MainActivity : AppCompatActivity() {
         val indicator = findViewById<DotsIndicator>(R.id.dots_indicator)
         indicator.setViewPager2(bannerPager)
 
-        // ✅ 자동 슬라이드 기능
+        // 자동 슬라이드 기능
         handler = Handler(Looper.getMainLooper())
         runnable = object : Runnable {
             override fun run() {
@@ -133,7 +133,7 @@ class MainActivity : AppCompatActivity() {
         }
         handler.postDelayed(runnable, 5000)
 
-        // ✅ 사용자가 손으로 슬라이드하면 자동 슬라이드 일시 중지
+        // 사용자가 손으로 슬라이드하면 자동 슬라이드 일시 중지
         bannerPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageScrollStateChanged(state: Int) {
                 when (state) {
@@ -143,27 +143,27 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        // ✅ 버튼들 클릭 이벤트
+        // 버튼들 클릭 이벤트
         findViewById<ImageButton>(R.id.btnFoodMgmt).setOnClickListener {
             startActivity(Intent(this, FoodManagementActivity::class.java))
         }
-        findViewById<ImageButton>(R.id.btnFoodRecipe).setOnClickListener {
+        findViewById<ImageButton>(R.id.btnRecipeSearch).setOnClickListener {
             startActivity(Intent(this, RecipeSearchActivity::class.java))
         }
-        findViewById<ImageButton>(R.id.btnSearch).setOnClickListener {
+        findViewById<ImageButton>(R.id.btnExpenseAnalysis).setOnClickListener {
             startActivity(Intent(this, ExpenseAnalysisActivity::class.java))
         }
-        findViewById<ImageButton>(R.id.btnFridge).setOnClickListener {
+        findViewById<ImageButton>(R.id.btnExpense).setOnClickListener {
             startActivity(Intent(this, ExpenseActivity::class.java))
         }
-        findViewById<ImageButton>(R.id.btnInformation).setOnClickListener {
+        findViewById<ImageButton>(R.id.btnUserInfo).setOnClickListener {
             startActivity(Intent(this, UserInfoShowActivity::class.java))
         }
 
-        findViewById<ImageButton>(R.id.btnMember).setOnClickListener {
+        findViewById<ImageButton>(R.id.btnMembers).setOnClickListener {
             startActivity(Intent(this, MemberActivity::class.java))
         }
-        findViewById<ImageButton>(R.id.btnFoodSearch).setOnClickListener {
+        findViewById<ImageButton>(R.id.btnAddRecipe).setOnClickListener {
             startActivity(Intent(this, AddRecipeActivity::class.java))
         }
         findViewById<ImageButton>(R.id.btnSetting).setOnClickListener {
@@ -171,7 +171,7 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        // ✅ 알림 벨 아이콘 클릭 이벤트 추가
+        // 알림 벨 아이콘 클릭 이벤트 추가
         val notificationBell: ImageView = findViewById(R.id.imageView) // 벨 아이콘 ID
         notificationBell.setOnClickListener {
             startActivity(Intent(this, ExpiryNotificationActivity::class.java))
@@ -246,10 +246,8 @@ class MainActivity : AppCompatActivity() {
 
         if (requestCode == 100) { // 알림 권한 요청 코드
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // 권한 허용됨
                 Log.d("MainActivity", "알림 권한이 허용되었습니다")
             } else {
-                // 권한 거부됨
                 Log.d("MainActivity", "알림 권한이 거부되었습니다")
                 Toast.makeText(
                     this,
@@ -338,13 +336,13 @@ class MainActivity : AppCompatActivity() {
             })
     }
 
-    // ✅ 액티비티 재개 시 데이터와 뱃지 업데이트
+    // 액티비티 재개 시 데이터와 뱃지 업데이트
     override fun onResume() {
         super.onResume()
         updateNotificationBadge()
     }
 
-    // ✅ 액티비티 종료 시 자동 슬라이드 정지
+    // 액티비티 종료 시 자동 슬라이드 정지
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacks(runnable)
@@ -387,13 +385,11 @@ class MainActivity : AppCompatActivity() {
 
                     val moreBtn = Button(this@MainActivity).apply {
                         text = "더 많은 레시피 확인하기!"
-                        // '레시피 보기' 버튼과 비슷하게 스타일 적용
                         setBackgroundTintList(ContextCompat.getColorStateList(this@MainActivity, R.color.green_700))
                         setTextColor(ContextCompat.getColor(this@MainActivity, android.R.color.white))
                         textSize = 15f
                         setPadding(40, 18, 40, 18)
                         background = ContextCompat.getDrawable(this@MainActivity, R.drawable.rounded_button_bg) // 선택
-                        // layoutParams도 CardView 내부 버튼과 맞춰줌
                         val params = LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.WRAP_CONTENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
@@ -414,7 +410,7 @@ class MainActivity : AppCompatActivity() {
 
 
             override fun onFailure(call: Call<List<RecipeDto>>, t: Throwable) {
-                // 에러 처리
+
             }
         })
     }

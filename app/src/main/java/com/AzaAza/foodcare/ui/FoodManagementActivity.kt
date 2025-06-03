@@ -71,806 +71,810 @@ class FoodManagementActivity : AppCompatActivity() {
     // SharedPreferences 관련 상수 및 변수
     private lateinit var sharedPreferences: SharedPreferences
     private val PREF_NAME = "FoodcarePrefs"
-    private val EXPIRY_ALERT_PREFIX = "expiry_alert_"
-    private val LAST_ALERT_DATE = "last_alert_date"
+/* 미사용으로 삭제 됨
+private val EXPIRY_ALERT_PREFIX = "expiry_alert_"
+*/
+private val LAST_ALERT_DATE = "last_alert_date"
 
-    // 현재 로그인한 사용자 ID
-    private var currentUserId: Int = -1
+// 현재 로그인한 사용자 ID
+private var currentUserId: Int = -1
 
-    // 모드 관련 변수
-    private var isSharedMode = false
-    private lateinit var toggleModeButton: Button
-    private lateinit var modeIndicator: TextView
-    private lateinit var modeDescription: TextView
+// 모드 관련 변수
+private var isSharedMode = false
+private lateinit var toggleModeButton: Button
+private lateinit var modeIndicator: TextView
+private lateinit var modeDescription: TextView
 
-    data class Ingredient(
-        val name: String,
-        val location: String,
-        val expiryDate: Date,
-        val purchaseDate: Date,
-        val imagePath: String? = null,   // 로컬 저장용
-        val imageUrl: String? = null     // 서버에서 받은 url 저장용
-    ) {
-        // 고유 식별자 생성
-        fun getUniqueKey(): String {
-            return "$name-$location-${expiryDate.time}"
-        }
+data class Ingredient(
+    val name: String,
+    val location: String,
+    val expiryDate: Date,
+    val purchaseDate: Date,
+    val imagePath: String? = null,   // 로컬 저장용
+    val imageUrl: String? = null     // 서버에서 받은 url 저장용
+) {
+    // 고유 식별자 생성
+    fun getUniqueKey(): String {
+        return "$name-$location-${expiryDate.time}"
+    }
+}
+
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    setContentView(R.layout.activity_food_management)
+
+    // 현재 사용자 ID 가져오기
+    currentUserId = UserSession.getUserId(this)
+
+    // 로그인 상태 확인
+    if (currentUserId == -1 || !UserSession.isLoggedIn(this)) {
+        Toast.makeText(this, "로그인이 필요합니다.", Toast.LENGTH_SHORT).show()
+        finish()
+        return
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_food_management)
+    // SharedPreferences 초기화
+    sharedPreferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
-        // 현재 사용자 ID 가져오기
-        currentUserId = UserSession.getUserId(this)
+    // UI 요소 초기화
+    initializeViews()
+    initializeUI()
 
-        // 로그인 상태 확인
-        if (currentUserId == -1 || !UserSession.isLoggedIn(this)) {
-            Toast.makeText(this, "로그인이 필요합니다.", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
+    // 앱 시작 시 서버에서 데이터 불러오기
+    fetchIngredientsFromServer()
 
-        // SharedPreferences 초기화
-        sharedPreferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+    // 검색 기능 구현
+    setupSearchFunction()
 
-        // UI 요소 초기화
-        initializeViews()
-        initializeUI()
+    // 뒤로가기 버튼 설정
+    val backButton: ImageView = findViewById(R.id.backButton)
+    backButton.setOnClickListener { onBackPressed() }
+}
 
-        // 앱 시작 시 서버에서 데이터 불러오기
-        fetchIngredientsFromServer()
+private fun initializeViews() {
+    container = findViewById<LinearLayout>(R.id.ingredientsContainer)
+    toggleModeButton = findViewById<Button>(R.id.toggleModeButton)
+    modeIndicator = findViewById<TextView>(R.id.modeIndicator)
+    modeDescription = findViewById<TextView>(R.id.modeDescription)
 
-        // 검색 기능 구현
-        setupSearchFunction()
-
-        // 뒤로가기 버튼 설정
-        val backButton: ImageView = findViewById(R.id.backButton)
-        backButton.setOnClickListener { onBackPressed() }
+    val fabAdd = findViewById<FloatingActionButton>(R.id.fabAdd)
+    fabAdd.setOnClickListener {
+        showAddIngredientDialog()
     }
+}
 
-    private fun initializeViews() {
-        container = findViewById<LinearLayout>(R.id.ingredientsContainer)
-        toggleModeButton = findViewById<Button>(R.id.toggleModeButton)
-        modeIndicator = findViewById<TextView>(R.id.modeIndicator)
-        modeDescription = findViewById<TextView>(R.id.modeDescription)
+private fun initializeUI() {
+    setupModeToggle()
+    updateModeUI()
+}
 
-        val fabAdd = findViewById<FloatingActionButton>(R.id.fabAdd)
-        fabAdd.setOnClickListener {
-            showAddIngredientDialog()
-        }
-    }
-
-    private fun initializeUI() {
-        setupModeToggle()
+private fun setupModeToggle() {
+    toggleModeButton.setOnClickListener {
+        isSharedMode = !isSharedMode
         updateModeUI()
-    }
 
-    private fun setupModeToggle() {
-        toggleModeButton.setOnClickListener {
-            isSharedMode = !isSharedMode
-            updateModeUI()
-
-            // 모드 변경 시 데이터 다시 불러오기
-            if (isSharedMode) {
-                fetchSharedIngredientsFromServer()
-            } else {
-                fetchIngredientsFromServer()
-            }
-        }
-    }
-
-    private fun updateModeUI() {
+        // 모드 변경 시 데이터 다시 불러오기
         if (isSharedMode) {
-            // 공유 모드로 전환
-            modeIndicator.text = "공유 모드"
-            modeIndicator.setTextColor(Color.parseColor("#FF9800"))
-            modeIndicator.setBackgroundResource(R.drawable.mode_indicator_shared)
-
-            toggleModeButton.text = "개인 모드로 전환"
-            toggleModeButton.setBackgroundResource(R.drawable.mode_toggle_button) // 초록색 drawable 사용
-
-            // 공유 모드 설명 텍스트 표시
-            modeDescription.text = "김철수님의 그룹 (공유 모드)"
-            modeDescription.visibility = View.VISIBLE
-
+            fetchSharedIngredientsFromServer()
         } else {
-            // 개인 모드로 전환
-            modeIndicator.text = "개인 모드"
-            modeIndicator.setTextColor(Color.parseColor("#4CAF50"))
-            modeIndicator.setBackgroundResource(R.drawable.mode_indicator_personal)
-
-            toggleModeButton.text = "공유 모드로 전환"
-            toggleModeButton.setBackgroundResource(R.drawable.mode_toggle_button) // 초록색 drawable 사용
-
-            // 공유 모드 설명 텍스트 숨김
-            modeDescription.visibility = View.GONE
+            fetchIngredientsFromServer()
         }
     }
+}
 
-    private fun setupSearchFunction() {
-        val searchEditText = findViewById<EditText>(R.id.editTextSearch)
-        searchEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+private fun updateModeUI() {
+    if (isSharedMode) {
+        // 공유 모드로 전환
+        modeIndicator.text = "공유 모드"
+        modeIndicator.setTextColor(Color.parseColor("#FF9800"))
+        modeIndicator.setBackgroundResource(R.drawable.mode_indicator_shared)
 
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                filterIngredients(s.toString())
-            }
+        toggleModeButton.text = "개인 모드로 전환"
+        toggleModeButton.setBackgroundResource(R.drawable.mode_toggle_button) // 초록색 drawable 사용
 
-            override fun afterTextChanged(s: Editable?) {}
-        })
+        // 공유 모드 설명 텍스트 표시
+        modeDescription.text = "김철수님의 그룹 (공유 모드)"
+        modeDescription.visibility = View.VISIBLE
+
+    } else {
+        // 개인 모드로 전환
+        modeIndicator.text = "개인 모드"
+        modeIndicator.setTextColor(Color.parseColor("#4CAF50"))
+        modeIndicator.setBackgroundResource(R.drawable.mode_indicator_personal)
+
+        toggleModeButton.text = "공유 모드로 전환"
+        toggleModeButton.setBackgroundResource(R.drawable.mode_toggle_button) // 초록색 drawable 사용
+
+        // 공유 모드 설명 텍스트 숨김
+        modeDescription.visibility = View.GONE
     }
+}
 
-    // 현재 사용자의 식자재만 서버에서 가져오기
-    private fun fetchIngredientsFromServer() {
-        Log.d("FoodManagement", "사용자 $currentUserId 의 식자재 목록 가져오기 시작")
+private fun setupSearchFunction() {
+    val searchEditText = findViewById<EditText>(R.id.editTextSearch)
+    searchEditText.addTextChangedListener(object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
-        // 사용자별 식자재 조회 API 호출
-        RetrofitClient.ingredientApiService.getIngredients(currentUserId)
-            .enqueue(object : Callback<List<IngredientDto>> {
-                override fun onResponse(call: Call<List<IngredientDto>>, response: Response<List<IngredientDto>>) {
-                    if (response.isSuccessful) {
-                        val serverIngredients = response.body()
-                        Log.d("FoodManagement", "사용자 $currentUserId 의 ${serverIngredients?.size ?: 0}개 식자재 데이터 수신")
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            filterIngredients(s.toString())
+        }
 
-                        if (serverIngredients != null) {
-                            processServerIngredients(serverIngredients)
-                        }
-                    } else {
-                        val errorMsg = response.errorBody()?.string() ?: "알 수 없는 오류"
-                        Log.e("FoodManagement", "서버 응답 오류: ${response.code()}, $errorMsg")
-                        showToast("서버에서 데이터를 불러오는데 실패했습니다.")
+        override fun afterTextChanged(s: Editable?) {}
+    })
+}
+
+// 현재 사용자의 식자재만 서버에서 가져오기
+private fun fetchIngredientsFromServer() {
+    Log.d("FoodManagement", "사용자 $currentUserId 의 식자재 목록 가져오기 시작")
+
+    // 사용자별 식자재 조회 API 호출
+    RetrofitClient.ingredientApiService.getIngredients(currentUserId)
+        .enqueue(object : Callback<List<IngredientDto>> {
+            override fun onResponse(call: Call<List<IngredientDto>>, response: Response<List<IngredientDto>>) {
+                if (response.isSuccessful) {
+                    val serverIngredients = response.body()
+                    Log.d("FoodManagement", "사용자 $currentUserId 의 ${serverIngredients?.size ?: 0}개 식자재 데이터 수신")
+
+                    if (serverIngredients != null) {
+                        processServerIngredients(serverIngredients)
                     }
+                } else {
+                    val errorMsg = response.errorBody()?.string() ?: "알 수 없는 오류"
+                    Log.e("FoodManagement", "서버 응답 오류: ${response.code()}, $errorMsg")
+                    showToast("서버에서 데이터를 불러오는데 실패했습니다.")
                 }
-
-                override fun onFailure(call: Call<List<IngredientDto>>, t: Throwable) {
-                    Log.e("FoodManagement", "서버 연결 실패", t)
-                    showToast("서버 연결에 실패했습니다.")
-                }
-            })
-    }
-
-    // 공유 모드용 데이터 가져오기
-    private fun fetchSharedIngredientsFromServer() {
-        Log.d("FoodManagement", "공유 모드 식자재 목록 가져오기 시작")
-
-        // 여기에 공유 모드용 API 호출 로직 구현
-        // 예시: RetrofitClient.ingredientApiService.getSharedIngredients(groupId)
-
-        // 임시로 개인 모드와 같은 데이터를 사용 (실제로는 그룹 데이터를 가져와야 함)
-        fetchIngredientsFromServer()
-        showToast("공유 모드로 전환되었습니다")
-    }
-
-    private fun processServerIngredients(serverIngredients: List<IngredientDto>) {
-        ingredientsList.clear()
-        ingredientIdMap.clear()
-        container.removeAllViews()
-
-        // 서버에서 받은 데이터가 현재 사용자의 것인지 한번 더 확인 (보안)
-        val userIngredients = serverIngredients.filter { it.userId == currentUserId }
-
-        for (dto in userIngredients) {
-            try {
-                val expiryDate = apiDateFormat.parse(dto.expiryDate) ?: Date()
-                val purchaseDate = apiDateFormat.parse(dto.purchaseDate) ?: Date()
-
-                val ingredient = Ingredient(
-                    dto.name,
-                    dto.location,
-                    expiryDate,
-                    purchaseDate,
-                    null,
-                    dto.imageUrl
-                )
-
-                ingredientIdMap[ingredient.getUniqueKey()] = dto.id
-                ingredientsList.add(ingredient)
-
-            } catch (e: Exception) {
-                Log.e("FoodManagement", "데이터 파싱 오류", e)
             }
-        }
 
-        handleExpiredIngredients()
+            override fun onFailure(call: Call<List<IngredientDto>>, t: Throwable) {
+                Log.e("FoodManagement", "서버 연결 실패", t)
+                showToast("서버 연결에 실패했습니다.")
+            }
+        })
+}
+
+// 공유 모드용 데이터 가져오기
+private fun fetchSharedIngredientsFromServer() {
+    Log.d("FoodManagement", "공유 모드 식자재 목록 가져오기 시작")
+
+    /* 사용할 거면 추가 하기 아니면 삭제*/
+
+    // 여기에 공유 모드용 API 호출 로직 구현
+    // 예시: RetrofitClient.ingredientApiService.getSharedIngredients(groupId)
+
+    // 임시로 개인 모드와 같은 데이터를 사용 (실제로는 그룹 데이터를 가져와야 함)
+    fetchIngredientsFromServer()
+    showToast("공유 모드로 전환되었습니다")
+}
+
+private fun processServerIngredients(serverIngredients: List<IngredientDto>) {
+    ingredientsList.clear()
+    ingredientIdMap.clear()
+    container.removeAllViews()
+
+    // 서버에서 받은 데이터가 현재 사용자의 것인지 한번 더 확인 (보안)
+    val userIngredients = serverIngredients.filter { it.userId == currentUserId }
+
+    for (dto in userIngredients) {
+        try {
+            val expiryDate = apiDateFormat.parse(dto.expiryDate) ?: Date()
+            val purchaseDate = apiDateFormat.parse(dto.purchaseDate) ?: Date()
+
+            val ingredient = Ingredient(
+                dto.name,
+                dto.location,
+                expiryDate,
+                purchaseDate,
+                null,
+                dto.imageUrl
+            )
+
+            ingredientIdMap[ingredient.getUniqueKey()] = dto.id
+            ingredientsList.add(ingredient)
+
+        } catch (e: Exception) {
+            Log.e("FoodManagement", "데이터 파싱 오류", e)
+        }
     }
 
-    private fun handleExpiredIngredients() {
-        val today = Calendar.getInstance().apply {
+    handleExpiredIngredients()
+}
+
+private fun handleExpiredIngredients() {
+    val today = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.time
+
+    // 전체 리스트를 소비기한 기준으로 정렬 (오름차순)
+    ingredientsList.sortBy { it.expiryDate }
+
+    // 오늘 날짜 확인
+    val todayStr = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(today)
+    val lastAlertDate = sharedPreferences.getString(LAST_ALERT_DATE, "")
+
+    // 소비기한이 지난 식재료 필터링
+    val expiredIngredients = ingredientsList.filter {
+        val calendar = Calendar.getInstance().apply {
+            time = it.expiryDate
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
-        }.time
-
-        // 전체 리스트를 소비기한 기준으로 정렬 (오름차순)
-        ingredientsList.sortBy { it.expiryDate }
-
-        // 오늘 날짜 확인
-        val todayStr = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(today)
-        val lastAlertDate = sharedPreferences.getString(LAST_ALERT_DATE, "")
-
-        // 소비기한이 지난 식재료 필터링
-        val expiredIngredients = ingredientsList.filter {
-            val calendar = Calendar.getInstance().apply {
-                time = it.expiryDate
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-            }
-            calendar.time.before(today)
         }
+        calendar.time.before(today)
+    }
 
-        // 마지막으로 알림을 표시한 날짜가 오늘이 아닐 경우에만 알림 표시
-        if (lastAlertDate != todayStr && expiredIngredients.isNotEmpty()) {
-            showExpiredIngredientsAlert(expiredIngredients, todayStr)
+    // 마지막으로 알림을 표시한 날짜가 오늘이 아닐 경우에만 알림 표시
+    if (lastAlertDate != todayStr && expiredIngredients.isNotEmpty()) {
+        showExpiredIngredientsAlert(expiredIngredients, todayStr)
+    } else {
+        // 모든 식자재 카드 표시
+        displayAllIngredients()
+    }
+}
+
+private fun showExpiredIngredientsAlert(expiredIngredients: List<Ingredient>, todayStr: String) {
+    // 유통기한 지난 항목 처리 (삭제/취소 분기)
+    for (expired in expiredIngredients) {
+        android.app.AlertDialog.Builder(this@FoodManagementActivity)
+            .setTitle("식자재 자동 삭제")
+            .setMessage("${expired.name}의 소비기한이 지났습니다. 정말 삭제하시겠습니까?")
+            .setPositiveButton("삭제") { _, _ ->
+                val fakeCard = CardView(this@FoodManagementActivity)
+                deleteIngredient(expired, fakeCard)
+            }
+            .setNegativeButton("취소") { _, _ ->
+                // 취소한 항목도 표시 (전체 리스트에 추가)
+                if (!ingredientsList.contains(expired)) {
+                    ingredientsList.add(expired)
+                }
+
+                // 소비기한 기준으로 전체 재정렬 (오름차순)
+                ingredientsList.sortBy { it.expiryDate }
+
+                // 컨테이너 초기화 후 모든 항목 다시 표시
+                displayAllIngredients()
+            }
+            .show()
+    }
+
+    // 알림을 표시한 날짜를 오늘로 저장
+    sharedPreferences.edit().putString(LAST_ALERT_DATE, todayStr).apply()
+}
+
+private fun displayAllIngredients() {
+    container.removeAllViews()
+    ingredientsList.forEach { ingredient ->
+        addIngredientCard(ingredient)
+    }
+    showToast("데이터 로드 완료 (${ingredientsList.size}개 표시됨)")
+}
+
+private fun filterIngredients(query: String) {
+    container.removeAllViews()
+
+    val filteredList = if (query.isEmpty()) {
+        ingredientsList
+    } else {
+        ingredientsList.filter { it.name.contains(query, ignoreCase = true) }
+    }
+
+    // 소비기한 임박순으로 정렬 (오름차순)
+    filteredList.sortedBy { it.expiryDate }.forEach { ingredient ->
+        addIngredientCard(ingredient)
+    }
+}
+
+private fun showAddIngredientDialog() {
+    val dialog = Dialog(this)
+    dialog.setContentView(R.layout.add_ingredient)
+    currentDialog = dialog
+
+    dialog.window?.apply {
+        setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        setBackgroundDrawableResource(android.R.color.white)
+        addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        setDimAmount(0.5f)
+    }
+
+    setupDialogViews(dialog)
+    dialog.show()
+}
+
+private fun setupDialogViews(dialog: Dialog) {
+    val buttonCancel = dialog.findViewById<Button>(R.id.buttonCancel)
+    val buttonSave = dialog.findViewById<Button>(R.id.buttonSave)
+    val editTextName = dialog.findViewById<EditText>(R.id.editTextName)
+    val editTextLocation = dialog.findViewById<EditText>(R.id.editTextLocation)
+    val editTextExpiry = dialog.findViewById<EditText>(R.id.editTextExpiry)
+    val editTextPurchase = dialog.findViewById<EditText>(R.id.editTextNotes)
+
+    // 이미지 관련 요소 초기화
+    imageViewPhoto = dialog.findViewById(R.id.imageViewPhoto)
+    val buttonCamera = dialog.findViewById<Button>(R.id.buttonCamera)
+    val buttonGallery = dialog.findViewById<Button>(R.id.buttonGallery)
+
+    setupImageButtons(buttonCamera, buttonGallery)
+    setupDatePickers(editTextExpiry, editTextPurchase)
+    setupDialogButtons(dialog, buttonCancel, buttonSave, editTextName, editTextLocation, editTextExpiry, editTextPurchase)
+}
+
+private fun setupImageButtons(buttonCamera: Button, buttonGallery: Button) {
+    // 카메라 버튼 클릭 시
+    buttonCamera.setOnClickListener {
+        if (checkCameraPermission()) {
+            openCamera()
         } else {
-            // 모든 식자재 카드 표시
-            displayAllIngredients()
+            requestCameraPermission()
         }
     }
 
-    private fun showExpiredIngredientsAlert(expiredIngredients: List<Ingredient>, todayStr: String) {
-        // 유통기한 지난 항목 처리 (삭제/취소 분기)
-        for (expired in expiredIngredients) {
-            android.app.AlertDialog.Builder(this@FoodManagementActivity)
-                .setTitle("식자재 자동 삭제")
-                .setMessage("${expired.name}의 소비기한이 지났습니다. 정말 삭제하시겠습니까?")
-                .setPositiveButton("삭제") { _, _ ->
-                    val fakeCard = CardView(this@FoodManagementActivity)
-                    deleteIngredient(expired, fakeCard)
-                }
-                .setNegativeButton("취소") { _, _ ->
-                    // 취소한 항목도 표시 (전체 리스트에 추가)
-                    if (!ingredientsList.contains(expired)) {
-                        ingredientsList.add(expired)
-                    }
-
-                    // 소비기한 기준으로 전체 재정렬 (오름차순)
-                    ingredientsList.sortBy { it.expiryDate }
-
-                    // 컨테이너 초기화 후 모든 항목 다시 표시
-                    displayAllIngredients()
-                }
-                .show()
-        }
-
-        // 알림을 표시한 날짜를 오늘로 저장
-        sharedPreferences.edit().putString(LAST_ALERT_DATE, todayStr).apply()
-    }
-
-    private fun displayAllIngredients() {
-        container.removeAllViews()
-        ingredientsList.forEach { ingredient ->
-            addIngredientCard(ingredient)
-        }
-        showToast("데이터 로드 완료 (${ingredientsList.size}개 표시됨)")
-    }
-
-    private fun filterIngredients(query: String) {
-        container.removeAllViews()
-
-        val filteredList = if (query.isEmpty()) {
-            ingredientsList
+    // 갤러리 버튼 클릭 시
+    buttonGallery.setOnClickListener {
+        if (checkStoragePermission()) {
+            openGallery()
         } else {
-            ingredientsList.filter { it.name.contains(query, ignoreCase = true) }
-        }
-
-        // 소비기한 임박순으로 정렬 (오름차순)
-        filteredList.sortedBy { it.expiryDate }.forEach { ingredient ->
-            addIngredientCard(ingredient)
+            requestStoragePermission()
         }
     }
+}
 
-    private fun showAddIngredientDialog() {
-        val dialog = Dialog(this)
-        dialog.setContentView(R.layout.add_ingredient)
-        currentDialog = dialog
-
-        dialog.window?.apply {
-            setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            setBackgroundDrawableResource(android.R.color.white)
-            addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-            setDimAmount(0.5f)
-        }
-
-        setupDialogViews(dialog)
-        dialog.show()
+private fun setupDatePickers(editTextExpiry: EditText, editTextPurchase: EditText) {
+    // DatePicker 처리 추가 - 유통기한
+    editTextExpiry.setOnClickListener {
+        showDatePickerDialog(editTextExpiry)
     }
 
-    private fun setupDialogViews(dialog: Dialog) {
-        val buttonCancel = dialog.findViewById<Button>(R.id.buttonCancel)
-        val buttonSave = dialog.findViewById<Button>(R.id.buttonSave)
-        val editTextName = dialog.findViewById<EditText>(R.id.editTextName)
-        val editTextLocation = dialog.findViewById<EditText>(R.id.editTextLocation)
-        val editTextExpiry = dialog.findViewById<EditText>(R.id.editTextExpiry)
-        val editTextPurchase = dialog.findViewById<EditText>(R.id.editTextNotes)
+    // DatePicker 처리 추가 - 구매날짜
+    editTextPurchase.setOnClickListener {
+        showDatePickerDialog(editTextPurchase)
+    }
+}
 
-        // 이미지 관련 요소 초기화
-        imageViewPhoto = dialog.findViewById(R.id.imageViewPhoto)
-        val buttonCamera = dialog.findViewById<Button>(R.id.buttonCamera)
-        val buttonGallery = dialog.findViewById<Button>(R.id.buttonGallery)
-
-        setupImageButtons(buttonCamera, buttonGallery)
-        setupDatePickers(editTextExpiry, editTextPurchase)
-        setupDialogButtons(dialog, buttonCancel, buttonSave, editTextName, editTextLocation, editTextExpiry, editTextPurchase)
+private fun setupDialogButtons(
+    dialog: Dialog,
+    buttonCancel: Button,
+    buttonSave: Button,
+    editTextName: EditText,
+    editTextLocation: EditText,
+    editTextExpiry: EditText,
+    editTextPurchase: EditText
+) {
+    buttonCancel.setOnClickListener {
+        dialog.dismiss()
     }
 
-    private fun setupImageButtons(buttonCamera: Button, buttonGallery: Button) {
-        // 카메라 버튼 클릭 시
-        buttonCamera.setOnClickListener {
-            if (checkCameraPermission()) {
-                openCamera()
-            } else {
-                requestCameraPermission()
+    buttonSave.setOnClickListener {
+        try {
+            val name = editTextName.text.toString()
+            val location = editTextLocation.text.toString()
+            val expiryDateStr = editTextExpiry.text.toString()
+            val purchaseDateStr = editTextPurchase.text.toString()
+
+            // 기본 유효성 검사
+            if (name.isBlank() || location.isBlank() || expiryDateStr.isBlank() || purchaseDateStr.isBlank()) {
+                Toast.makeText(this, "모든 필드를 입력해주세요", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
-        }
 
-        // 갤러리 버튼 클릭 시
-        buttonGallery.setOnClickListener {
-            if (checkStoragePermission()) {
-                openGallery()
-            } else {
-                requestStoragePermission()
-            }
-        }
-    }
+            // 날짜 파싱
+            val expiryDate = dateFormat.parse(expiryDateStr) ?: Date()
+            val purchaseDate = dateFormat.parse(purchaseDateStr) ?: Date()
 
-    private fun setupDatePickers(editTextExpiry: EditText, editTextPurchase: EditText) {
-        // DatePicker 처리 추가 - 유통기한
-        editTextExpiry.setOnClickListener {
-            showDatePickerDialog(editTextExpiry)
-        }
+            // 데이터 추가 (이미지 경로 포함)
+            val newIngredient = Ingredient(
+                name,
+                location,
+                expiryDate,
+                purchaseDate,
+                currentPhotoPath.ifEmpty { null }
+            )
 
-        // DatePicker 처리 추가 - 구매날짜
-        editTextPurchase.setOnClickListener {
-            showDatePickerDialog(editTextPurchase)
-        }
-    }
+            // 서버에 데이터 전송
+            sendIngredientToServer(newIngredient, dialog)
 
-    private fun setupDialogButtons(
-        dialog: Dialog,
-        buttonCancel: Button,
-        buttonSave: Button,
-        editTextName: EditText,
-        editTextLocation: EditText,
-        editTextExpiry: EditText,
-        editTextPurchase: EditText
-    ) {
-        buttonCancel.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        buttonSave.setOnClickListener {
-            try {
-                val name = editTextName.text.toString()
-                val location = editTextLocation.text.toString()
-                val expiryDateStr = editTextExpiry.text.toString()
-                val purchaseDateStr = editTextPurchase.text.toString()
-
-                // 기본 유효성 검사
-                if (name.isBlank() || location.isBlank() || expiryDateStr.isBlank() || purchaseDateStr.isBlank()) {
-                    Toast.makeText(this, "모든 필드를 입력해주세요", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-
-                // 날짜 파싱
-                val expiryDate = dateFormat.parse(expiryDateStr) ?: Date()
-                val purchaseDate = dateFormat.parse(purchaseDateStr) ?: Date()
-
-                // 데이터 추가 (이미지 경로 포함)
-                val newIngredient = Ingredient(
-                    name,
-                    location,
-                    expiryDate,
-                    purchaseDate,
-                    currentPhotoPath.ifEmpty { null }
-                )
-
-                // 서버에 데이터 전송
-                sendIngredientToServer(newIngredient, dialog)
-
-            } catch (e: Exception) {
-                Toast.makeText(this, "데이터 형식을 확인해주세요", Toast.LENGTH_SHORT).show()
-                Log.e("FoodManagement", "데이터 추가 오류", e)
-            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "데이터 형식을 확인해주세요", Toast.LENGTH_SHORT).show()
+            Log.e("FoodManagement", "데이터 추가 오류", e)
         }
     }
+}
 
-    // 카메라 및 갤러리 관련 메서드들
-    private fun checkCameraPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(
+// 카메라 및 갤러리 관련 메서드들
+private fun checkCameraPermission(): Boolean {
+    return ContextCompat.checkSelfPermission(
+        this,
+        Manifest.permission.CAMERA
+    ) == PackageManager.PERMISSION_GRANTED
+}
+
+private fun requestCameraPermission() {
+    ActivityCompat.requestPermissions(
+        this,
+        arrayOf(Manifest.permission.CAMERA),
+        CAMERA_PERMISSION_CODE
+    )
+}
+
+private fun checkStoragePermission(): Boolean {
+    return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        ContextCompat.checkSelfPermission(
             this,
-            Manifest.permission.CAMERA
+            Manifest.permission.READ_MEDIA_IMAGES
+        ) == PackageManager.PERMISSION_GRANTED
+    } else {
+        ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.READ_EXTERNAL_STORAGE
         ) == PackageManager.PERMISSION_GRANTED
     }
+}
 
-    private fun requestCameraPermission() {
+private fun requestStoragePermission() {
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
         ActivityCompat.requestPermissions(
             this,
-            arrayOf(Manifest.permission.CAMERA),
-            CAMERA_PERMISSION_CODE
+            arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
+            STORAGE_PERMISSION_CODE
+        )
+    } else {
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+            STORAGE_PERMISSION_CODE
         )
     }
+}
 
-    private fun checkStoragePermission(): Boolean {
-        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.READ_MEDIA_IMAGES
-            ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
-        }
-    }
+private fun openCamera() {
+    Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+        takePictureIntent.resolveActivity(packageManager)?.also {
+            // 파일 생성
+            val photoFile: File? = try {
+                createImageFile()
+            } catch (ex: IOException) {
+                Log.e("FoodManagement", "이미지 파일 생성 실패", ex)
+                null
+            }
 
-    private fun requestStoragePermission() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
-                STORAGE_PERMISSION_CODE
-            )
-        } else {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                STORAGE_PERMISSION_CODE
-            )
-        }
-    }
-
-    private fun openCamera() {
-        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
-            takePictureIntent.resolveActivity(packageManager)?.also {
-                // 파일 생성
-                val photoFile: File? = try {
-                    createImageFile()
-                } catch (ex: IOException) {
-                    Log.e("FoodManagement", "이미지 파일 생성 실패", ex)
-                    null
-                }
-
-                // 파일이 생성됐으면 계속 진행
-                photoFile?.also {
-                    val photoURI: Uri = FileProvider.getUriForFile(
-                        this,
-                        "com.AzaAza.foodcare.fileprovider",
-                        it
-                    )
-                    currentPhotoUri = photoURI
-                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
-                    startActivityForResult(takePictureIntent, CAMERA_REQUEST_CODE)
-                }
+            // 파일이 생성됐으면 계속 진행
+            photoFile?.also {
+                val photoURI: Uri = FileProvider.getUriForFile(
+                    this,
+                    "com.AzaAza.foodcare.fileprovider",
+                    it
+                )
+                currentPhotoUri = photoURI
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                startActivityForResult(takePictureIntent, CAMERA_REQUEST_CODE)
             }
         }
     }
+}
 
-    @Throws(IOException::class)
-    private fun createImageFile(): File {
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        return File.createTempFile(
-            "JPEG_${timeStamp}_", /* prefix */
-            ".jpg", /* suffix */
-            storageDir /* directory */
-        ).apply {
-            currentPhotoPath = absolutePath
+@Throws(IOException::class)
+private fun createImageFile(): File {
+    val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+    val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+    return File.createTempFile(
+        "JPEG_${timeStamp}_", /* prefix */
+        ".jpg", /* suffix */
+        storageDir /* directory */
+    ).apply {
+        currentPhotoPath = absolutePath
+    }
+}
+
+private fun openGallery() {
+    val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+    startActivityForResult(intent, GALLERY_REQUEST_CODE)
+}
+
+override fun onRequestPermissionsResult(
+    requestCode: Int,
+    permissions: Array<out String>,
+    grantResults: IntArray
+) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    when (requestCode) {
+        CAMERA_PERMISSION_CODE -> {
+            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                openCamera()
+            } else {
+                showToast("카메라 권한이 필요합니다")
+            }
+        }
+        STORAGE_PERMISSION_CODE -> {
+            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                openGallery()
+            } else {
+                showToast("저장소 접근 권한이 필요합니다")
+            }
         }
     }
+}
 
-    private fun openGallery() {
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        startActivityForResult(intent, GALLERY_REQUEST_CODE)
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+    if (resultCode == Activity.RESULT_OK) {
         when (requestCode) {
-            CAMERA_PERMISSION_CODE -> {
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    openCamera()
-                } else {
-                    showToast("카메라 권한이 필요합니다")
+            CAMERA_REQUEST_CODE -> {
+                // 카메라로 찍은 사진 처리
+                try {
+                    selectedImageBitmap = BitmapFactory.decodeFile(currentPhotoPath)
+                    imageViewPhoto.setImageBitmap(selectedImageBitmap)
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    showToast("이미지 로드 실패")
                 }
             }
-            STORAGE_PERMISSION_CODE -> {
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    openGallery()
-                } else {
-                    showToast("저장소 접근 권한이 필요합니다")
-                }
-            }
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK) {
-            when (requestCode) {
-                CAMERA_REQUEST_CODE -> {
-                    // 카메라로 찍은 사진 처리
-                    try {
-                        selectedImageBitmap = BitmapFactory.decodeFile(currentPhotoPath)
+            GALLERY_REQUEST_CODE -> {
+                // 갤러리에서 선택한 사진 처리
+                try {
+                    data?.data?.let { uri ->
+                        val inputStream = contentResolver.openInputStream(uri)
+                        selectedImageBitmap = BitmapFactory.decodeStream(inputStream)
                         imageViewPhoto.setImageBitmap(selectedImageBitmap)
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                        showToast("이미지 로드 실패")
-                    }
-                }
-                GALLERY_REQUEST_CODE -> {
-                    // 갤러리에서 선택한 사진 처리
-                    try {
-                        data?.data?.let { uri ->
-                            val inputStream = contentResolver.openInputStream(uri)
-                            selectedImageBitmap = BitmapFactory.decodeStream(inputStream)
-                            imageViewPhoto.setImageBitmap(selectedImageBitmap)
 
-                            // 갤러리에서 선택한 이미지 파일로 저장
-                            val photoFile = createImageFile()
-                            photoFile.outputStream().use { outputStream ->
-                                selectedImageBitmap?.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
-                            }
+                        // 갤러리에서 선택한 이미지 파일로 저장
+                        val photoFile = createImageFile()
+                        photoFile.outputStream().use { outputStream ->
+                            selectedImageBitmap?.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
                         }
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                        showToast("이미지 로드 실패")
                     }
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    showToast("이미지 로드 실패")
                 }
             }
         }
     }
+}
 
-    private fun sendIngredientToServer(ingredient: Ingredient, dialog: Dialog) {
-        val namePart = ingredient.name.toRequestBody("text/plain".toMediaTypeOrNull())
-        val locationPart = ingredient.location.toRequestBody("text/plain".toMediaTypeOrNull())
-        val expiryDatePart = apiDateFormat.format(ingredient.expiryDate).toRequestBody("text/plain".toMediaTypeOrNull())
-        val purchaseDatePart = apiDateFormat.format(ingredient.purchaseDate).toRequestBody("text/plain".toMediaTypeOrNull())
-        val userIdPart = currentUserId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+private fun sendIngredientToServer(ingredient: Ingredient, dialog: Dialog) {
+    val namePart = ingredient.name.toRequestBody("text/plain".toMediaTypeOrNull())
+    val locationPart = ingredient.location.toRequestBody("text/plain".toMediaTypeOrNull())
+    val expiryDatePart = apiDateFormat.format(ingredient.expiryDate).toRequestBody("text/plain".toMediaTypeOrNull())
+    val purchaseDatePart = apiDateFormat.format(ingredient.purchaseDate).toRequestBody("text/plain".toMediaTypeOrNull())
+    val userIdPart = currentUserId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
 
-        var imagePart: MultipartBody.Part? = null
+    var imagePart: MultipartBody.Part? = null
 
-        if (ingredient.imagePath != null) {
-            val imageFile = File(ingredient.imagePath)
-            val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
-            imagePart = MultipartBody.Part.createFormData("image", imageFile.name, requestFile)
+    if (ingredient.imagePath != null) {
+        val imageFile = File(ingredient.imagePath)
+        val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
+        imagePart = MultipartBody.Part.createFormData("image", imageFile.name, requestFile)
+    }
+
+    RetrofitClient.ingredientApiService.addIngredient(
+        namePart, locationPart, expiryDatePart, purchaseDatePart, userIdPart, imagePart
+    ).enqueue(object : Callback<IngredientResponse> {
+        override fun onResponse(call: Call<IngredientResponse>, response: Response<IngredientResponse>) {
+            if (response.isSuccessful) {
+                // 서버에서 식별자 할당
+                val newId = ingredientsList.size + 1
+                ingredientIdMap[ingredient.getUniqueKey()] = newId
+
+                ingredientsList.add(ingredient)
+
+                // 소비기한 임박순으로 정렬 (오름차순)
+                ingredientsList.sortBy { it.expiryDate }
+
+                container.removeAllViews()
+                ingredientsList.forEach { addIngredientCard(it) }
+
+                showToast(response.body()?.message ?: "${ingredient.name} 추가 성공!")
+                dialog.dismiss()
+            } else {
+                showToast("서버 오류: ${response.code()}")
+                Log.e("FoodManagement", "서버 응답 오류: ${response.code()}")
+            }
         }
 
-        RetrofitClient.ingredientApiService.addIngredient(
-            namePart, locationPart, expiryDatePart, purchaseDatePart, userIdPart, imagePart
-        ).enqueue(object : Callback<IngredientResponse> {
+        override fun onFailure(call: Call<IngredientResponse>, t: Throwable) {
+            showToast("서버 연결에 실패했습니다.")
+            Log.e("FoodManagement", "서버 연결 실패", t)
+        }
+    })
+}
+
+// 식자재 삭제 기능
+private fun deleteIngredient(ingredient: Ingredient, cardView: CardView) {
+    val ingredientId = ingredientIdMap[ingredient.getUniqueKey()]
+    if (ingredientId == null) {
+        showToast("식자재 ID를 찾을 수 없습니다.")
+        return
+    }
+
+    // 삭제 요청을 보낼 때 로딩 표시
+    val progressDialog = android.app.ProgressDialog(this).apply {
+        setMessage("삭제 중...")
+        setCancelable(false)
+        show()
+    }
+
+    // 서버에 삭제 요청 (현재 사용자 ID와 함께)
+    Log.d("FoodManagement", "식자재 삭제 요청 - ID: $ingredientId, 사용자: $currentUserId, 이름: ${ingredient.name}")
+
+    RetrofitClient.ingredientApiService.deleteIngredient(ingredientId, currentUserId)
+        .enqueue(object : Callback<IngredientResponse> {
             override fun onResponse(call: Call<IngredientResponse>, response: Response<IngredientResponse>) {
+                progressDialog.dismiss()
+
                 if (response.isSuccessful) {
-                    // 서버에서 식별자 할당
-                    val newId = ingredientsList.size + 1
-                    ingredientIdMap[ingredient.getUniqueKey()] = newId
-
-                    ingredientsList.add(ingredient)
-
-                    // 소비기한 임박순으로 정렬 (오름차순)
-                    ingredientsList.sortBy { it.expiryDate }
-
-                    container.removeAllViews()
-                    ingredientsList.forEach { addIngredientCard(it) }
-
-                    showToast(response.body()?.message ?: "${ingredient.name} 추가 성공!")
-                    dialog.dismiss()
+                    ingredientsList.remove(ingredient)
+                    ingredientIdMap.remove(ingredient.getUniqueKey())
+                    container.removeView(cardView)
+                    showToast("${ingredient.name}이(가) 삭제되었습니다.")
                 } else {
-                    showToast("서버 오류: ${response.code()}")
-                    Log.e("FoodManagement", "서버 응답 오류: ${response.code()}")
+                    val errorBody = response.errorBody()?.string() ?: "알 수 없는 오류"
+                    when (response.code()) {
+                        403 -> showToast("본인의 식자재만 삭제할 수 있습니다.")
+                        404 -> showToast("해당 식자재를 찾을 수 없습니다.")
+                        else -> showToast("삭제 실패: ${response.code()}")
+                    }
+                    Log.e("FoodManagement", "삭제 실패 - 코드: ${response.code()}, 응답: $errorBody")
                 }
             }
 
             override fun onFailure(call: Call<IngredientResponse>, t: Throwable) {
-                showToast("서버 연결에 실패했습니다.")
+                progressDialog.dismiss()
                 Log.e("FoodManagement", "서버 연결 실패", t)
+                showToast("서버 연결에 실패했습니다: ${t.message}")
             }
         })
+}
+
+private fun showToast(message: String) {
+    Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+}
+
+private fun showDatePickerDialog(editText: EditText) {
+    val calendar = Calendar.getInstance()
+    val year = calendar.get(Calendar.YEAR)
+    val month = calendar.get(Calendar.MONTH)
+    val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+    val datePickerDialog = android.app.DatePickerDialog(
+        this,
+        { _, selectedYear, selectedMonth, selectedDay ->
+            val selectedDate = Calendar.getInstance()
+            selectedDate.set(selectedYear, selectedMonth, selectedDay)
+            val formattedDate = dateFormat.format(selectedDate.time)
+            editText.setText(formattedDate)
+        },
+        year, month, day
+    )
+
+    datePickerDialog.show()
+}
+
+private fun addIngredientCard(ingredient: Ingredient) {
+    val inflater = LayoutInflater.from(this)
+    val cardView = inflater.inflate(R.layout.ingredient_card, container, false) as CardView
+
+    // 카드 내용 설정
+    val nameTextView = cardView.findViewById<TextView>(R.id.textViewName)
+    val expiryTextView = cardView.findViewById<TextView>(R.id.textViewExpiry)
+    val locationTextView = cardView.findViewById<TextView>(R.id.textViewLocation)
+    val imageView = cardView.findViewById<ImageView>(R.id.imageView)
+
+    nameTextView.text = ingredient.name
+
+    // 이미지 설정
+    if (ingredient.imagePath != null) {
+        val bitmap = BitmapFactory.decodeFile(ingredient.imagePath)
+        imageView.setImageBitmap(bitmap)
+    } else if (ingredient.imageUrl != null) {
+        Glide.with(this)
+            .load("https://foodcare-69ae76eec1bf.herokuapp.com${ingredient.imageUrl}")
+            .into(imageView)
+    } else {
+        imageView.setImageResource(R.drawable.basicfood)
     }
 
-    // 식자재 삭제 기능
-    private fun deleteIngredient(ingredient: Ingredient, cardView: CardView) {
-        val ingredientId = ingredientIdMap[ingredient.getUniqueKey()]
-        if (ingredientId == null) {
-            showToast("식자재 ID를 찾을 수 없습니다.")
-            return
+    setupExpiryDisplay(ingredient, expiryTextView)
+
+    val purchaseStr = displayDateFormat.format(ingredient.purchaseDate)
+    locationTextView.text = "${ingredient.location} · 구입 $purchaseStr"
+
+    setupCardClickListeners(cardView, ingredient)
+
+    container.addView(cardView)
+}
+
+private fun setupExpiryDisplay(ingredient: Ingredient, expiryTextView: TextView) {
+    val today = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.time
+
+    val diffDays = ((ingredient.expiryDate.time - today.time) / (1000 * 60 * 60 * 24)).toInt()
+    val expiryStr = displayDateFormat.format(ingredient.expiryDate)
+
+    when {
+        diffDays < 0 -> {
+            // 소비기한이 지난 경우: "소비기한: X일 지남" 형태로 표시
+            val daysOverdue = Math.abs(diffDays)
+            expiryTextView.text = "소비기한: ${daysOverdue}일 지남"
+            expiryTextView.setBackgroundResource(R.drawable.expiry_background) // 빨간색
+            expiryTextView.setTextColor(Color.WHITE)
         }
-
-        // 삭제 요청을 보낼 때 로딩 표시
-        val progressDialog = android.app.ProgressDialog(this).apply {
-            setMessage("삭제 중...")
-            setCancelable(false)
-            show()
+        diffDays == 0 || isSameDay(ingredient.expiryDate, today) -> {
+            expiryTextView.text = "소비기한: 오늘까지"
+            expiryTextView.setBackgroundResource(R.drawable.expiry_background) // 빨간색
+            expiryTextView.setTextColor(Color.WHITE)
         }
-
-        // 서버에 삭제 요청 (현재 사용자 ID와 함께)
-        Log.d("FoodManagement", "식자재 삭제 요청 - ID: $ingredientId, 사용자: $currentUserId, 이름: ${ingredient.name}")
-
-        RetrofitClient.ingredientApiService.deleteIngredient(ingredientId, currentUserId)
-            .enqueue(object : Callback<IngredientResponse> {
-                override fun onResponse(call: Call<IngredientResponse>, response: Response<IngredientResponse>) {
-                    progressDialog.dismiss()
-
-                    if (response.isSuccessful) {
-                        ingredientsList.remove(ingredient)
-                        ingredientIdMap.remove(ingredient.getUniqueKey())
-                        container.removeView(cardView)
-                        showToast("${ingredient.name}이(가) 삭제되었습니다.")
-                    } else {
-                        val errorBody = response.errorBody()?.string() ?: "알 수 없는 오류"
-                        when (response.code()) {
-                            403 -> showToast("본인의 식자재만 삭제할 수 있습니다.")
-                            404 -> showToast("해당 식자재를 찾을 수 없습니다.")
-                            else -> showToast("삭제 실패: ${response.code()}")
-                        }
-                        Log.e("FoodManagement", "삭제 실패 - 코드: ${response.code()}, 응답: $errorBody")
-                    }
-                }
-
-                override fun onFailure(call: Call<IngredientResponse>, t: Throwable) {
-                    progressDialog.dismiss()
-                    Log.e("FoodManagement", "서버 연결 실패", t)
-                    showToast("서버 연결에 실패했습니다: ${t.message}")
-                }
-            })
-    }
-
-    private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-    }
-
-    private fun showDatePickerDialog(editText: EditText) {
-        val calendar = Calendar.getInstance()
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH)
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
-
-        val datePickerDialog = android.app.DatePickerDialog(
-            this,
-            { _, selectedYear, selectedMonth, selectedDay ->
-                val selectedDate = Calendar.getInstance()
-                selectedDate.set(selectedYear, selectedMonth, selectedDay)
-                val formattedDate = dateFormat.format(selectedDate.time)
-                editText.setText(formattedDate)
-            },
-            year, month, day
-        )
-
-        datePickerDialog.show()
-    }
-
-    private fun addIngredientCard(ingredient: Ingredient) {
-        val inflater = LayoutInflater.from(this)
-        val cardView = inflater.inflate(R.layout.ingredient_card, container, false) as CardView
-
-        // 카드 내용 설정
-        val nameTextView = cardView.findViewById<TextView>(R.id.textViewName)
-        val expiryTextView = cardView.findViewById<TextView>(R.id.textViewExpiry)
-        val locationTextView = cardView.findViewById<TextView>(R.id.textViewLocation)
-        val imageView = cardView.findViewById<ImageView>(R.id.imageView)
-
-        nameTextView.text = ingredient.name
-
-        // 이미지 설정
-        if (ingredient.imagePath != null) {
-            val bitmap = BitmapFactory.decodeFile(ingredient.imagePath)
-            imageView.setImageBitmap(bitmap)
-        } else if (ingredient.imageUrl != null) {
-            Glide.with(this)
-                .load("https://foodcare-69ae76eec1bf.herokuapp.com${ingredient.imageUrl}")
-                .into(imageView)
-        } else {
-            imageView.setImageResource(R.drawable.basicfood)
+        diffDays in 1..3 -> {
+            expiryTextView.text = "소비기한: ${diffDays}일 남음"
+            expiryTextView.setBackgroundResource(R.drawable.expiry_warning_background) // 주황색
+            expiryTextView.setTextColor(Color.WHITE)
         }
-
-        setupExpiryDisplay(ingredient, expiryTextView)
-
-        val purchaseStr = displayDateFormat.format(ingredient.purchaseDate)
-        locationTextView.text = "${ingredient.location} · 구입 $purchaseStr"
-
-        setupCardClickListeners(cardView, ingredient)
-
-        container.addView(cardView)
-    }
-
-    private fun setupExpiryDisplay(ingredient: Ingredient, expiryTextView: TextView) {
-        val today = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.time
-
-        val diffDays = ((ingredient.expiryDate.time - today.time) / (1000 * 60 * 60 * 24)).toInt()
-        val expiryStr = displayDateFormat.format(ingredient.expiryDate)
-
-        when {
-            diffDays < 0 -> {
-                // 소비기한이 지난 경우: "소비기한: X일 지남" 형태로 표시
-                val daysOverdue = Math.abs(diffDays)
-                expiryTextView.text = "소비기한: ${daysOverdue}일 지남"
-                expiryTextView.setBackgroundResource(R.drawable.expiry_background) // 빨간색
-                expiryTextView.setTextColor(Color.WHITE)
-            }
-            diffDays == 0 || isSameDay(ingredient.expiryDate, today) -> {
-                expiryTextView.text = "소비기한: 오늘까지"
-                expiryTextView.setBackgroundResource(R.drawable.expiry_background) // 빨간색
-                expiryTextView.setTextColor(Color.WHITE)
-            }
-            diffDays in 1..3 -> {
+        diffDays >= 4 -> {
+            // 4일 이상 남은 경우
+            if (diffDays <= 7) {
                 expiryTextView.text = "소비기한: ${diffDays}일 남음"
-                expiryTextView.setBackgroundResource(R.drawable.expiry_warning_background) // 주황색
+                expiryTextView.setBackgroundResource(R.drawable.expiry_safe_background) // 초록색
+                expiryTextView.setTextColor(Color.WHITE)
+            } else {
+                // 8일 이상 남은 경우는 날짜 표시
+                expiryTextView.text = "소비기한: $expiryStr"
+                expiryTextView.setBackgroundResource(R.drawable.expiry_safe_background) // 초록색
                 expiryTextView.setTextColor(Color.WHITE)
             }
-            diffDays >= 4 -> {
-                // 4일 이상 남은 경우
-                if (diffDays <= 7) {
-                    expiryTextView.text = "소비기한: ${diffDays}일 남음"
-                    expiryTextView.setBackgroundResource(R.drawable.expiry_safe_background) // 초록색
-                    expiryTextView.setTextColor(Color.WHITE)
-                } else {
-                    // 8일 이상 남은 경우는 날짜 표시
-                    expiryTextView.text = "소비기한: $expiryStr"
-                    expiryTextView.setBackgroundResource(R.drawable.expiry_safe_background) // 초록색
-                    expiryTextView.setTextColor(Color.WHITE)
-                }
-            }
         }
-
-        expiryTextView.setPadding(dpToPx(12), dpToPx(4), dpToPx(12), dpToPx(4))
     }
 
-    private fun setupCardClickListeners(cardView: CardView, ingredient: Ingredient) {
-        // 카드 클릭 이벤트 추가 - 식자재를 기반으로 레시피 검색
-        cardView.setOnClickListener {
-            // 선택한 식자재 이름으로 레시피 검색 화면으로 이동
-            val intent = Intent(this, RecipeSearchActivity::class.java)
-            intent.putExtra("SELECTED_INGREDIENT", ingredient.name)
-            startActivity(intent)
-        }
+    expiryTextView.setPadding(dpToPx(12), dpToPx(4), dpToPx(12), dpToPx(4))
+}
 
-        cardView.setOnLongClickListener {
-            android.app.AlertDialog.Builder(this)
-                .setTitle("삭제 확인")
-                .setMessage("${ingredient.name}을(를) 삭제하시겠습니까?")
-                .setPositiveButton("삭제") { _, _ ->
-                    deleteIngredient(ingredient, cardView)
-                }
-                .setNegativeButton("취소", null)
-                .show()
+private fun setupCardClickListeners(cardView: CardView, ingredient: Ingredient) {
+    // 카드 클릭 이벤트 추가 - 식자재를 기반으로 레시피 검색
+    cardView.setOnClickListener {
+        // 선택한 식자재 이름으로 레시피 검색 화면으로 이동
+        val intent = Intent(this, RecipeSearchActivity::class.java)
+        intent.putExtra("SELECTED_INGREDIENT", ingredient.name)
+        startActivity(intent)
+    }
+
+    cardView.setOnLongClickListener {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("삭제 확인")
+            .setMessage("${ingredient.name}을(를) 삭제하시겠습니까?")
+            .setPositiveButton("삭제") { _, _ ->
+                deleteIngredient(ingredient, cardView)
+            }
+            .setNegativeButton("취소", null)
+            .show()
+        true
+    }
+}
+
+private fun isSameDay(date1: Date, date2: Date): Boolean {
+    val cal1 = Calendar.getInstance()
+    val cal2 = Calendar.getInstance()
+    cal1.time = date1
+    cal2.time = date2
+    return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+            cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+}
+
+private fun dpToPx(dp: Int): Int {
+    val density = resources.displayMetrics.density
+    return (dp * density).toInt()
+}
+
+override fun onOptionsItemSelected(item: MenuItem): Boolean {
+    return when (item.itemId) {
+        android.R.id.home -> {
+            onBackPressed()
             true
         }
+        else -> super.onOptionsItemSelected(item)
     }
-
-    private fun isSameDay(date1: Date, date2: Date): Boolean {
-        val cal1 = Calendar.getInstance()
-        val cal2 = Calendar.getInstance()
-        cal1.time = date1
-        cal2.time = date2
-        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
-                cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
-    }
-
-    private fun dpToPx(dp: Int): Int {
-        val density = resources.displayMetrics.density
-        return (dp * density).toInt()
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                onBackPressed()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
+}
 }

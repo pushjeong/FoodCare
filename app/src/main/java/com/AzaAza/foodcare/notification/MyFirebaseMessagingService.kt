@@ -5,9 +5,7 @@ import com.AzaAza.foodcare.api.RetrofitClient
 import com.AzaAza.foodcare.models.UpdateFcmTokenRequest
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+
 
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
@@ -47,7 +45,4 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             Log.e("FCM", "로그인 아이디가 null임, FCM 토큰 저장 실패")
         }
     }
-
-
-
 }

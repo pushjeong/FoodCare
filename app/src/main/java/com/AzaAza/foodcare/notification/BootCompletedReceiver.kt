@@ -17,7 +17,7 @@ class BootCompletedReceiver : BroadcastReceiver() {
             // 알림 예약 다시 설정
             ExpiryNotificationManager.scheduleNotifications(context)
 
-            // ✅ 즉시 만료 식자재 확인 및 알림 테스트 실행
+            // 즉시 만료 식자재 확인 및 알림 테스트 실행
             ExpiryNotificationManager.checkExpiringIngredients(context)
 
         }

@@ -2,6 +2,8 @@ package com.AzaAza.foodcare.data
 
 import android.content.Context
 
+
+/* 안 쓰는 함수 많은 것 같은데, 주석 이상해*/
 object UserSession {
     private const val PREF_NAME = "user_prefs"
     private const val USER_ID_KEY = "USER_ID"

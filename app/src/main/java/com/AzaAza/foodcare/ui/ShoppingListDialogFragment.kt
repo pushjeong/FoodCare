@@ -78,6 +78,7 @@ class ShoppingListDialogFragment(
 
                 deleteBtn.setOnClickListener {
                     listLayout.removeView(itemView)
+                    /*와이럼*/
                     addedItems.removeIf { it.first == name }
                     quantityMap.remove(name)
 

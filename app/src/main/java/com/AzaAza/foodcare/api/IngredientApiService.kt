@@ -34,15 +34,16 @@ interface IngredientApiService {
      * 공유 그룹 식자재 조회 (그룹 모드)
      * 그룹 내 모든 구성원의 식자재 조회
      */
-    @GET("/ingredients/shared/{owner_id}")
-    fun getSharedIngredients(@Path("owner_id") ownerId: Int): Call<List<IngredientDto>>
-
-    /**
-     * 식자재 삭제 (소유자만 가능)
-     */
-    @DELETE("/ingredients/{id}")
-    fun deleteIngredient(
-        @Path("id") id: Int,
-        @Query("user_id") userId: Int
-    ): Call<IngredientResponse>
+/* 미사용으로 삭제 됨, 그리고 이 클래스 주석 왜이리 더러움
+@GET("/ingredients/shared/{owner_id}")
+fun getSharedIngredients(@Path("owner_id") ownerId: Int): Call<List<IngredientDto>>
+*/
+/**
+ * 식자재 삭제 (소유자만 가능)
+ */
+@DELETE("/ingredients/{id}")
+fun deleteIngredient(
+    @Path("id") id: Int,
+    @Query("user_id") userId: Int
+): Call<IngredientResponse>
 }

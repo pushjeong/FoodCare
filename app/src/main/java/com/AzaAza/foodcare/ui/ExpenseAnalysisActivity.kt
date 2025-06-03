@@ -93,6 +93,7 @@ class ExpenseAnalysisActivity : AppCompatActivity() {
         }
     }
 
+    /* 미사용으로 삭제 됨
     private fun showMoreIngredients(inflater: LayoutInflater, topLayout: LinearLayout) {
         val startIndex = 5
         val moreIngredients = allTopIngredients.drop(startIndex)
@@ -119,7 +120,7 @@ class ExpenseAnalysisActivity : AppCompatActivity() {
             topLayout.addView(cardView)
         }
     }
-
+*/
     private fun recommendRecipesWithTopIngredients(recommendLayout: LinearLayout) {
         CoroutineScope(Dispatchers.IO).launch {
             try {

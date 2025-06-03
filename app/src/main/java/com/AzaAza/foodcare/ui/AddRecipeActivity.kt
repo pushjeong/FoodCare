@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -211,37 +210,17 @@ class AddRecipeActivity : AppCompatActivity() {
                 requestCameraPermission()
             }
         }
-
         // 갤러리 버튼 클릭
-        btnGallery.setOnClickListener {
-           /* if (checkStoragePermission()) {
-                openGallery()
-            } else {
-                requestStoragePermission()
-            }*/
-            checkAndRequestGalleryPermission()
-        }
-
+        btnGallery.setOnClickListener { checkAndRequestGalleryPermission() }
         // 사진 삭제 버튼 클릭
-        btnRemovePhoto.setOnClickListener {
-            removeSelectedImage()
-        }
+        btnRemovePhoto.setOnClickListener { removeSelectedImage() }
     }
 
     private fun checkCameraPermission(): Boolean {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
     }
-
-    private fun checkStoragePermission(): Boolean {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
-    }
-
     private fun requestCameraPermission() {
         ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), CAMERA_PERMISSION_CODE)
-    }
-
-    private fun requestStoragePermission() {
-        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), STORAGE_PERMISSION_CODE)
     }
 
     private fun openCamera() {
@@ -608,11 +587,12 @@ class AddRecipeActivity : AppCompatActivity() {
     private fun validateForm(): Boolean {
         var isValid = true
 
-        // 사진 검증 (선택사항이지만 필요시 활성화)
-        // if (selectedImageUri == null) {
-        //     showError(errorPhoto, "음식 사진을 등록해주세요.")
-        //     isValid = false
-        // }
+
+        // 사진 검증
+        if (selectedImageUri == null) {
+             showError(errorPhoto, "음식 사진을 등록해주세요.")
+             isValid = false
+         }
 
         // 레시피 이름 검증
         if (editRecipeName.text.toString().trim().isEmpty()) {
@@ -741,7 +721,7 @@ class AddRecipeActivity : AppCompatActivity() {
             category = categoryText  // 선택된 카테고리
         )
 
-        // 🔍 디버깅: 요청 데이터 로깅
+        // 디버깅: 요청 데이터 로깅
         Log.d("AddRecipe", "=== 레시피 등록 요청 ===")
         Log.d("AddRecipe", "name: ${request.name}")
         Log.d("AddRecipe", "summary: ${request.summary}")
@@ -781,7 +761,7 @@ class AddRecipeActivity : AppCompatActivity() {
                 btnRegisterRecipe.isEnabled = true
                 btnRegisterRecipe.text = "레시피 등록"
 
-                // 🔍 디버깅: 응답 상태 로깅
+                // 디버깅: 응답 상태 로깅
                 Log.d("AddRecipe", "=== 서버 응답 ===")
                 Log.d("AddRecipe", "HTTP 코드: ${response.code()}")
                 Log.d("AddRecipe", "응답 성공여부: ${response.isSuccessful}")
@@ -856,7 +836,7 @@ class AddRecipeActivity : AppCompatActivity() {
         })
         return
     }
-        // (2) 사진이 있는 경우: 멀티파트 방식 추가!
+        // (2) 사진이 있는 경우: 멀티파트 방식 추가
         val namePart = editRecipeName.text.toString().toRequestBody("text/plain".toMediaTypeOrNull())
         val summaryPart = editFoodSummary.text.toString().toRequestBody("text/plain".toMediaTypeOrNull())
         val ingredientsPart = editIngredients.text.toString().toRequestBody("text/plain".toMediaTypeOrNull())

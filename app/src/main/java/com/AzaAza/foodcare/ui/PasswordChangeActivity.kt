@@ -139,7 +139,10 @@ class PasswordChangeActivity : AppCompatActivity() {
                 return value
             }
         }
-
+        /*아래 부분은 디버깅용 하드코딩임. 실 배포/운영에선 쓸모 없음.
+        *조치: 진짜 fallback이 필요하다면 ‘null’이나 안전한 기본값(예: “”)으로 대체.
+        * 실사용에서는 SharedPreferences에서 못 찾으면 오류 알림이 더 적절.
+         */
         // 3. 비밀번호 찾기에서 사용했던 로그인 ID (화면에서 확인한 것)
         val tempLoginId = "12345"
         Log.d("PasswordChange", "임시 로그인 ID 사용: $tempLoginId")

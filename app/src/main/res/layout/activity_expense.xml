@@ -1,66 +1,170 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:background="@android:color/white"
+    android:fitsSystemWindows="true">
 
-    <!-- 상단 고정 바 -->
+    <!-- 전체 콘텐츠 감싸는 LinearLayout -->
     <LinearLayout
-        android:id="@+id/topBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:background="@drawable/topbar"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <!-- 상단 고정 바 -->
+        <LinearLayout
+            android:id="@+id/topBarLayout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginStart="24dp"
-            android:layout_marginEnd="24dp"
-            android:paddingTop="16dp"
-            android:paddingBottom="16dp">
+            android:layout_height="100dp"
+            android:background="@drawable/topbar"
+            android:orientation="vertical">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp">
+
+                <ImageView
+                    android:id="@+id/backButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/back_button"
+                    android:contentDescription="뒤로가기"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" />
+
+                <TextView
+                    android:id="@+id/topBarTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="가계부"
+                    android:textSize="40sp"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toEndOf="@id/backButton"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.4" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </LinearLayout>
+
+        <!-- 탭 메뉴 -->
+        <LinearLayout
+            android:id="@+id/modeToggleContainer"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="0dp"
+            android:background="@drawable/bg_toggle_container_rect"
+            android:padding="4dp"
+            android:orientation="horizontal">
+
+            <!-- 개인 모드 -->
+            <LinearLayout
+                android:id="@+id/personalModeTab"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:background="@drawable/bg_toggle_selected_blue_rect"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:id="@+id/personalModeIcon"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_user"
+                    android:tint="#007AFF"
+                    android:layout_marginEnd="4dp" />
+
+                <TextView
+                    android:id="@+id/personalModeText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="개인 모드"
+                    android:textColor="#007AFF"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- 공유 모드 -->
+            <LinearLayout
+                android:id="@+id/sharedModeTab"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:background="@android:color/transparent"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:id="@+id/sharedModeIcon"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_users"
+                    android:tint="#999999"
+                    android:layout_marginEnd="4dp" />
+
+                <TextView
+                    android:id="@+id/sharedModeText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="공유 모드"
+                    android:textColor="#999999"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 공유 모드 안내 텍스트 -->
+        <LinearLayout
+            android:id="@+id/sharedModeInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="4dp"
+            android:padding="12dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:background="@drawable/bg_shared_mode_info"
+            android:visibility="gone">
 
             <ImageView
-                android:id="@+id/backButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@drawable/back_button"
-                android:contentDescription="뒤로가기"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_users"
+                android:tint="#00C471"
+                android:layout_marginEnd="6dp" />
 
             <TextView
-                android:id="@+id/topBarTitle"
+                android:id="@+id/sharedModeInfoText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="가계부"
-                android:textSize="40sp"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold"
-                app:layout_constraintStart_toEndOf="@id/backButton"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.4" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </LinearLayout>
+                android:text="가족 4명과 공유 중 · 김철수, 김영희, 김민수, 김지영"
+                android:textSize="14sp"
+                android:textColor="#00C471" />
+        </LinearLayout>
 
-    <!-- 고정된 상단 콘텐츠 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-        <!-- 월 선택 UI -->
+        <!-- 월 선택 -->
         <LinearLayout
+            android:id="@+id/monthSelectorLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="4dp"
+            android:padding="0dp"
             android:gravity="center">
 
             <ImageButton
@@ -93,14 +197,16 @@
                 android:contentDescription="다음 달" />
         </LinearLayout>
 
-        <!-- 총액 정보 -->
+        <!-- 총 지출 카드 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="16dp"
-            android:background="#F5F5F5"
-            android:elevation="2dp">
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="2dp"
+            android:background="@drawable/bg_total_expense_card">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -119,7 +225,7 @@
                     android:id="@+id/totalExpenseText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0원"
+                    android:text="127,500원"
                     android:textSize="28sp"
                     android:textStyle="bold"
                     android:textColor="#000000"
@@ -143,64 +249,83 @@
                     android:id="@+id/comparisonTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="+ 0"
+                    android:text="+ 15,000"
                     android:textSize="28sp"
                     android:textStyle="bold"
-                    android:textColor="#0000FF"
+                    android:textColor="#007AFF"
                     android:layout_marginTop="4dp" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- 원형 차트 -->
+        <!-- 차트 영역 -->
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="280dp"
-            android:padding="12dp">
+            android:layout_height="200dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="4dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:background="@android:color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/chart_placeholder_background">
+
+                <ImageView
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:src="@drawable/ic_pie_chart"
+                    android:layout_marginBottom="8dp"
+                    android:alpha="0.3" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="지출 분포"
+                    android:textSize="16sp"
+                    android:textColor="#999999"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="차트 영역"
+                    android:textSize="14sp"
+                    android:textColor="#CCCCCC" />
+            </LinearLayout>
 
             <com.github.mikephil.charting.charts.PieChart
                 android:id="@+id/expensePieChart"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"
+                android:visibility="gone" />
         </FrameLayout>
 
-        <!-- 추가 버튼 -->
-        <LinearLayout
+        <!-- 카테고리 리스트 -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/categoriesRecyclerView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp">
-
-            <TextView
-                android:id="@+id/addExpenseTextView"
-                android:layout_width="80dp"
-                android:layout_height="36dp"
-                android:minHeight="0dp"
-                android:minWidth="0dp"
-                android:gravity="center"
-                android:text="+ 추가"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp"
-                android:background="@drawable/rounded_button_background"
-                android:drawablePadding="4dp"
-                android:clickable="true"
-                android:focusable="true" />
-        </LinearLayout>
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="4dp"
+            android:padding="8dp"
+            android:clipToPadding="false"
+            android:overScrollMode="always"
+            android:scrollbars="vertical" />
     </LinearLayout>
 
-    <!-- 카테고리 리스트 (스크롤 가능) -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/categoriesRecyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="8dp"
-        android:clipToPadding="false"
-        android:overScrollMode="always"
-        android:scrollbars="vertical" />
-</LinearLayout>
+    <!-- 🟢 하단 중앙 고정 + 버튼 -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAddExpense"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="24dp"
+        android:src="@drawable/add"
+        android:contentDescription="+ 추가"
+        android:backgroundTint="#00C471"
+        app:fabSize="normal" />
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -4,6 +4,7 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -62,6 +63,16 @@ class ExpenseActivity : AppCompatActivity() {
     private lateinit var prevMonthButton: ImageButton
     private lateinit var nextMonthButton: ImageButton
 
+    // 탭 관련 UI 요소
+    private lateinit var personalModeTab: LinearLayout
+    private lateinit var sharedModeTab: LinearLayout
+    private lateinit var personalModeIcon: ImageView
+    private lateinit var sharedModeIcon: ImageView
+    private lateinit var personalModeText: TextView
+    private lateinit var sharedModeText: TextView
+    private lateinit var sharedModeInfo: LinearLayout
+    private lateinit var sharedModeInfoText: TextView
+
     private val categories = ArrayList<CategoryDto>()
     private val expenses = ArrayList<ExpenseDto>()
     private var totalExpense: Double = 0.0
@@ -77,6 +88,9 @@ class ExpenseActivity : AppCompatActivity() {
     // 현재 실제 연도와 월 (현재 날짜)
     private var currentYear: Int = 0
     private var currentMonth: Int = 0
+
+    // 현재 모드 (개인/공유)
+    private var isSharedMode: Boolean = false
 
     // 현재 대화상자의 어댑터를 추적하기 위한 변수 추가
     private var currentExpenseListAdapter: ExpenseListAdapter? =null
@@ -96,6 +110,15 @@ class ExpenseActivity : AppCompatActivity() {
         totalExpenseText = findViewById(R.id.totalExpenseText)
         comparisonTextView = findViewById(R.id.comparisonTextView)
 
+        // 탭 UI 초기화
+        personalModeTab = findViewById(R.id.personalModeTab)
+        sharedModeTab = findViewById(R.id.sharedModeTab)
+        personalModeIcon = findViewById(R.id.personalModeIcon)
+        sharedModeIcon = findViewById(R.id.sharedModeIcon)
+        personalModeText = findViewById(R.id.personalModeText)
+        sharedModeText = findViewById(R.id.sharedModeText)
+        sharedModeInfo = findViewById(R.id.sharedModeInfo)
+        sharedModeInfoText = sharedModeInfo.findViewById(R.id.sharedModeInfoText)
         // 현재 날짜로 초기화
         val calendar = Calendar.getInstance()
         currentYear = calendar.get(Calendar.YEAR)
@@ -112,6 +135,16 @@ class ExpenseActivity : AppCompatActivity() {
 
         updateMonthYearText()
         updateNextButtonState()
+        updateModeUI()
+
+        // 탭 이벤트 리스너 설정
+        personalModeTab.setOnClickListener {
+            switchToPersonalMode()
+        }
+
+        sharedModeTab.setOnClickListener {
+            switchToSharedMode()
+        }
 
         // 이벤트 리스너 설정
         currentMonthText.setOnClickListener {
@@ -126,10 +159,8 @@ class ExpenseActivity : AppCompatActivity() {
             moveToNextMonth()
         }
 
-        // 지출 추가 버튼
-        val addExpenseTextView: TextView = findViewById(R.id.addExpenseTextView)
-        addExpenseTextView.setOnClickListener {
-            // 기존 버튼의 동작 수행
+        val fabAddExpense: View = findViewById(R.id.fabAddExpense)
+        fabAddExpense.setOnClickListener {
             showAddExpenseDialog()
         }
 
@@ -146,6 +177,69 @@ class ExpenseActivity : AppCompatActivity() {
 
         // 선택된 달의 지출 내역 로드
         loadMonthlyData()
+    }
+
+    private fun switchToPersonalMode() {
+        if (!isSharedMode) return
+
+        isSharedMode = false
+        updateModeUI()
+        loadMonthlyData() // 데이터 새로고침
+    }
+
+    private fun switchToSharedMode() {
+        if (isSharedMode) return
+
+        isSharedMode = true
+        updateModeUI()
+        loadMonthlyData() // 데이터 새로고침
+    }
+
+    private fun updateModeUI() {
+        // 공유 모드 안내 텍스트의 마진을 동적으로 조정
+        val sharedModeInfoLayoutParams = sharedModeInfo.layoutParams as ViewGroup.MarginLayoutParams
+
+        if (isSharedMode) {
+            // 개인 모드 비활성화
+            personalModeTab.setBackgroundColor(Color.TRANSPARENT)
+            personalModeIcon.setColorFilter(Color.parseColor("#999999"))
+            personalModeText.setTextColor(Color.parseColor("#999999"))
+
+            // 공유 모드 활성화
+            sharedModeTab.setBackgroundResource(R.drawable.bg_toggle_selected_green_rect)
+            sharedModeIcon.setColorFilter(Color.parseColor("#00C471"))
+            sharedModeText.setTextColor(Color.parseColor("#00C471"))
+
+            sharedModeInfo.visibility = View.VISIBLE
+
+            // 공유 모드일 때 상단 마진 증가
+            sharedModeInfoLayoutParams.topMargin = dpToPx(16) // 16dp
+            sharedModeInfoLayoutParams.bottomMargin = dpToPx(-4) // 하단 마진을 음수로 설정하여 아래 요소를 위로 당김
+        } else {
+            // 공유 모드 비활성화
+            sharedModeTab.setBackgroundColor(Color.TRANSPARENT)
+            sharedModeIcon.setColorFilter(Color.parseColor("#999999"))
+            sharedModeText.setTextColor(Color.parseColor("#999999"))
+
+            // 개인 모드 활성화
+            personalModeTab.setBackgroundResource(R.drawable.bg_toggle_selected_blue_rect)
+            personalModeIcon.setColorFilter(Color.parseColor("#007AFF"))
+            personalModeText.setTextColor(Color.parseColor("#007AFF"))
+
+            sharedModeInfo.visibility = View.GONE
+
+            // 개인 모드일 때는 기본 마진
+            sharedModeInfoLayoutParams.topMargin = dpToPx(8) // 기본값
+            sharedModeInfoLayoutParams.bottomMargin = dpToPx(4) // 기본값
+        }
+
+        // 마진 변경 적용
+        sharedModeInfo.layoutParams = sharedModeInfoLayoutParams
+    }
+
+    // dp를 px로 변환하는 helper 메서드
+    private fun dpToPx(dp: Int): Int {
+        return (dp * resources.displayMetrics.density).toInt()
     }
 
     private fun updateMonthYearText() {
@@ -307,11 +401,11 @@ class ExpenseActivity : AppCompatActivity() {
                     // 전월 대비 비교 텍스트 업데이트
                     updateComparisonText()
 
-                    // 파이 차트 업데이트
+                    // 파이 차트 업데이트 (현재는 숨김 처리)
                     updatePieChart(categorySummaries)
 
                     // 카테고리 목록 업데이트
-                    // updateCategoryList(categorySummaries) - 이제 updatePieChart에서 호출함
+                    updateCategoryList(categorySummaries)
                 }
 
                 // 해당 월의 전체 지출 내역도 로드
@@ -389,6 +483,12 @@ class ExpenseActivity : AppCompatActivity() {
         // 색상 정보 전달
         if (colors != null && colors.isNotEmpty()) {
             categoryAdapter.updateColors(colors)
+        } else {
+            // 기본 색상 맵 사용
+            val categoryAdapterColors = categories.map { category ->
+                CATEGORY_COLORS[category.name] ?: Color.GRAY
+            }
+            categoryAdapter.updateColors(categoryAdapterColors)
         }
 
         // 어댑터 갱신
@@ -396,6 +496,12 @@ class ExpenseActivity : AppCompatActivity() {
     }
 
     private fun updatePieChart(categorySummaries: List<com.AzaAza.foodcare.api.CategorySummary>) {
+        if (categorySummaries.sumOf { it.amount } <= 0.0) {
+            pieChart.visibility = View.GONE
+            return
+        } else {
+            pieChart.visibility = View.VISIBLE
+        }
         val pieEntries = ArrayList<PieEntry>()
         val categoryColors = ArrayList<Int>()
 
@@ -429,7 +535,7 @@ class ExpenseActivity : AppCompatActivity() {
         pieChart.description.isEnabled = false
         pieChart.centerText = "지출 분포"
         pieChart.setCenterTextSize(16f)
-        pieChart.legend.isEnabled = true // 범례 활성화
+        pieChart.legend.isEnabled = false
         pieChart.animateY(1000)
         pieChart.invalidate()
 
@@ -580,41 +686,63 @@ class ExpenseActivity : AppCompatActivity() {
         }
     }
 
+    // showCategoryDetailDialog 메서드 수정
     private fun showCategoryDetailDialog(category: CategoryDto) {
         val categoryExpenses = expenses.filter { it.categoryId == category.id }
-
-        if (categoryExpenses.isEmpty()) {
-            Toast.makeText(this, "${category.name} 카테고리에 지출 내역이 없습니다", Toast.LENGTH_SHORT).show()
-            return
-        }
 
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_category_detail, null)
         val expenseGroupRecyclerView = dialogView.findViewById<RecyclerView>(R.id.expenseGroupRecyclerView)
         val categoryNameText = dialogView.findViewById<TextView>(R.id.categoryNameText)
+        val categoryNameTextSmall = dialogView.findViewById<TextView>(R.id.categoryNameTextSmall)
         val totalAmountText = dialogView.findViewById<TextView>(R.id.totalAmountText)
+        val emptyStateLayout = dialogView.findViewById<LinearLayout>(R.id.emptyStateLayout)
+        val closeButton = dialogView.findViewById<ImageView>(R.id.closeButton)
 
+        // 카테고리 이름 설정
         categoryNameText.text = category.name
+        categoryNameTextSmall.text = category.name
+
+        // 총 금액 설정
         val formatter = NumberFormat.getInstance(Locale.KOREA)
         totalAmountText.text = "${formatter.format(category.totalAmount.toInt())}원"
-
-        val expenseGroups = groupExpensesByDate(categoryExpenses)
-
-        expenseGroupRecyclerView.layoutManager = LinearLayoutManager(this)
-        val adapter = ExpenseGroupAdapter(expenseGroups) { expense ->
-            showDeleteConfirmDialog(expense)
-        }
-        expenseGroupRecyclerView.adapter = adapter
-
-        // ✅ 어댑터 참조 저장해서 삭제 시 UI 즉시 반영 가능하게
-        currentGroupAdapter = adapter
 
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
             .create()
 
-        dialog.show()
+        // 다이얼로그 배경을 투명하게 설정하고 둥근 모서리 적용
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
-        Toast.makeText(this, "항목을 길게 누르면 삭제할 수 있습니다", Toast.LENGTH_SHORT).show()
+        // 닫기 버튼 이벤트 처리
+        closeButton.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        if (categoryExpenses.isEmpty()) {
+            // 지출 내역이 없는 경우
+            expenseGroupRecyclerView.visibility = View.GONE
+            emptyStateLayout.visibility = View.VISIBLE
+        } else {
+            // 지출 내역이 있는 경우
+            expenseGroupRecyclerView.visibility = View.VISIBLE
+            emptyStateLayout.visibility = View.GONE
+
+            val expenseGroups = groupExpensesByDate(categoryExpenses)
+
+            // 모든 그룹을 확장된 상태로 설정 (헤더가 없으므로)
+            expenseGroups.forEach { it.isExpanded = true }
+
+            expenseGroupRecyclerView.layoutManager = LinearLayoutManager(this)
+            val adapter = ExpenseGroupAdapter(expenseGroups) { expense ->
+                showDeleteConfirmDialog(expense)
+            }
+            expenseGroupRecyclerView.adapter = adapter
+            currentGroupAdapter = adapter
+
+            Toast.makeText(this, "항목을 길게 누르면 삭제할 수 있습니다", Toast.LENGTH_SHORT).show()
+        }
+
+        dialog.show()
     }
 
     // 지출 항목 삭제 확인 다이얼로그
@@ -746,6 +874,7 @@ class ExpenseActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
+
     // 지출 내역 목록용 어댑터 클래스 수정
     inner class ExpenseListAdapter(
         private val context: Context,

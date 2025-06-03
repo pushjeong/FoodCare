@@ -18,22 +18,40 @@
         android:background="#00E676"
         android:layout_marginEnd="12dp"/>
 
-    <!-- 항목명 -->
-    <TextView
-        android:id="@+id/itemNameText"
+    <!-- 가운데 영역 (항목명 + 날짜) -->
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="두부"
-        android:textSize="16sp"
-        android:textColor="#333333" />
+        android:orientation="vertical">
+
+        <!-- 항목명 -->
+        <TextView
+            android:id="@+id/itemNameText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="커피"
+            android:textSize="16sp"
+            android:textColor="#333333" />
+
+        <!-- 날짜 -->
+        <TextView
+            android:id="@+id/itemDateText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2025-05-31"
+            android:textSize="14sp"
+            android:textColor="#999999"
+            android:layout_marginTop="2dp" />
+    </LinearLayout>
 
     <!-- 금액 -->
     <TextView
         android:id="@+id/itemAmountText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="1,500원"
+        android:text="4,500원"
         android:textSize="16sp"
-        android:textColor="#333333" />
+        android:textColor="#333333"
+        android:layout_gravity="center_vertical" />
 </LinearLayout>

@@ -1,13 +1,9 @@
 package com.AzaAza.foodcare.adapter
 
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.cardview.widget.CardView
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.models.CategoryDto
@@ -16,60 +12,56 @@ import java.util.*
 
 class CategoryAdapter(
     private val categories: List<CategoryDto>,
-    private val onClick: (CategoryDto) -> Unit
-) : RecyclerView.Adapter<CategoryAdapter.ViewHolder>() {
+    private val onCategoryClick: (CategoryDto) -> Unit
+) : RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder>() {
 
-    // 카테고리 색상 저장할 리스트
-    private val categoryColors = mutableListOf<Int>()
+    private var categoryColors: List<Int> = listOf()
 
-    // 색상 업데이트 메서드
+    // 색상 정보 업데이트 메서드
     fun updateColors(colors: List<Int>) {
-        categoryColors.clear()
-        categoryColors.addAll(colors)
+        categoryColors = colors
         notifyDataSetChanged()
     }
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val categoryNameText: TextView = view.findViewById(R.id.categoryNameText)
-        val categoryAmountText: TextView = view.findViewById(R.id.categoryAmountText)
-        val cardView: CardView = view as CardView
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CategoryViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_category, parent, false)
-        return ViewHolder(view)
+        return CategoryViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: CategoryViewHolder, position: Int) {
         val category = categories[position]
-        holder.categoryNameText.text = category.name
-
-        // 금액 포맷팅
-        val formatter = NumberFormat.getInstance(Locale.KOREA)
-        holder.categoryAmountText.text = "${formatter.format(category.totalAmount.toInt())}원"
-
-        // 테두리 색상 설정 (색상 리스트가 비어있지 않은 경우에만)
-        if (categoryColors.isNotEmpty()) {
-            // 포지션에 맞게 색상을 사용 (고정된 순서로)
-            val color = categoryColors[position % categoryColors.size]
-
-            // 테두리 설정을 위한 drawable 생성
-            val shape = GradientDrawable()
-            shape.shape = GradientDrawable.RECTANGLE
-            shape.cornerRadius = 8 * holder.itemView.context.resources.displayMetrics.density // 8dp를 픽셀로 변환
-            shape.setColor(ContextCompat.getColor(holder.itemView.context, android.R.color.white))
-            shape.setStroke(5, color) // 5px 두께와 해당 색상으로 테두리 설정
-
-            // 배경으로 설정
-            holder.cardView.background = shape
-        }
-
-        // 클릭 리스너 설정
-        holder.itemView.setOnClickListener {
-            onClick(category)
-        }
+        holder.bind(category, position)
     }
 
-    override fun getItemCount() = categories.size
+    override fun getItemCount(): Int = categories.size
+
+    inner class CategoryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val categoryNameText: TextView = itemView.findViewById(R.id.categoryNameText)
+        private val categoryAmountText: TextView = itemView.findViewById(R.id.categoryAmountText)
+        private val categoryColorIndicator: View = itemView.findViewById(R.id.categoryColorIndicator)
+
+        fun bind(category: CategoryDto, position: Int) {
+            categoryNameText.text = category.name
+
+            // 금액 포맷팅
+            val formatter = NumberFormat.getInstance(Locale.KOREA)
+            categoryAmountText.text = "${formatter.format(category.totalAmount.toInt())}원"
+
+            // 색상 인디케이터 설정 (사각형 배경 + tintColor)
+            if (position < categoryColors.size) {
+                val color = categoryColors[position]
+                categoryColorIndicator.setBackgroundResource(R.drawable.category_color_square)
+                categoryColorIndicator.background.setTint(color)
+            } else {
+                categoryColorIndicator.setBackgroundResource(R.drawable.category_color_square)
+                categoryColorIndicator.background.setTint(0xFFAAAAAA.toInt()) // 기본 회색
+            }
+
+            // 클릭 이벤트
+            itemView.setOnClickListener {
+                onCategoryClick(category)
+            }
+        }
+    }
 }

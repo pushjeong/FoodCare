@@ -84,6 +84,16 @@ class ProfileSettingActivity : AppCompatActivity() {
                 }
             }.show()
     }
+    private fun copyUriToTempFile(uri: Uri): String {
+        val inputStream = contentResolver.openInputStream(uri)
+        val tempFile = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "profile_gallery_${System.currentTimeMillis()}.jpg")
+        inputStream?.use { input ->
+            FileOutputStream(tempFile).use { output ->
+                input.copyTo(output)
+            }
+        }
+        return tempFile.absolutePath
+    }
 
     // 갤러리에서 이미지 선택
     private val pickImageLauncher = registerForActivityResult(
@@ -93,11 +103,13 @@ class ProfileSettingActivity : AppCompatActivity() {
             val uri: Uri? = result.data?.data
             uri?.let {
                 selectedImageUri = it
-                currentPhotoPath = getRealPathFromUri(it)
+                // 임시 파일로 복사
+                currentPhotoPath = copyUriToTempFile(it)
                 profileImageView.setImageURI(it)
             }
         }
     }
+
     private fun pickImageFromGallery() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         intent.type = "image/*"

@@ -1,5 +1,9 @@
 package com.AzaAza.foodcare.models
 
+import kotlinx.parcelize.Parcelize
+import android.os.Parcelable
+
+@Parcelize
 data class HealthInfoResponse(
     val id: Int,
     val birth_date: String,
@@ -10,4 +14,4 @@ data class HealthInfoResponse(
     val allergens: List<Allergen>,
     val diseases: List<Disease>,
     val url: String
-)
+): Parcelable

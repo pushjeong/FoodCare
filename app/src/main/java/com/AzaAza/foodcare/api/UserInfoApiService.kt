@@ -12,7 +12,10 @@ interface UserInfoApiService {
     fun getAllDiseases(): Call<List<Disease>>
 
     @GET("/health_info")
-    fun listHealthInfo(): Call<List<HealthInfoResponse>>
+    fun listHealthInfo(
+        @Query("user_id") userId: Int
+    ): Call<List<HealthInfoResponse>>
+
 
     @GET("/health_info/{id}")
     fun getHealthInfo(@Path("id") id: Int): Call<HealthInfoResponse>

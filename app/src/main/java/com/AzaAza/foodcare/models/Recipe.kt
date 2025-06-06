@@ -1,5 +1,10 @@
 package com.AzaAza.foodcare.models
 
+import kotlinx.parcelize.Parcelize
+import android.os.Parcelable
+
+
+@Parcelize
 data class Recipe(
     val name: String,
     val summary: String? = null,
@@ -16,4 +21,4 @@ data class Recipe(
     val disease: String? = null,
     val diseaseReason: String? = null,
     val category: String? = null
-)
+): Parcelable

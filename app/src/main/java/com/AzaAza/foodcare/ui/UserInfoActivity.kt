@@ -23,7 +23,7 @@ import retrofit2.Response
 import android.widget.*
 import com.google.android.flexbox.FlexboxLayout
 import androidx.appcompat.widget.AppCompatSpinner
-
+import com.AzaAza.foodcare.data.UserSession
 
 
 class UserInfoActivity : AppCompatActivity() {
@@ -41,6 +41,13 @@ class UserInfoActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_info)
+
+        val currentUserId = UserSession.getUserId(this)
+        if (currentUserId == -1) {
+            Toast.makeText(this, "로그인이 필요합니다.", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
 
         val spinnerAllergen = findViewById<AppCompatSpinner>(R.id.spinnerAllergen)
         val spinnerDisease = findViewById<AppCompatSpinner>(R.id.spinnerDisease)
@@ -208,20 +215,31 @@ class UserInfoActivity : AppCompatActivity() {
 
             val genderKor = spinnerGender.selectedItem.toString().trim()
             val genderMapping = mapOf("남성" to "Male", "여성" to "Female", "기타" to "Other")
-            val gender = genderMapping[genderKor] ?: "Other" // 여기가 point!
+            val gender = genderMapping[genderKor] ?: "Other"
+
+            val foodPrefKor = spinnerFood.selectedItem.toString().trim()
+            val foodPrefMapping = mapOf(
+                "한식" to "한식",
+                "일식" to "일식",
+                "중식" to "중식",
+                "아시아요리" to "아시아요리",
+                "양식" to "양식",
+                "디저트" to "디저트"
+            )
+            val foodPref = foodPrefMapping[foodPrefKor] ?: "한식"   // 반드시 이거!
 
             val height = etHeight.text.toString().toDoubleOrNull() ?: 0.0
             val weight = etWeight.text.toString().toDoubleOrNull() ?: 0.0
-            val foodPref = spinnerFood.selectedItem.toString().trim()
             val allergenIds = selectedAllergens.map { it.id }
             val diseaseIds = selectedDiseases.map { it.id }
 
             val request = HealthInfoRequest(
+                user_id = currentUserId,
                 birth_date = birthDate,
-                gender = gender,   // 한글 말고 반드시 영어 Enum
+                gender = gender,
                 height_cm = height,
                 weight_kg = weight,
-                food_preference = foodPref, // 공백없고 Enum 그대로
+                food_preference = foodPref, // 꼭 한글!
                 allergen_ids = allergenIds,
                 disease_ids = diseaseIds
             )

@@ -17,6 +17,7 @@ import retrofit2.Response
 import retrofit2.Call
 import android.graphics.Color
 import android.util.TypedValue
+import com.AzaAza.foodcare.data.UserSession
 import com.google.android.flexbox.FlexboxLayout
 
 class UserInfoShowActivity : AppCompatActivity() {
@@ -72,7 +73,8 @@ class UserInfoShowActivity : AppCompatActivity() {
     }
 
     private fun loadHealthInfo() {
-        api.listHealthInfo().enqueue(object: Callback<List<HealthInfoResponse>> {
+        val userId = UserSession.getUserId(this)   // 또는 currentUserId, 네가 사용하는 id 변수
+        api.listHealthInfo(userId).enqueue(object: Callback<List<HealthInfoResponse>> {
             override fun onResponse(call: Call<List<HealthInfoResponse>>, response: Response<List<HealthInfoResponse>>) {
                 if (response.isSuccessful) {
                     val list = response.body() ?: emptyList()
@@ -91,6 +93,7 @@ class UserInfoShowActivity : AppCompatActivity() {
             }
         })
     }
+
 
     private fun displayInfo(info: HealthInfoResponse?) {
         tvBirthDate.text = info?.birth_date ?: ""

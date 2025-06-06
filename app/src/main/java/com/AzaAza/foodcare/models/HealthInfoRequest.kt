@@ -1,6 +1,7 @@
 package com.AzaAza.foodcare.models
 
 data class HealthInfoRequest(
+    val user_id: Int,
     val birth_date: String,
     val gender: String,
     val height_cm: Double,

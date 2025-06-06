@@ -44,16 +44,13 @@
         <activity android:name=".ui.AddRecipeActivity"/>
         <activity android:name=".ui.SettingActivity"/>
         <activity android:name=".ui.ProfileSettingActivity" />
+        <activity android:name=".ui.UserInfoShowActivity" />
+        <activity
+            android:name=".ui.ExpiryNotificationActivity"
+            android:exported="false" />
+        <activity android:name=".ui.RecipeDetailActivity"/>
 
-                <activity android:name=".ui.UserInfoShowActivity" />
 
-
-
-                <activity
-                    android:name=".ui.ExpiryNotificationActivity"
-                    android:exported="false" />
-
-                <!-- 1) Launcher: AuthActivity -->
         <!-- 로그인/인증 관련 액티비티 -->
         <!-- 1) Launcher: AuthActivity -->
         <activity

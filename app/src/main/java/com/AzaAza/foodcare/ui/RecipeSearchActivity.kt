@@ -20,6 +20,7 @@ import com.AzaAza.foodcare.models.IngredientDto
 import com.AzaAza.foodcare.models.Recipe
 import com.AzaAza.foodcare.models.RecipeDto
 import com.AzaAza.foodcare.data.UserSession
+import com.AzaAza.foodcare.models.HealthInfoResponse
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -33,6 +34,7 @@ class RecipeSearchActivity : AppCompatActivity() {
     private var allRecipes = listOf<Recipe>()
     private var userIngredients = listOf<String>()
     private var selectedIngredient: String? = null
+    private var userHealthInfo: HealthInfoResponse? = null
 
     // 현재 로그인한 사용자 ID
     private var currentUserId: Int = -1
@@ -85,13 +87,33 @@ class RecipeSearchActivity : AppCompatActivity() {
         // RecyclerView 설정
         recipeRecyclerView = findViewById(R.id.recipeRecyclerView)
         recipeRecyclerView.layoutManager = LinearLayoutManager(this)
-        recipeAdapter = RecipeAdapter(emptyList(), userIngredients)
+        recipeAdapter = RecipeAdapter(allRecipes, userIngredients, userHealthInfo)
         recipeRecyclerView.adapter = recipeAdapter
 
+        fetchUserHealthInfo()
+
+
+
+
         // 서버에서 사용자 재료 목록과 레시피 데이터를 가져오기
-        fetchUserIngredients()
+        //fetchUserIngredients()
     }
 
+    private fun fetchUserHealthInfo() {
+        RetrofitClient.userInfoApiService.listHealthInfo(currentUserId)
+            .enqueue(object : Callback<List<HealthInfoResponse>> {
+                override fun onResponse(
+                    call: Call<List<HealthInfoResponse>>,
+                    response: Response<List<HealthInfoResponse>>
+                ) {
+                    userHealthInfo = response.body()?.firstOrNull()
+                    fetchUserIngredients()  // 식자재는 여기서만 시작!
+                }
+                override fun onFailure(call: Call<List<HealthInfoResponse>>, t: Throwable) {
+                    fetchUserIngredients()
+                }
+            })
+    }
     /**
      * 현재 사용자의 식자재 목록만 가져오기
      */
@@ -164,7 +186,7 @@ class RecipeSearchActivity : AppCompatActivity() {
                             .sortedByDescending { it.matchedCount }
 
                         // RecipeAdapter에 사용자 식자재 정보 전달
-                        recipeAdapter = RecipeAdapter(allRecipes, userIngredients)
+                        recipeAdapter = RecipeAdapter(allRecipes, userIngredients, userHealthInfo)
                         recipeRecyclerView.adapter = recipeAdapter
 
                         // 선택된 식자재로 초기 필터링 수행
@@ -312,7 +334,7 @@ class RecipeSearchActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-
+/*
     override fun onResume() {
         super.onResume()
         // 액티비티가 다시 활성화될 때 사용자 식자재 목록을 새로고침
@@ -320,4 +342,6 @@ class RecipeSearchActivity : AppCompatActivity() {
             fetchUserIngredients()
         }
     }
+*/
+
 }

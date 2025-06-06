@@ -57,12 +57,12 @@ class SettingActivity : AppCompatActivity() {
 
         // 서비스 이용약관
         findViewById<View>(R.id.termsServiceBar).setOnClickListener {
-            openWebPage("https://yourdomain.com/terms")
+            Toast.makeText(this, "추후 추가될 예정입니다.", Toast.LENGTH_SHORT).show()
         }
 
         // 개인정보 처리방침
         findViewById<View>(R.id.privacyPolicyBar).setOnClickListener {
-            openWebPage("https://yourdomain.com/privacy")
+            Toast.makeText(this, "추후 추가될 예정입니다.", Toast.LENGTH_SHORT).show()
         }
     }
 

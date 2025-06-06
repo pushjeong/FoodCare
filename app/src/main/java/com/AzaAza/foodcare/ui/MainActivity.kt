@@ -43,6 +43,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import com.google.firebase.messaging.FirebaseMessaging
 import com.AzaAza.foodcare.data.UserSession
+import com.AzaAza.foodcare.models.HealthInfoResponse
 
 class MainActivity : AppCompatActivity() {
 
@@ -377,8 +378,14 @@ class MainActivity : AppCompatActivity() {
                         ingredientsText.text = "재료: " + recipe.ingredients.joinToString(", ")
 
                         btnDetail.setOnClickListener {
-                            showRecipeDetailDialog(recipe, cardView.context)
+                            val intent = Intent(cardView.context, RecipeDetailActivity::class.java)
+                            intent.putExtra("EXTRA_RECIPE", recipe)
+                            // 필요하다면 사용자 식자재, 건강정보도 전달
+                            intent.putStringArrayListExtra("EXTRA_MY_INGREDIENTS", ArrayList<String>())
+                            intent.putExtra("EXTRA_USER_HEALTH", null as? HealthInfoResponse)
+                            cardView.context.startActivity(intent)
                         }
+
 
                         recommendationsContainer.addView(cardView)
                     }

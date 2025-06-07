@@ -91,12 +91,6 @@ class RecipeSearchActivity : AppCompatActivity() {
         recipeRecyclerView.adapter = recipeAdapter
 
         fetchUserHealthInfo()
-
-
-
-
-        // 서버에서 사용자 재료 목록과 레시피 데이터를 가져오기
-        //fetchUserIngredients()
     }
 
     private fun fetchUserHealthInfo() {
@@ -114,6 +108,7 @@ class RecipeSearchActivity : AppCompatActivity() {
                 }
             })
     }
+
     /**
      * 현재 사용자의 식자재 목록만 가져오기
      */
@@ -242,7 +237,7 @@ class RecipeSearchActivity : AppCompatActivity() {
     }
 
     /**
-     * 레시피 필터링 및 검색 기능
+     * 개선된 레시피 필터링 및 검색 기능
      */
     private fun filterRecipes(query: String) {
         if (query.isEmpty() && selectedIngredient.isNullOrEmpty()) {
@@ -257,11 +252,9 @@ class RecipeSearchActivity : AppCompatActivity() {
         // 1. 레시피 이름으로 검색
         val nameFiltered = RecipeSearchHelper.filter(queryToUse, allRecipes)
 
-        // 2. 재료명으로 검색
+        // 2. 재료명으로 검색 (개선된 매칭 로직 적용)
         val ingredientFiltered = allRecipes.filter { recipe ->
-            recipe.ingredients.any { ingredient ->
-                ingredient.contains(queryToUse, ignoreCase = true)
-            }
+            hasMatchingIngredient(recipe, queryToUse)
         }
 
         // 3. 카테고리로 검색
@@ -282,8 +275,17 @@ class RecipeSearchActivity : AppCompatActivity() {
         // 모든 검색 결과 합치기 (중복 제거)
         val allFilteredResults = (nameFiltered + ingredientFiltered + categoryFiltered + difficultyFiltered + timeFiltered).distinct()
 
+        // 선택된 식자재가 있는 경우, 해당 식자재를 포함하지 않은 레시피는 제외
+        val finalFilteredResults = if (!selectedIngredient.isNullOrEmpty() && query == selectedIngredient) {
+            allFilteredResults.filter { recipe ->
+                hasMatchingIngredient(recipe, selectedIngredient!!)
+            }
+        } else {
+            allFilteredResults
+        }
+
         // 매칭된 재료 개수와 관련성에 따라 정렬
-        val sortedResults = allFilteredResults.sortedWith(compareByDescending<Recipe> { recipe ->
+        val sortedResults = finalFilteredResults.sortedWith(compareByDescending<Recipe> { recipe ->
             // 1순위: 보유 재료와의 매칭 개수
             recipe.matchedCount
         }.thenByDescending { recipe ->
@@ -294,16 +296,108 @@ class RecipeSearchActivity : AppCompatActivity() {
                 else -> 0
             }
         }.thenByDescending { recipe ->
-            // 3순위: 검색어와 재료의 관련성
-            recipe.ingredients.count { ingredient ->
-                ingredient.contains(queryToUse, ignoreCase = true)
-            }
+            // 3순위: 검색어와 재료의 관련성 (개선된 매칭 고려)
+            getIngredientMatchScore(recipe, queryToUse)
         })
 
         recipeAdapter.updateList(sortedResults)
 
         // 선택된 식자재 표시 라벨 업데이트
         updateSelectedIngredientLabel(query, queryToUse, sortedResults.size)
+    }
+
+    /**
+     * 레시피가 특정 재료와 매칭되는지 확인 (개선된 로직)
+     */
+    private fun hasMatchingIngredient(recipe: Recipe, queryIngredient: String): Boolean {
+        return recipe.ingredients.any { recipeIngredient ->
+            isIngredientMatched(recipeIngredient, queryIngredient)
+        }
+    }
+
+    /**
+     * 재료 매칭 점수 계산
+     */
+    private fun getIngredientMatchScore(recipe: Recipe, queryIngredient: String): Int {
+        var score = 0
+        recipe.ingredients.forEach { recipeIngredient ->
+            if (isIngredientMatched(recipeIngredient, queryIngredient)) {
+                score += when {
+                    recipeIngredient.equals(queryIngredient, ignoreCase = true) -> 10 // 완전 일치
+                    recipeIngredient.contains(queryIngredient, ignoreCase = true) -> 5 // 부분 일치
+                    else -> 2 // 대체재 매칭
+                }
+            }
+        }
+        return score
+    }
+
+    /**
+     * 개선된 재료 매칭 로직
+     */
+    private fun isIngredientMatched(recipeIngredient: String, queryIngredient: String): Boolean {
+        val cleanRecipeIngredient = recipeIngredient.trim()
+        val cleanQueryIngredient = queryIngredient.trim()
+
+        // 1. 직접 매칭 (대소문자 무시)
+        if (cleanRecipeIngredient.equals(cleanQueryIngredient, ignoreCase = true)) {
+            return true
+        }
+
+        // 2. 부분 매칭
+        if (cleanRecipeIngredient.contains(cleanQueryIngredient, ignoreCase = true) ||
+            cleanQueryIngredient.contains(cleanRecipeIngredient, ignoreCase = true)) {
+            return true
+        }
+
+        // 3. 괄호 처리: "돼지고기(또는 참치)" 같은 경우
+        if (cleanRecipeIngredient.contains("(") && cleanRecipeIngredient.contains(")")) {
+            val alternatives = extractAlternatives(cleanRecipeIngredient)
+            return alternatives.any { alternative ->
+                alternative.equals(cleanQueryIngredient, ignoreCase = true) ||
+                        alternative.contains(cleanQueryIngredient, ignoreCase = true) ||
+                        cleanQueryIngredient.contains(alternative, ignoreCase = true)
+            }
+        }
+
+        return false
+    }
+
+    /**
+     * 괄호 안의 대체 재료들을 추출
+     * 예: "돼지고기(또는 참치)" -> ["돼지고기", "참치"]
+     */
+    private fun extractAlternatives(ingredient: String): List<String> {
+        val alternatives = mutableListOf<String>()
+
+        // 괄호 밖의 주 재료 추가
+        val mainIngredient = ingredient.substringBefore("(").trim()
+        if (mainIngredient.isNotEmpty()) {
+            alternatives.add(mainIngredient)
+        }
+
+        // 괄호 안의 내용 처리
+        val parenthesesContent = ingredient.substringAfter("(").substringBefore(")").trim()
+        if (parenthesesContent.isNotEmpty()) {
+            // "또는", "혹은", "," 등으로 분리
+            val separators = listOf("또는", "혹은", "이나", ",", "/", "｜")
+            var content = parenthesesContent
+
+            for (separator in separators) {
+                if (content.contains(separator)) {
+                    val parts = content.split(separator).map { it.trim() }.filter { it.isNotEmpty() }
+                    alternatives.addAll(parts)
+                    break
+                }
+            }
+
+            // 분리되지 않았다면 전체를 하나의 대체재로 추가
+            if (!separators.any { content.contains(it) }) {
+                alternatives.add(content)
+            }
+        }
+
+        return alternatives.distinct().filter { it.isNotEmpty() }
     }
 
     /**
@@ -334,14 +428,4 @@ class RecipeSearchActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-/*
-    override fun onResume() {
-        super.onResume()
-        // 액티비티가 다시 활성화될 때 사용자 식자재 목록을 새로고침
-        if (currentUserId != -1) {
-            fetchUserIngredients()
-        }
-    }
-*/
-
 }

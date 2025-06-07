@@ -43,13 +43,13 @@ class MemberAdapter(
         val member = memberList[position]
         Log.d(
             "PROFILE_TEST",
-            "username=${member.username}, profile_image_url=${member.profile_image_url}"
+            "username=${member.username}, profile_image_url=${member.profileImageUrl}"
         )
 
         holder.nameText.text = member.username
         // 역할 명칭
         holder.roleText.text = when {
-            member.is_owner -> "대표"
+            member.isOwner -> "대표"
             member.status == "pending" && member.id == myUserId -> "나 - 초대받음"
             member.status == "pending" -> "초대함"
             member.id == myUserId -> "나 - 구성원"
@@ -58,9 +58,9 @@ class MemberAdapter(
 
         holder.btnMemberAction.visibility = View.GONE
         // 프로필 사진 세팅
-        if (!member.profile_image_url.isNullOrBlank()) {
+        if (!member.profileImageUrl.isNullOrBlank()) {
             Glide.with(holder.itemView.context)
-                .load("https://foodcare-69ae76eec1bf.herokuapp.com" + member.profile_image_url)
+                .load("https://foodcare-69ae76eec1bf.herokuapp.com" + member.profileImageUrl)
                 .circleCrop()
                 .placeholder(R.drawable.ic_profile)
                 .error(R.drawable.ic_profile)
@@ -74,7 +74,7 @@ class MemberAdapter(
         if (isManageMode) {
             when {
                 // 대표 자기자신은 버튼 안 뜸
-                member.is_owner && member.id == myUserId -> holder.btnMemberAction.visibility = View.GONE
+                member.isOwner && member.id == myUserId -> holder.btnMemberAction.visibility = View.GONE
 
                 // 초대 상태 (pending)
                 member.status == "pending" -> {
@@ -87,7 +87,7 @@ class MemberAdapter(
                 }
 
                 // accepted 상태 - 구성원: 대표가 추방, 본인은 나가기
-                member.status == "accepted" && !member.is_owner -> {
+                member.status == "accepted" && !member.isOwner -> {
                     holder.btnMemberAction.text = if (member.id == myUserId) "나가기" else "추방"
                     holder.btnMemberAction.visibility = View.VISIBLE
                     holder.btnMemberAction.setOnClickListener {
@@ -103,12 +103,11 @@ class MemberAdapter(
             holder.btnMemberAction.visibility = View.GONE
         }
 
-
         // 기타 프로필, 클릭 등은 동일하게 처리
         holder.nameText.text = member.username
-        if (!member.profile_image_url.isNullOrBlank()) {
+        if (!member.profileImageUrl.isNullOrBlank()) {
             Glide.with(holder.itemView.context)
-                .load("https://foodcare-69ae76eec1bf.herokuapp.com" + member.profile_image_url)
+                .load("https://foodcare-69ae76eec1bf.herokuapp.com" + member.profileImageUrl)
                 .circleCrop()
                 .placeholder(R.drawable.ic_profile)
                 .error(R.drawable.ic_profile)
@@ -121,5 +120,3 @@ class MemberAdapter(
         holder.itemView.setOnClickListener { onMemberClick(member) }
     }
 }
-
-

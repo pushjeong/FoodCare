@@ -1,12 +1,13 @@
 package com.AzaAza.foodcare.models
 
+import com.google.gson.annotations.SerializedName
 
 data class MemberResponse(
-    val id: Int,
-    val username: String,
-    val login_id: String,
-    val email: String,
-    val status: String,    // "pending" 또는 "accepted"
-    val is_owner: Boolean,
-    val profile_image_url: String?
+    @SerializedName("id") val id: Int,
+    @SerializedName("username") val username: String,
+    @SerializedName("login_id") val loginId: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("status") val status: String,    // "pending" 또는 "accepted"
+    @SerializedName("is_owner") val isOwner: Boolean,
+    @SerializedName("profile_image_url") val profileImageUrl: String?
 )

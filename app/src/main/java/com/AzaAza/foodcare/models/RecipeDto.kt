@@ -20,8 +20,9 @@ data class RecipeDto(
     // RecipeDto를 Recipe 객체로 변환하는 함수
     fun toRecipe(userIngredients: List<String>): Recipe {
         val ingredientsList = ingredients.split(",").map { it.trim() }
-        val matched = ingredientsList.filter { it in userIngredients }
 
+        // 개선된 재료 매칭 로직
+        val matched = findMatchedIngredients(ingredientsList, userIngredients)
 
         // 음식 이름에 따라 이미지 선택
         val imageRes = when (name) {
@@ -173,7 +174,7 @@ data class RecipeDto(
             "떡" -> R.drawable.dish_img_rice_cake
             "치즈케이크" -> R.drawable.dish_img_cheesecake
             "붕어빵" -> R.drawable.dish_img_fish_shaped_bun
-           "파운드케이크" -> R.drawable.dish_img_poundcake
+            "파운드케이크" -> R.drawable.dish_img_poundcake
             "마카롱" -> R.drawable.dish_img_macaron
             "과일 타르트" -> R.drawable.dish_img_fruit_tart
             "인절미" -> R.drawable.dish_img_injeolmi
@@ -201,6 +202,127 @@ data class RecipeDto(
             diseaseReason = diseasereason,
             category = category
         )
+    }
 
+    /**
+     * 개선된 재료 매칭 로직
+     * 괄호 안의 대체 재료도 고려하여 매칭
+     */
+    private fun findMatchedIngredients(recipeIngredients: List<String>, userIngredients: List<String>): List<String> {
+        val matched = mutableListOf<String>()
+
+        for (recipeIngredient in recipeIngredients) {
+            val cleanIngredient = recipeIngredient.trim()
+
+            // 괄호가 있는 경우와 없는 경우 모두 처리
+            if (isIngredientMatched(cleanIngredient, userIngredients)) {
+                // 실제 매칭된 사용자 재료명을 찾아서 추가
+                val matchedUserIngredient = findMatchedUserIngredient(cleanIngredient, userIngredients)
+                if (matchedUserIngredient != null) {
+                    matched.add(matchedUserIngredient)
+                }
+            }
+        }
+
+        return matched.distinct() // 중복 제거
+    }
+
+    /**
+     * 레시피 재료가 사용자 재료와 매칭되는지 확인
+     */
+    private fun isIngredientMatched(recipeIngredient: String, userIngredients: List<String>): Boolean {
+        // 1. 직접 매칭 (대소문자 무시)
+        if (userIngredients.any { it.equals(recipeIngredient, ignoreCase = true) }) {
+            return true
+        }
+
+        // 2. 부분 매칭 (사용자 재료가 레시피 재료에 포함되는 경우)
+        if (userIngredients.any { recipeIngredient.contains(it, ignoreCase = true) }) {
+            return true
+        }
+
+        // 3. 괄호 처리: "돼지고기(또는 참치)" 같은 경우
+        if (recipeIngredient.contains("(") && recipeIngredient.contains(")")) {
+            val alternatives = extractAlternatives(recipeIngredient)
+            return alternatives.any { alternative ->
+                userIngredients.any { userIngredient ->
+                    alternative.equals(userIngredient, ignoreCase = true) ||
+                            alternative.contains(userIngredient, ignoreCase = true) ||
+                            userIngredient.contains(alternative, ignoreCase = true)
+                }
+            }
+        }
+
+        // 4. 역방향 매칭 (레시피 재료가 사용자 재료에 포함되는 경우)
+        if (userIngredients.any { it.contains(recipeIngredient, ignoreCase = true) }) {
+            return true
+        }
+
+        return false
+    }
+
+    /**
+     * 실제 매칭된 사용자 재료명을 찾아 반환
+     */
+    private fun findMatchedUserIngredient(recipeIngredient: String, userIngredients: List<String>): String? {
+        // 1. 직접 매칭
+        userIngredients.find { it.equals(recipeIngredient, ignoreCase = true) }?.let { return it }
+
+        // 2. 사용자 재료가 레시피 재료에 포함되는 경우
+        userIngredients.find { recipeIngredient.contains(it, ignoreCase = true) }?.let { return it }
+
+        // 3. 괄호 처리
+        if (recipeIngredient.contains("(") && recipeIngredient.contains(")")) {
+            val alternatives = extractAlternatives(recipeIngredient)
+            for (alternative in alternatives) {
+                userIngredients.find { userIngredient ->
+                    alternative.equals(userIngredient, ignoreCase = true) ||
+                            alternative.contains(userIngredient, ignoreCase = true) ||
+                            userIngredient.contains(alternative, ignoreCase = true)
+                }?.let { return it }
+            }
+        }
+
+        // 4. 역방향 매칭
+        userIngredients.find { it.contains(recipeIngredient, ignoreCase = true) }?.let { return it }
+
+        return null
+    }
+
+    /**
+     * 괄호 안의 대체 재료들을 추출
+     * 예: "돼지고기(또는 참치)" -> ["돼지고기", "참치"]
+     */
+    private fun extractAlternatives(ingredient: String): List<String> {
+        val alternatives = mutableListOf<String>()
+
+        // 괄호 밖의 주 재료 추가
+        val mainIngredient = ingredient.substringBefore("(").trim()
+        if (mainIngredient.isNotEmpty()) {
+            alternatives.add(mainIngredient)
+        }
+
+        // 괄호 안의 내용 처리
+        val parenthesesContent = ingredient.substringAfter("(").substringBefore(")").trim()
+        if (parenthesesContent.isNotEmpty()) {
+            // "또는", "혹은", "," 등으로 분리
+            val separators = listOf("또는", "혹은", "이나", ",", "/", "｜")
+            var content = parenthesesContent
+
+            for (separator in separators) {
+                if (content.contains(separator)) {
+                    val parts = content.split(separator).map { it.trim() }.filter { it.isNotEmpty() }
+                    alternatives.addAll(parts)
+                    break
+                }
+            }
+
+            // 분리되지 않았다면 전체를 하나의 대체재로 추가
+            if (!separators.any { content.contains(it) }) {
+                alternatives.add(content)
+            }
+        }
+
+        return alternatives.distinct().filter { it.isNotEmpty() }
     }
 }

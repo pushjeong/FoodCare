@@ -5,12 +5,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.ScrollView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.models.Recipe
-import androidx.appcompat.app.AlertDialog
 import com.AzaAza.foodcare.models.HealthInfoResponse
 import com.AzaAza.foodcare.ui.RecipeDetailActivity
 import com.bumptech.glide.Glide
@@ -38,7 +36,6 @@ class RecipeAdapter(
         holder.nameText.text = recipe.name
         holder.descriptionText.text = recipe.description
 
-
         // 이미지 표시 우선순위: 서버 사진 > 기본 drawable
         val baseUrl = "https://foodcare-69ae76eec1bf.herokuapp.com"
         if (!recipe.imageUrl.isNullOrBlank()) {
@@ -51,17 +48,14 @@ class RecipeAdapter(
             holder.imageView.setImageResource(recipe.imageResId)
         }
 
-        holder.matchedCountText.text = if (recipe.matchedIngredients.isNotEmpty())
+        // 매칭된 재료 정보 표시 (개선된 로직)
+        holder.matchedCountText.text = if (recipe.matchedIngredients.isNotEmpty()) {
             "일치 재료: ${recipe.matchedCount}개 (${recipe.matchedIngredients.joinToString(", ")})"
-        else
+        } else {
             "일치하는 재료 없음"
+        }
 
-        holder.imageView.setImageResource(recipe.imageResId)
-        holder.matchedCountText.text = if (recipe.matchedIngredients.isNotEmpty())
-            "일치 재료: ${recipe.matchedCount}개 (${recipe.matchedIngredients.joinToString(", ")})"
-        else
-            "일치하는 재료 없음"
-
+        // 레시피 상세 화면으로 이동
         holder.itemView.setOnClickListener {
             val context = holder.itemView.context
             val intent = Intent(context, RecipeDetailActivity::class.java)
@@ -69,58 +63,7 @@ class RecipeAdapter(
             intent.putStringArrayListExtra("EXTRA_MY_INGREDIENTS", ArrayList(userIngredients))
             intent.putExtra("EXTRA_USER_HEALTH", userHealthInfo)
             context.startActivity(intent)
-
         }
-
-
-     /*  holder.descriptionText.setOnClickListener {
-            val context = holder.itemView.context
-
-            // 전체 조리 순서를 메시지로 구성
-            val message = """
-📝 레시피 설명:
-${recipe.instructions}
-
-🧂 필요한 재료:
-${recipe.ingredients.joinToString(", ")}
-
-⏱ 소요 시간: ${recipe.timeTaken ?: "알 수 없음"}
-💪 난이도: ${recipe.difficulty ?: "알 수 없음"}
-🩺 알레르기: ${recipe.allergies ?: "없음"}
-🚫 질병 관련: ${recipe.disease ?: "없음"}
-""".trimIndent()
-
-            // 상세정보용 TextView 설정
-            val textView = TextView(context).apply {
-                text = message
-                textSize = 16f
-                setPadding(40, 40, 40, 40)
-                isVerticalScrollBarEnabled = true
-                movementMethod = android.text.method.ScrollingMovementMethod.getInstance()
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-            }
-
-            // ScrollView에 감싸고 wrap_content로 설정하여 내용에 따라 높이 조절
-            val scrollView = ScrollView(context).apply {
-                addView(textView)
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-            }
-
-            // 다이얼로그 생성 및 표시
-            AlertDialog.Builder(context)
-                .setTitle("${recipe.name} 상세 정보")
-                .setView(scrollView)
-                .setPositiveButton("닫기", null)
-                .show()
-        }
-
-*/
     }
 
     override fun getItemCount(): Int = recipes.size
@@ -129,5 +72,4 @@ ${recipe.ingredients.joinToString(", ")}
         recipes = newList
         notifyDataSetChanged()
     }
-
 }

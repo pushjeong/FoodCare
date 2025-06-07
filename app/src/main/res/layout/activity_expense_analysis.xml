@@ -7,7 +7,7 @@
     android:orientation="vertical"
     android:background="@android:color/white">
 
-    <!-- ✅ 고정 상단바 (스크롤뷰 밖) -->
+    <!-- ✅ 고정 상단바 -->
     <LinearLayout
         android:id="@+id/topBarLayout"
         android:layout_width="match_parent"
@@ -49,7 +49,108 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </LinearLayout>
 
-    <!-- ✅ 본문 스크롤 영역 -->
+    <!-- ✅ 개인/공유 모드 토글 -->
+    <LinearLayout
+        android:id="@+id/modeToggleContainer"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_toggle_container_rect"
+        android:padding="4dp"
+        android:orientation="horizontal">
+
+        <!-- 개인 모드 -->
+        <LinearLayout
+            android:id="@+id/personalModeTab"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:background="@drawable/bg_toggle_selected_blue_rect"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/personalModeIcon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_user"
+                android:tint="#007AFF"
+                android:layout_marginEnd="4dp" />
+
+            <TextView
+                android:id="@+id/personalModeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="개인 모드"
+                android:textColor="#007AFF"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- 공유 모드 -->
+        <LinearLayout
+            android:id="@+id/sharedModeTab"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:background="@android:color/transparent"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/sharedModeIcon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_users"
+                android:tint="#999999"
+                android:layout_marginEnd="4dp" />
+
+            <TextView
+                android:id="@+id/sharedModeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="공유 모드"
+                android:textColor="#999999"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ✅ 공유 모드 안내 -->
+    <LinearLayout
+        android:id="@+id/sharedModeInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="8dp"
+        android:padding="12dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_shared_mode_info"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_users"
+            android:tint="#00C471"
+            android:layout_marginEnd="6dp" />
+
+        <TextView
+            android:id="@+id/sharedModeInfoText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="가족 4명과 공유 중 · "
+            android:textSize="14sp"
+            android:textColor="#00C471" />
+    </LinearLayout>
+
+    <!-- ✅ 본문 스크롤 -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -74,7 +175,7 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginBottom="16dp" />
 
-            <!-- 카드 삽입 영역 -->
+            <!-- 카드 영역 -->
             <LinearLayout
                 android:id="@+id/topIngredientsLayout"
                 android:layout_width="match_parent"
@@ -116,7 +217,7 @@
                     android:layout_marginStart="8dp" />
             </LinearLayout>
 
-            <!-- 추천 음식 제목 -->
+            <!-- 맞춤 음식 추천 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -128,7 +229,7 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="12dp" />
 
-            <!-- 추천 음식 삽입 영역 -->
+            <!-- 추천 레시피 영역 -->
             <LinearLayout
                 android:id="@+id/recommendLayout"
                 android:layout_width="match_parent"

@@ -75,28 +75,28 @@ class ExpiryNotificationManager {
                 Log.d(TAG, "알림 채널이 생성되었습니다")
             }
         }
-/* 미사용으로 삭제 됨
-        // 배터리 최적화 예외 설정 화면으로 이동
-        fun requestBatteryOptimizationExemption(context: Context) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                try {
-                    val intent = Intent().apply {
-                        action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
-                        data = Uri.parse("package:${context.packageName}")
+        /* 미사용으로 삭제 됨
+                // 배터리 최적화 예외 설정 화면으로 이동
+                fun requestBatteryOptimizationExemption(context: Context) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        try {
+                            val intent = Intent().apply {
+                                action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+                                data = Uri.parse("package:${context.packageName}")
+                            }
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "배터리 최적화 예외 설정 화면 열기 실패", e)
+                            try {
+                                val settingsIntent = Intent(Settings.ACTION_BATTERY_SAVER_SETTINGS)
+                                context.startActivity(settingsIntent)
+                            } catch (e2: Exception) {
+                                Log.e(TAG, "배터리 설정 화면 열기 실패", e2)
+                                Toast.makeText(context, "설정 앱에서 배터리 > 배터리 최적화에서 FoodCare 앱을 '최적화 안함'으로 설정해주세요.", Toast.LENGTH_LONG).show()
+                            }
+                        }
                     }
-                    context.startActivity(intent)
-                } catch (e: Exception) {
-                    Log.e(TAG, "배터리 최적화 예외 설정 화면 열기 실패", e)
-                    try {
-                        val settingsIntent = Intent(Settings.ACTION_BATTERY_SAVER_SETTINGS)
-                        context.startActivity(settingsIntent)
-                    } catch (e2: Exception) {
-                        Log.e(TAG, "배터리 설정 화면 열기 실패", e2)
-                        Toast.makeText(context, "설정 앱에서 배터리 > 배터리 최적화에서 FoodCare 앱을 '최적화 안함'으로 설정해주세요.", Toast.LENGTH_LONG).show()
-                    }
-                }
-            }
-        }*/
+                }*/
 
         // 알림 일정 예약 함수 (개선됨)
         fun scheduleNotifications(context: Context) {

@@ -6,6 +6,7 @@ import com.AzaAza.foodcare.models.SignUpRequest
 import com.AzaAza.foodcare.models.LoginRequest
 import com.AzaAza.foodcare.models.LoginResponse
 import com.AzaAza.foodcare.models.MemberResponse
+import com.AzaAza.foodcare.models.MyGroupsResponse
 import com.AzaAza.foodcare.models.SignupResponse
 import com.AzaAza.foodcare.models.UserResponse
 import com.AzaAza.foodcare.models.VerificationRequestDto
@@ -87,5 +88,8 @@ interface UserApiService {
         @Part("login_id") loginId: RequestBody,
         @Part image: MultipartBody.Part
     ): Call<ProfileImageResponse>
+
+    @GET("/members/my_groups/{user_id}")
+    fun getMyGroups(@Path("user_id") userId: Int): Call<MyGroupsResponse>
 
 }

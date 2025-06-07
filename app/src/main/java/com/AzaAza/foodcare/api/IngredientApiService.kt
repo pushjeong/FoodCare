@@ -1,3 +1,4 @@
+// IngredientApiService.kt
 package com.AzaAza.foodcare.api
 
 import com.AzaAza.foodcare.models.IngredientDto
@@ -7,11 +8,9 @@ import okhttp3.RequestBody
 import retrofit2.Call
 import retrofit2.http.*
 
-// API 인터페이스 정의
 interface IngredientApiService {
-    /**
-     * 식자재 추가 (사용자별)
-     */
+
+    // 식자재 추가
     @Multipart
     @POST("/ingredients")
     fun addIngredient(
@@ -20,30 +19,25 @@ interface IngredientApiService {
         @Part("expiry_date") expiryDate: RequestBody,
         @Part("purchase_date") purchaseDate: RequestBody,
         @Part("user_id") userId: RequestBody,
-        @Part image: MultipartBody.Part?
+        @Part image: MultipartBody.Part?  // 이미지 없으면 null 넣으면 됨
     ): Call<IngredientResponse>
 
-    /**
-     * 사용자별 식자재 조회 (개인 모드)
-     * 본인이 등록한 식자재만 조회
-     */
+    // 내가 등록한 식자재만 조회 (개인 모드)
     @GET("/ingredients")
-    fun getIngredients(@Query("user_id") userId: Int): Call<List<IngredientDto>>
+    fun getIngredients(
+        @Query("user_id") userId: Int
+    ): Call<List<IngredientDto>>
 
-    /**
-     * 공유 그룹 식자재 조회 (그룹 모드)
-     * 그룹 내 모든 구성원의 식자재 조회
-     */
-/* 미사용으로 삭제 됨, 그리고 이 클래스 주석 왜이리 더러움
-@GET("/ingredients/shared/{owner_id}")
-fun getSharedIngredients(@Path("owner_id") ownerId: Int): Call<List<IngredientDto>>
-*/
-/**
- * 식자재 삭제 (소유자만 가능)
- */
-@DELETE("/ingredients/{id}")
-fun deleteIngredient(
-    @Path("id") id: Int,
-    @Query("user_id") userId: Int
-): Call<IngredientResponse>
+    // 공유 모드일 때 전체 그룹 식자재 조회
+    @GET("/ingredients/shared/{owner_id}")
+    fun getSharedIngredients(
+        @Path("owner_id") ownerId: Int
+    ): Call<List<IngredientDto>>
+
+    // 식자재 삭제 (등록한 사람만 삭제 가능)
+    @DELETE("/ingredients/{id}")
+    fun deleteIngredient(
+        @Path("id") id: Int,
+        @Query("user_id") userId: Int
+    ): Call<IngredientResponse>
 }

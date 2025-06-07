@@ -4,8 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
-    android:fitsSystemWindows="true">
+    android:background="@android:color/white">
 
     <!-- 전체 콘텐츠 감싸는 LinearLayout -->
     <LinearLayout
@@ -153,7 +152,7 @@
                 android:id="@+id/sharedModeInfoText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="가족 4명과 공유 중 · 김철수, 김영희, 김민수, 김지영"
+                android:text="가족 4명과 공유 중 · "
                 android:textSize="14sp"
                 android:textColor="#00C471" />
         </LinearLayout>

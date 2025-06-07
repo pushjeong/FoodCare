@@ -2,43 +2,63 @@ package com.AzaAza.foodcare.api
 
 import com.AzaAza.foodcare.models.CategoryDto
 import com.AzaAza.foodcare.models.ExpenseDto
-import com.google.gson.annotations.SerializedName
+import com.AzaAza.foodcare.models.SharedExpenseDto
+import com.AzaAza.foodcare.models.MemberResponse
+import com.AzaAza.foodcare.models.MonthlySummaryResponse
+import com.AzaAza.foodcare.models.SharedMonthlySummaryResponse
 import retrofit2.Response
 import retrofit2.http.*
 
 interface ExpenseApiService {
+    // =================== 개인 모드 API ===================
     @GET("expense_categories")
-    suspend fun getCategories(): List<CategoryDto>
+    suspend fun getCategories(@Query("user_id") userId: Int): List<CategoryDto>
 
     @GET("expenses")
-    suspend fun getExpenses(): List<ExpenseDto>
+    suspend fun getExpenses(@Query("user_id") userId: Int): List<ExpenseDto>
 
     @POST("expenses")
     suspend fun addExpense(@Body expense: ExpenseDto): Response<ExpenseDto>
 
     @DELETE("expenses/{expense_id}")
-    suspend fun deleteExpense(@Path("expense_id") expenseId: Int): Response<Void>
+    suspend fun deleteExpense(@Path("expense_id") expenseId: Int, @Query("user_id") userId: Int): Response<Void>
 
-    /*  미사용으로 삭제 됨
     @GET("expenses/category/{category_id}")
-    suspend fun getExpensesByCategory(@Path("category_id") categoryId: Int): List<ExpenseDto>
-    */
+    suspend fun getExpensesByCategory(
+        @Path("category_id") categoryId: Int,
+        @Query("user_id") userId: Int
+    ): List<ExpenseDto>
+
     @GET("expenses/summary/monthly")
     suspend fun getMonthlySummary(
+        @Query("user_id") userId: Int,
         @Query("year") year: Int? = null,
         @Query("month") month: Int? = null
     ): MonthlySummaryResponse
+
+    // =================== 공유 모드 API ===================
+
+    @GET("expense_categories/shared/{owner_id}")
+    suspend fun getSharedCategories(@Path("owner_id") ownerId: Int): List<CategoryDto>
+
+    @GET("expenses/shared/{owner_id}")
+    suspend fun getSharedExpenses(@Path("owner_id") ownerId: Int): List<SharedExpenseDto>
+
+    @GET("expenses/summary/monthly/shared/{owner_id}")
+    suspend fun getSharedMonthlySummary(
+        @Path("owner_id") ownerId: Int,
+        @Query("year") year: Int? = null,
+        @Query("month") month: Int? = null
+    ): SharedMonthlySummaryResponse
+
+    @GET("expenses/category/shared/{owner_id}/{category_id}")
+    suspend fun getSharedExpensesByCategory(
+        @Path("owner_id") ownerId: Int,
+        @Path("category_id") categoryId: Int
+    ): List<SharedExpenseDto>
+
+    // =================== 멤버 관리 API ===================
+
+    @GET("members/{owner_id}")
+    suspend fun getMembers(@Path("owner_id") ownerId: Int): List<MemberResponse>
 }
-
-data class MonthlySummaryResponse(
-    @SerializedName("year") val year: Int,
-    @SerializedName("month") val month: Int,
-    @SerializedName("total_amount") val totalAmount: Double,
-    @SerializedName("categories") val categories: List<CategorySummary>
-)
-
-data class CategorySummary(
-    @SerializedName("category_name") val categoryName: String,
-    @SerializedName("amount") val amount: Double,
-    @SerializedName("percentage") val percentage: Double
-)

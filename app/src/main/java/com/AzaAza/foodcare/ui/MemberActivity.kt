@@ -103,8 +103,8 @@ class MemberActivity : AppCompatActivity() {
                             MemberProfileDialog(
                                 name = member.username,
                                 email = member.email,
-                                profileUrl = member.profile_image_url,
-                                isOwner = member.is_owner
+                                profileUrl = member.profileImageUrl,
+                                isOwner = member.isOwner
                             ).show(supportFragmentManager, "MemberProfileDialog")
                         },
                         isManageMode = isManageMode,
@@ -129,22 +129,22 @@ class MemberActivity : AppCompatActivity() {
     }
 
 
-/*미사용으로 삭제
-    private fun createMyOwnGroup() {
-        RetrofitClient.userApiService.createMyGroup(myUserId)
-            .enqueue(object : Callback<InviteResponse> {
-                override fun onResponse(call: Call<InviteResponse>, response: Response<InviteResponse>) {
-                    // 생성이 끝난 후 MainActivity로 강제 이동
-                    val intent = Intent(this@MemberActivity, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(intent)
-                    finish()
-                }
-                override fun onFailure(call: Call<InviteResponse>, t: Throwable) {
-                    Toast.makeText(this@MemberActivity, "내 집 생성 실패!", Toast.LENGTH_SHORT).show()
-                }
-            })
-    }*/
+    /*미사용으로 삭제
+        private fun createMyOwnGroup() {
+            RetrofitClient.userApiService.createMyGroup(myUserId)
+                .enqueue(object : Callback<InviteResponse> {
+                    override fun onResponse(call: Call<InviteResponse>, response: Response<InviteResponse>) {
+                        // 생성이 끝난 후 MainActivity로 강제 이동
+                        val intent = Intent(this@MemberActivity, MainActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                        startActivity(intent)
+                        finish()
+                    }
+                    override fun onFailure(call: Call<InviteResponse>, t: Throwable) {
+                        Toast.makeText(this@MemberActivity, "내 집 생성 실패!", Toast.LENGTH_SHORT).show()
+                    }
+                })
+        }*/
 
     private fun showAddMemberDialog() {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit_text, null)

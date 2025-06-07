@@ -52,6 +52,13 @@ class PasswordChangeActivity : AppCompatActivity() {
         etConfirmPassword = findViewById(R.id.etConfirmPassword)
         btnChangePassword = findViewById(R.id.btnChangePassword)
 
+        // 로그인 ID 확인 및 디버깅
+        val loginId = getLoginId()
+        if (loginId.isEmpty()) {
+            showLoginIdNotFoundDialog()
+            return
+        }
+
         //비밀번호 변경 버튼 클릭 리스너
         btnChangePassword.setOnClickListener {
             if (validateInput()) {
@@ -121,17 +128,27 @@ class PasswordChangeActivity : AppCompatActivity() {
         loadingDialog?.dismiss()
     }
 
-    // 로그인 ID 찾기 (여러 방법 시도)
+    // 로그인 ID 찾기 - 수정된 버전
     private fun getLoginId(): String {
-        // 1. SharedPreferences에서 찾기
-        val savedLoginId = prefs.getString("login_id", null)
-        if (!savedLoginId.isNullOrEmpty()) {
-            Log.d("PasswordChange", "SharedPreferences에서 로그인 ID 발견: $savedLoginId")
-            return savedLoginId
+        Log.d("PasswordChange", "=== SharedPreferences 전체 내용 확인 ===")
+
+        // SharedPreferences의 모든 값 로깅
+        val allEntries = prefs.all
+        for ((key, value) in allEntries) {
+            Log.d("PasswordChange", "SharedPreferences - $key: $value")
         }
 
-        // 2. 다른 가능한 키들 시도
-        val possibleKeys = listOf("loginId", "user_id", "username", "email")
+        // 1. SharedPreferences에서 찾기 (실제 저장된 키 우선)
+        val possibleKeys = listOf(
+            "USER_LOGIN_ID",    // LoginActivity에서 실제로 저장하는 키
+            "login_id",
+            "loginId",
+            "user_login_id",
+            "user_id",
+            "username",
+            "email"
+        )
+
         for (key in possibleKeys) {
             val value = prefs.getString(key, null)
             if (!value.isNullOrEmpty()) {
@@ -139,20 +156,54 @@ class PasswordChangeActivity : AppCompatActivity() {
                 return value
             }
         }
-        /*아래 부분은 디버깅용 하드코딩임. 실 배포/운영에선 쓸모 없음.
-        *조치: 진짜 fallback이 필요하다면 ‘null’이나 안전한 기본값(예: “”)으로 대체.
-        * 실사용에서는 SharedPreferences에서 못 찾으면 오류 알림이 더 적절.
-         */
-        // 3. 비밀번호 찾기에서 사용했던 로그인 ID (화면에서 확인한 것)
-        val tempLoginId = "12345"
-        Log.d("PasswordChange", "임시 로그인 ID 사용: $tempLoginId")
 
-        return tempLoginId
+        // USER_ID는 Int로 저장되므로 별도 처리
+        val userId = prefs.getInt("USER_ID", -1)
+        if (userId != -1) {
+            Log.d("PasswordChange", "USER_ID에서 사용자 ID 발견: $userId")
+            return userId.toString()
+        }
+
+        // 2. Intent에서 전달받은 login_id 확인
+        val intentLoginId = intent.getStringExtra("login_id")
+        if (!intentLoginId.isNullOrEmpty()) {
+            Log.d("PasswordChange", "Intent에서 로그인 ID 발견: $intentLoginId")
+            return intentLoginId
+        }
+
+        Log.e("PasswordChange", "로그인 ID를 찾을 수 없습니다")
+        return ""
+    }
+
+    // 로그인 ID가 없을 때 다이얼로그 표시
+    private fun showLoginIdNotFoundDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("오류")
+            .setMessage("사용자 정보를 찾을 수 없습니다.\n다시 로그인해주세요.")
+            .setPositiveButton("로그인 화면으로") { _, _ ->
+                goToLoginActivity()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    // 로그인 화면으로 이동
+    private fun goToLoginActivity() {
+        val intent = Intent(this, LoginActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(intent)
+        finish()
     }
 
     // 비밀번호 변경 API 호출
     private fun changePassword() {
         val loginId = getLoginId()
+        if (loginId.isEmpty()) {
+            showLoginIdNotFoundDialog()
+            return
+        }
+
         val currentPassword = etCurrentPassword.text.toString().trim()
         val newPassword = etNewPassword.text.toString().trim()
 
@@ -168,8 +219,8 @@ class PasswordChangeActivity : AppCompatActivity() {
 
                 Log.d("PasswordChange", "비밀번호 변경 요청:")
                 Log.d("PasswordChange", "- 로그인 ID: $loginId")
-                Log.d("PasswordChange", "- 현재 비밀번호: ${currentPassword.take(3)}... (일부만 표시)")
-                Log.d("PasswordChange", "- 새 비밀번호: ${newPassword.take(3)}... (일부만 표시)")
+                Log.d("PasswordChange", "- 현재 비밀번호 길이: ${currentPassword.length}")
+                Log.d("PasswordChange", "- 새 비밀번호 길이: ${newPassword.length}")
 
                 val response = RetrofitClient.userApiService.changePassword(requestBody)
 
@@ -194,18 +245,29 @@ class PasswordChangeActivity : AppCompatActivity() {
     // 비밀번호 변경 에러 처리
     private fun handlePasswordChangeError(message: String) {
         when {
-            message.contains("현재 비밀번호") -> {
+            message.contains("현재 비밀번호") || message.contains("일치하지 않습니다") -> {
                 AlertDialog.Builder(this)
                     .setTitle("현재 비밀번호 오류")
-                    .setMessage("현재 비밀번호가 일치하지 않습니다.\n\n💡 확인사항:\n• 비밀번호 찾기로 받은 임시 비밀번호를 입력하셨나요?\n• 임시 비밀번호: 영문 대소문자 + 숫자 10자리")
+                    .setMessage("현재 비밀번호가 일치하지 않습니다.\n\n💡 확인사항:\n• 비밀번호 찾기로 받은 임시 비밀번호를 입력하셨나요?\n• 임시 비밀번호: 영문 대소문자 + 숫자 10자리\n• 공백이나 특수문자가 포함되지 않았나요?")
                     .setPositiveButton("확인") { _, _ ->
                         etCurrentPassword.selectAll()
                         etCurrentPassword.requestFocus()
                     }
+                    .setNegativeButton("비밀번호 찾기") { _, _ ->
+                        // 비밀번호 찾기 화면으로 이동
+                        val intent = Intent(this, FindPwActivity::class.java)
+                        startActivity(intent)
+                    }
                     .show()
             }
             message.contains("사용자") -> {
-                Toast.makeText(this, "사용자 정보를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+                AlertDialog.Builder(this)
+                    .setTitle("사용자 오류")
+                    .setMessage("사용자 정보를 찾을 수 없습니다.\n다시 로그인해주세요.")
+                    .setPositiveButton("로그인") { _, _ ->
+                        goToLoginActivity()
+                    }
+                    .show()
             }
             else -> {
                 Toast.makeText(this, message, Toast.LENGTH_LONG).show()
@@ -233,9 +295,22 @@ class PasswordChangeActivity : AppCompatActivity() {
                                 etCurrentPassword.selectAll()
                                 etCurrentPassword.requestFocus()
                             }
+                            .setNegativeButton("비밀번호 찾기") { _, _ ->
+                                // 비밀번호 찾기 화면으로 이동
+                                val intent = Intent(this, FindPwActivity::class.java)
+                                startActivity(intent)
+                            }
                             .show()
                     }
-                    404 -> Toast.makeText(this, "사용자를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+                    404 -> {
+                        AlertDialog.Builder(this)
+                            .setTitle("사용자 오류")
+                            .setMessage("사용자를 찾을 수 없습니다.\n다시 로그인해주세요.")
+                            .setPositiveButton("로그인") { _, _ ->
+                                goToLoginActivity()
+                            }
+                            .show()
+                    }
                     else -> Toast.makeText(this, "서버 오류: ${e.code()}", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -270,7 +345,7 @@ class PasswordChangeActivity : AppCompatActivity() {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
 
-            // 4. 약간의 지연 후 로그인 화면으로 이동 (Toast가 보이도록)
+            // 3. 약간의 지연 후 로그인 화면으로 이동 (Toast가 보이도록)
             Handler(Looper.getMainLooper()).postDelayed({
                 startActivity(intent)
                 finish()

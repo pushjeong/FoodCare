@@ -41,20 +41,26 @@ interface ExpenseApiService {
     @GET("expense_categories/shared/{owner_id}")
     suspend fun getSharedCategories(@Path("owner_id") ownerId: Int): List<CategoryDto>
 
+    // 공유 지출 조회 - 권한 확인을 위해 현재 사용자 ID 추가
     @GET("expenses/shared/{owner_id}")
-    suspend fun getSharedExpenses(@Path("owner_id") ownerId: Int): List<SharedExpenseDto>
+    suspend fun getSharedExpenses(
+        @Path("owner_id") ownerId: Int,
+        @Query("user_id") userId: Int? = null  // 현재 사용자 ID 추가 (선택적)
+    ): List<SharedExpenseDto>
 
     @GET("expenses/summary/monthly/shared/{owner_id}")
     suspend fun getSharedMonthlySummary(
         @Path("owner_id") ownerId: Int,
         @Query("year") year: Int? = null,
-        @Query("month") month: Int? = null
+        @Query("month") month: Int? = null,
+        @Query("user_id") userId: Int? = null  // 권한 확인용 사용자 ID 추가
     ): SharedMonthlySummaryResponse
 
     @GET("expenses/category/shared/{owner_id}/{category_id}")
     suspend fun getSharedExpensesByCategory(
         @Path("owner_id") ownerId: Int,
-        @Path("category_id") categoryId: Int
+        @Path("category_id") categoryId: Int,
+        @Query("user_id") userId: Int? = null  // 권한 확인용 사용자 ID 추가
     ): List<SharedExpenseDto>
 
     // =================== 멤버 관리 API ===================

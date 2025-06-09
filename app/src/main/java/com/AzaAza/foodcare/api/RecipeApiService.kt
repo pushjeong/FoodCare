@@ -23,7 +23,7 @@ interface RecipeApiService {
     fun createRecipe(@Body request: RecipeCreateRequest): Call<RecipeCreateResponse>
 
     @Multipart
-    @POST("/recipes")
+    @POST("/recipes/upload")
     fun addRecipeWithImage(
         @Part("name") name: RequestBody,
         @Part("summary") summary: RequestBody,
@@ -35,8 +35,9 @@ interface RecipeApiService {
         @Part("disease") disease: RequestBody,
         @Part("diseasereason") diseasereason: RequestBody?,
         @Part("category") category: RequestBody,
-        @Part image: MultipartBody.Part?
+        @Part image: MultipartBody.Part? // nullable, 없어도 multipart 유지
     ): Call<RecipeCreateResponse>
+
 
 
 }

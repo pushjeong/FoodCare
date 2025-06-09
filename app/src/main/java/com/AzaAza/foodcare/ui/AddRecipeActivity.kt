@@ -35,6 +35,7 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 
+
 class AddRecipeActivity : AppCompatActivity() {
 
     // UI 요소들
@@ -587,13 +588,6 @@ class AddRecipeActivity : AppCompatActivity() {
     private fun validateForm(): Boolean {
         var isValid = true
 
-
-        // 사진 검증
-        if (selectedImageUri == null) {
-             showError(errorPhoto, "음식 사진을 등록해주세요.")
-             isValid = false
-         }
-
         // 레시피 이름 검증
         if (editRecipeName.text.toString().trim().isEmpty()) {
             showError(errorRecipeName, "레시피 이름을 입력해주세요.")
@@ -658,11 +652,9 @@ class AddRecipeActivity : AppCompatActivity() {
     }
 
     private fun registerRecipe() {
-        // 버튼 비활성화 (중복 클릭 방지)
         btnRegisterRecipe.isEnabled = false
         btnRegisterRecipe.text = "등록 중..."
 
-        // 카테고리 변환
         val categoryText = when (spinnerCategory.selectedItemPosition) {
             1 -> "한식"
             2 -> "양식"
@@ -670,10 +662,9 @@ class AddRecipeActivity : AppCompatActivity() {
             4 -> "중식"
             5 -> "아시아"
             6 -> "디저트"
-            else -> "한식" // 기본값
+            else -> "한식"
         }
 
-        // 난이도 레벨 변환
         val difficultyLevel = when (spinnerDifficulty.selectedItemPosition) {
             1 -> "쉬움"
             2 -> "보통"
@@ -682,7 +673,6 @@ class AddRecipeActivity : AppCompatActivity() {
             else -> "보통"
         }
 
-        // 알레르기 정보를 문자열로 변환
         val allergiesString = if (selectedAllergies.contains("none")) {
             "없음"
         } else {
@@ -691,7 +681,6 @@ class AddRecipeActivity : AppCompatActivity() {
             }
         }
 
-        // 질병 정보를 문자열로 변환
         val diseaseString = if (selectedDiseases.contains("normal")) {
             "일반 건강식"
         } else {
@@ -700,143 +689,13 @@ class AddRecipeActivity : AppCompatActivity() {
             }
         }
 
-        // 질병 이유 생성 (선택된 질병에 따라)
         val diseaseReason = if (selectedDiseases.contains("normal")) {
             "일반적인 건강한 식단을 위한 레시피입니다."
         } else {
             "해당 질병을 가진 분들의 건강 관리에 도움이 되는 레시피입니다."
         }
 
-        // API 요청 객체 생성 (새로운 필드 순서)
-        val request = RecipeCreateRequest(
-            name = editRecipeName.text.toString().trim(),
-            summary = editFoodSummary.text.toString().trim(),  // 음식 설명
-            ingredients = editIngredients.text.toString().trim(),
-            instructions = editRecipeInstructions.text.toString().trim(),  // 레시피 설명
-            timetaken = "${editCookingTime.text}분",
-            difficultylevel = difficultyLevel,
-            allergies = allergiesString,
-            disease = diseaseString,
-            diseasereason = diseaseReason,
-            category = categoryText  // 선택된 카테고리
-        )
-
-        // 디버깅: 요청 데이터 로깅
-        Log.d("AddRecipe", "=== 레시피 등록 요청 ===")
-        Log.d("AddRecipe", "name: ${request.name}")
-        Log.d("AddRecipe", "summary: ${request.summary}")
-        Log.d("AddRecipe", "ingredients: ${request.ingredients}")
-        Log.d("AddRecipe", "instructions: ${request.instructions}")
-        Log.d("AddRecipe", "timetaken: ${request.timetaken}")
-        Log.d("AddRecipe", "difficultylevel: ${request.difficultylevel}")
-        Log.d("AddRecipe", "allergies: ${request.allergies}")
-        Log.d("AddRecipe", "disease: ${request.disease}")
-        Log.d("AddRecipe", "diseasereason: ${request.diseasereason}")
-        Log.d("AddRecipe", "category: ${request.category}")
-        Log.d("AddRecipe", "selectedImageUri: $selectedImageUri")
-        Log.d("AddRecipe", "========================")
-
-        // (1) 사진이 없는 경우: 기존 방식 그대로
-        if (selectedImageUri == null || currentPhotoPath.isEmpty()) {
-            val request = RecipeCreateRequest(
-                name = editRecipeName.text.toString().trim(),
-                summary = editFoodSummary.text.toString().trim(),
-                ingredients = editIngredients.text.toString().trim(),
-                instructions = editRecipeInstructions.text.toString().trim(),
-                timetaken = "${editCookingTime.text}분",
-                difficultylevel = difficultyLevel,
-                allergies = allergiesString,
-                disease = diseaseString,
-                diseasereason = diseaseReason,
-                category = categoryText
-            )
-
-        // API 호출
-        RetrofitClient.recipeApiService.createRecipe(request).enqueue(object : Callback<RecipeCreateResponse> {
-            override fun onResponse(
-                call: Call<RecipeCreateResponse>,
-                response: Response<RecipeCreateResponse>
-            ) {
-                // 버튼 다시 활성화
-                btnRegisterRecipe.isEnabled = true
-                btnRegisterRecipe.text = "레시피 등록"
-
-                // 디버깅: 응답 상태 로깅
-                Log.d("AddRecipe", "=== 서버 응답 ===")
-                Log.d("AddRecipe", "HTTP 코드: ${response.code()}")
-                Log.d("AddRecipe", "응답 성공여부: ${response.isSuccessful}")
-                Log.d("AddRecipe", "응답 메시지: ${response.message()}")
-
-                if (response.isSuccessful) {
-                    val result = response.body()
-                    Log.d("AddRecipe", "응답 body: $result")
-                    Log.d("AddRecipe", "result.success: ${result?.success}")
-                    Log.d("AddRecipe", "result.message: ${result?.message}")
-                    Log.d("AddRecipe", "result.recipeId: ${result?.recipeId}")
-
-                    if (result?.success == true) {
-                        // 성공 처리
-                        Toast.makeText(
-                            this@AddRecipeActivity,
-                            "레시피가 성공적으로 등록되었습니다! (ID: ${result.recipeId})",
-                            Toast.LENGTH_LONG
-                        ).show()
-
-                        Log.d("AddRecipe", "✅ 레시피 등록 성공: ID = ${result.recipeId}")
-
-                        // 폼 초기화
-                        clearForm()
-                    } else {
-                        // 서버에서 실패 응답
-                        Log.e("AddRecipe", "❌ 서버에서 실패 응답")
-                        Toast.makeText(
-                            this@AddRecipeActivity,
-                            "레시피 등록 실패: ${result?.message ?: "알 수 없는 오류"}",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                } else {
-                    // HTTP 오류
-                    Log.e("AddRecipe", "❌ HTTP 오류: ${response.code()}")
-
-                    // 응답 본문도 확인
-                    try {
-                        val errorBody = response.errorBody()?.string()
-                        Log.e("AddRecipe", "에러 응답 본문: $errorBody")
-                    } catch (e: Exception) {
-                        Log.e("AddRecipe", "에러 응답 본문 읽기 실패: $e")
-                    }
-
-                    Toast.makeText(
-                        this@AddRecipeActivity,
-                        "서버 오류가 발생했습니다. (코드: ${response.code()})",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-                Log.d("AddRecipe", "==================")
-            }
-
-            override fun onFailure(call: Call<RecipeCreateResponse>, t: Throwable) {
-                // 버튼 다시 활성화
-                btnRegisterRecipe.isEnabled = true
-                btnRegisterRecipe.text = "레시피 등록"
-
-                // 🔍 디버깅: 네트워크 오류 상세 로깅
-                Log.e("AddRecipe", "❌ 네트워크 오류 발생", t)
-                Log.e("AddRecipe", "오류 메시지: ${t.message}")
-                Log.e("AddRecipe", "오류 타입: ${t.javaClass.simpleName}")
-
-                // 네트워크 오류 처리
-                Toast.makeText(
-                    this@AddRecipeActivity,
-                    "네트워크 오류: ${t.message}",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        })
-        return
-    }
-        // (2) 사진이 있는 경우: 멀티파트 방식 추가
+        // --- Multipart로 변환 ---
         val namePart = editRecipeName.text.toString().toRequestBody("text/plain".toMediaTypeOrNull())
         val summaryPart = editFoodSummary.text.toString().toRequestBody("text/plain".toMediaTypeOrNull())
         val ingredientsPart = editIngredients.text.toString().toRequestBody("text/plain".toMediaTypeOrNull())
@@ -849,10 +708,12 @@ class AddRecipeActivity : AppCompatActivity() {
         val categoryPart = categoryText.toRequestBody("text/plain".toMediaTypeOrNull())
 
         var imagePart: MultipartBody.Part? = null
-        selectedImageUri?.let { uri ->
-            val file = File(currentPhotoPath)
-            val reqFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-            imagePart = MultipartBody.Part.createFormData("image", file.name, reqFile)
+        if (selectedImageUri != null) {
+            val imageFile = getFileFromUri(selectedImageUri!!)
+            if (imageFile != null) {
+                val reqFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
+                imagePart = MultipartBody.Part.createFormData("image", imageFile.name, reqFile)
+            }
         }
 
         RetrofitClient.recipeApiService.addRecipeWithImage(
@@ -874,8 +735,13 @@ class AddRecipeActivity : AppCompatActivity() {
                             "레시피가 성공적으로 등록되었습니다! (ID: ${result.recipeId})",
                             Toast.LENGTH_LONG
                         ).show()
-                        // 폼 초기화 등 후처리
                         clearForm()
+
+                        val intent = Intent(this@AddRecipeActivity, MainActivity::class.java)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                        startActivity(intent)
+                        finish()
+
                     } else {
                         Toast.makeText(
                             this@AddRecipeActivity,
@@ -902,8 +768,22 @@ class AddRecipeActivity : AppCompatActivity() {
                 ).show()
             }
         })
-
     }
+
+    private fun getFileFromUri(uri: Uri): File? {
+        return try {
+            val inputStream = contentResolver.openInputStream(uri)
+            val tempFile = File.createTempFile("upload_", ".jpg", cacheDir)
+            tempFile.outputStream().use { output ->
+                inputStream?.copyTo(output)
+            }
+            tempFile
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
 
     private fun clearForm() {
         editRecipeName.text.clear()

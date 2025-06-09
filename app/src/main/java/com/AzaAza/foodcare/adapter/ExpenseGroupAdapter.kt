@@ -179,6 +179,14 @@ class ExpenseGroupAdapter(
             // 카테고리 인디케이터 색상 (초록 고정)
             categoryIndicator.setBackgroundColor(android.graphics.Color.parseColor("#00E676"))
 
+            val memoText: TextView = itemView.findViewById(R.id.itemMemoText)
+            if (!expenseItem.memo.isNullOrBlank()) {
+                memoText.text = expenseItem.memo
+                memoText.visibility = View.VISIBLE
+            } else {
+                memoText.visibility = View.GONE
+            }
+
             Log.d(TAG, "bind 완료: ${nameText.text}, ${dateText.text}, ${amountText.text}")
         }
     }

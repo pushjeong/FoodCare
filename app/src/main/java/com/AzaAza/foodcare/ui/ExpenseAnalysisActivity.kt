@@ -10,12 +10,16 @@ import androidx.appcompat.app.AppCompatActivity
 import com.AzaAza.foodcare.R
 import com.AzaAza.foodcare.api.RetrofitClient
 import com.AzaAza.foodcare.data.UserSession
+import com.AzaAza.foodcare.models.MyGroupsResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class ExpenseAnalysisActivity : AppCompatActivity() {
 
@@ -75,9 +79,30 @@ class ExpenseAnalysisActivity : AppCompatActivity() {
 
         sharedModeTab.setOnClickListener {
             if (!isSharedMode) {
-                isSharedMode = true
-                updateModeUI()
-                reloadData()
+                RetrofitClient.userApiService.getMyGroups(currentUserId)
+                    .enqueue(object : Callback<MyGroupsResponse> {
+                        override fun onResponse(
+                            call: Call<MyGroupsResponse>,
+                            response: Response<MyGroupsResponse>
+                        ) {
+                            val group = response.body()
+                            val ownerId = group?.asOwner?.firstOrNull()?.groupOwnerId
+                                ?: group?.asMember?.firstOrNull()?.groupOwnerId
+
+                            if (ownerId != null) {
+                                groupOwnerId = ownerId
+                                isSharedMode = true
+                                updateModeUI()
+                                reloadData()
+                            } else {
+                                Toast.makeText(this@ExpenseAnalysisActivity, "공유 그룹이 없습니다.", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+
+                        override fun onFailure(call: Call<MyGroupsResponse>, t: Throwable) {
+                            Toast.makeText(this@ExpenseAnalysisActivity, "공유 그룹 정보 로드 실패", Toast.LENGTH_SHORT).show()
+                        }
+                    })
             }
         }
 
@@ -103,18 +128,78 @@ class ExpenseAnalysisActivity : AppCompatActivity() {
             }
             dialog.show(supportFragmentManager, "ShoppingListDialog")
         }
-
-        reloadData()
     }
 
     private fun initializeModeSettings() {
         val intentSharedMode = intent.getBooleanExtra("shared_mode", false)
-        val intentOwnerId = intent.getIntExtra("group_owner_id", -1)
+        isSharedMode = intentSharedMode
+        currentUserId = UserSession.getUserId(this)
 
-        isSharedMode = intentSharedMode && intentOwnerId != -1
-        groupOwnerId = if (isSharedMode) intentOwnerId else currentUserId
+        if (!isSharedMode) {
+            // 개인 모드
+            groupOwnerId = currentUserId
+            updateModeUI()
+            reloadData()
+            return
+        }
 
-        Log.d(TAG, "모드 설정: ${if (isSharedMode) "공유" else "개인"}, groupOwnerId: $groupOwnerId")
+        // 공유 모드일 때만 그룹 정보 조회
+        RetrofitClient.userApiService.getMyGroups(currentUserId)
+            .enqueue(object : Callback<MyGroupsResponse> {
+                override fun onResponse(
+                    call: Call<MyGroupsResponse>,
+                    response: Response<MyGroupsResponse>
+                ) {
+                    if (response.isSuccessful && response.body() != null) {
+                        val group = response.body()!!
+
+                        // 대표자 ID를 먼저 owner에서 찾고, 없으면 member에서 찾음
+                        val ownerId = group.asOwner.firstOrNull()?.groupOwnerId
+                            ?: group.asMember.firstOrNull()?.groupOwnerId
+
+                        if (ownerId == null) {
+                            Toast.makeText(
+                                this@ExpenseAnalysisActivity,
+                                "공유 그룹이 없습니다.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            // 대표자 정보가 없으면 개인 모드로 대체
+                            isSharedMode = false
+                            groupOwnerId = currentUserId
+                        } else {
+                            // ✅ 대표자 ID 설정
+                            groupOwnerId = ownerId
+                            isSharedMode = true
+                        }
+
+                        updateModeUI()
+                        reloadData()
+                    } else {
+                        // 실패 시 개인 모드로 전환
+                        Toast.makeText(
+                            this@ExpenseAnalysisActivity,
+                            "공유 그룹 정보를 불러오지 못했습니다.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        isSharedMode = false
+                        groupOwnerId = currentUserId
+                        updateModeUI()
+                        reloadData()
+                    }
+                }
+
+                override fun onFailure(call: Call<MyGroupsResponse>, t: Throwable) {
+                    Toast.makeText(
+                        this@ExpenseAnalysisActivity,
+                        "서버 통신 오류",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    isSharedMode = false
+                    groupOwnerId = currentUserId
+                    updateModeUI()
+                    reloadData()
+                }
+            })
     }
 
     private fun updateModeUI() {
@@ -177,7 +262,8 @@ class ExpenseAnalysisActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val top10 = if (isSharedMode) {
-                    val sharedExpenses = RetrofitClient.expenseApiService.getSharedExpenses(groupOwnerId)
+                    val sharedExpenses =
+                        RetrofitClient.expenseApiService.getSharedExpenses(groupOwnerId)
                     val groceryExpenses = sharedExpenses.filter { expense ->
                         expense.categoryName?.trim()?.equals("장보기", true) == true
                     }
@@ -187,7 +273,8 @@ class ExpenseAnalysisActivity : AppCompatActivity() {
                         .sortedByDescending { it.second }
                         .take(10)
                 } else {
-                    val personalExpenses = RetrofitClient.expenseApiService.getExpenses(currentUserId)
+                    val personalExpenses =
+                        RetrofitClient.expenseApiService.getExpenses(currentUserId)
                     val groceryExpenses = personalExpenses.filter { expense ->
                         expense.categoryName?.trim()?.equals("장보기", true) == true
                     }
@@ -213,10 +300,13 @@ class ExpenseAnalysisActivity : AppCompatActivity() {
                         topLayout.addView(noDataText)
                     } else {
                         allTopIngredients.take(5).forEachIndexed { index, (name, count) ->
-                            val cardView = inflater.inflate(R.layout.item_ingredient_card, topLayout, false)
-                            cardView.findViewById<TextView>(R.id.rankCircle).text = (index + 1).toString()
+                            val cardView =
+                                inflater.inflate(R.layout.item_ingredient_card, topLayout, false)
+                            cardView.findViewById<TextView>(R.id.rankCircle).text =
+                                (index + 1).toString()
                             cardView.findViewById<TextView>(R.id.ingredientName).text = name
-                            cardView.findViewById<TextView>(R.id.frequencyText).text = "월 ${count}회 구매"
+                            cardView.findViewById<TextView>(R.id.frequencyText).text =
+                                "월 ${count}회 구매"
 
                             cardView.findViewById<Button>(R.id.addButton).setOnClickListener {
                                 addToShoppingList(name, count)
@@ -235,7 +325,8 @@ class ExpenseAnalysisActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val topIngredients = if (isSharedMode) {
-                    val sharedExpenses = RetrofitClient.expenseApiService.getSharedExpenses(groupOwnerId)
+                    val sharedExpenses =
+                        RetrofitClient.expenseApiService.getSharedExpenses(groupOwnerId)
                     sharedExpenses.filter { expense ->
                         expense.categoryName?.trim()?.equals("장보기", true) == true
                     }
@@ -243,7 +334,8 @@ class ExpenseAnalysisActivity : AppCompatActivity() {
                         .distinct()
                         .take(10)
                 } else {
-                    val personalExpenses = RetrofitClient.expenseApiService.getExpenses(currentUserId)
+                    val personalExpenses =
+                        RetrofitClient.expenseApiService.getExpenses(currentUserId)
                     personalExpenses.filter { expense ->
                         expense.categoryName?.trim()?.equals("장보기", true) == true
                     }
@@ -347,29 +439,17 @@ class ExpenseAnalysisActivity : AppCompatActivity() {
                 val userId = UserSession.getUserId(this@ExpenseAnalysisActivity)
                 val currentUser = members.find { it.id == userId }
 
-                // 대표자 이름 추출
-                val ownerName = members.find { it.isOwner }?.username ?: "알 수 없음"
-                val totalMemberCount = members.size
-
                 withContext(Dispatchers.Main) {
-                    val infoText = if (currentUser?.isOwner == true) {
-                        // 대표자인 경우: 구성원 이름만 표시
-                        val memberNames = members.filter { !it.isOwner }
-                            .map { it.username }
-                            .joinToString(", ")
+                    // 대표자 맨 앞 + (대표) 태그, 구성원 나열
+                    val owner = members.find { it.isOwner }
+                    val nonOwners = members.filter { !it.isOwner }
 
-                        "가족 ${totalMemberCount}명과 공유 중 · $ownerName (대표)" +
-                                if (memberNames.isNotEmpty()) ", $memberNames" else ""
-                    } else {
-                        // 구성원인 경우: 본인 포함한 전체 구성원 이름 표시
-                        val memberNames = members.filter { !it.isOwner }
-                            .map { it.username }
-                            .joinToString(", ")
-
-                        "가족 ${totalMemberCount}명과 공유 중 · $ownerName (대표)" +
-                                if (memberNames.isNotEmpty()) ", $memberNames" else ""
+                    val allMembersSorted = listOfNotNull(owner) + nonOwners
+                    val displayNames = allMembersSorted.joinToString(", ") {
+                        if (it.isOwner) "${it.username} (대표)" else it.username
                     }
 
+                    val infoText = "가족 ${members.size}명과 공유 중 · $displayNames"
                     sharedModeInfoText.text = infoText
                     Log.d(TAG, "공유 모드 정보 로드 완료: $infoText")
                 }
